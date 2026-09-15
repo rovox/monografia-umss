@@ -1,0 +1,118 @@
+% ============================================================
+%  SECCIÓN PRELIMINAR
+%  Dedicatoria, Agradecimientos, Resumen, Glosario/Abreviaturas.
+%  (El Índice, Índice de tablas e Índice de figuras se generan
+%   automáticamente desde main.tex.)
+% ============================================================
+
+% ---------- DEDICATORIA -------------------------------------
+% No muestra número de página, pero SÍ se cuenta (regla 3.1).
+\thispagestyle{empty}
+\vspace*{6cm}
+\begin{flushright}
+  \interlineadoResumen
+  \textit{A mi abuelo que me enseñó a no parar de estudiar y aprender, a mi abuela que
+  me transmitió su curiosidad, a mi hermano que me extiende la mano cuando tengo\\
+  problemas y a mi querida madre que me impregnó de su enorme\\
+  fuerza de voluntad y paciencia.}
+\end{flushright}
+\clearpage
+
+% ---------- AGRADECIMIENTOS ---------------------------------
+\chapter*{AGRADECIMIENTOS}
+\thispagestyle{empty}   % debe ir DESPUÉS de \chapter*, que reimpone el estilo
+\interlineadoResumen
+Agradezco a mi familia que me sostiene, impulsa y ayuda sin importar las adversidades.
+Agradezco también a la vida por todas aquellas personas que por azares del destino llegué
+a conocer, con las cuales he pasado inolvidables momentos, mañanas de estudio, tardes de
+juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
+\clearpage
+
+% ---------- RESUMEN -----------------------------------------
+% Formato exigido: Garamond 11.5 pt, interlineado múltiple 1.2,
+% con espaciado anterior y posterior de 6 puntos entre párrafos.
+% Extensión: idealmente 1 plana COMPLETA incluyendo las palabras
+% clave. Estructura sugerida por la guía:
+%   1 párrafo de introducción
+%   1-2 párrafos de metodología
+%   1 párrafo de hallazgos (resultados + breve análisis)
+%   1 párrafo de conclusiones
+\chapter*{RESUMEN}
+\addcontentsline{toc}{chapter}{RESUMEN}
+{%
+  \garamondfont\fontsize{11.5}{13.8}\selectfont   % Garamond 11.5, interlineado 1.2
+  \setlength{\parskip}{6pt}                       % 6 pt antes/después
+  \setlength{\parindent}{0pt}
+
+  % --- Párrafo 1: introducción / contexto ---------------------
+  Cada vez que alguien abre Trufi App para preguntarle cómo llegar de un lugar a otro, esa
+  consulta queda registrada. Multiplicado por casi dos millones de veces entre 2022 y 2024,
+  ese registro es un mapa involuntario de todos los lugares del eje metropolitano de
+  Cochabamba donde la gente no sabe cómo moverse. El proyecto parte de una constatación
+  simple: una consulta de ruta ya es, por definición, una necesidad de información que el
+  sistema de transporte no resolvió por sí solo. El problema que se aborda no es predecir
+  si una persona en particular va a repetir su consulta, sino identificar en qué zonas del
+  territorio esa necesidad se concentra, en qué medida coincide con la falta de cobertura
+  de rutas mapeadas en el feed GTFS de la aplicación, y qué zonas debería priorizar el
+  trabajo voluntario de mapeo de Trufi App.
+
+  % --- Párrafo 2: metodología ----------------------------------
+  La metodología sigue las seis fases de CRISP-DM. Los datos primarios son 85 archivos
+  semanales de consultas (1.927.675 registros, septiembre de 2022 a junio de 2024), que se
+  auditaron, consolidaron y validaron de forma exhaustiva antes de cualquier análisis: se
+  verificó el esquema de los 85 archivos, se resolvieron dos variantes de codificación y de
+  nomenclatura de columnas, se validó empíricamente la variable de distancia recibida, se
+  caracterizó el comportamiento del identificador de usuario y se documentó un vacío
+  temporal de siete semanas. El análisis territorial se apoya en una teselación de
+  hexágonos H3, sobre la cual se integrarán métricas de cobertura de rutas GTFS y de
+  entorno urbano (Puntos de Interés de OpenStreetMap).
+
+  % --- Párrafo 3: enfoque analítico -----------------------------
+  El proyecto contempla tres frentes analíticos combinados: segmentación no supervisada de
+  zonas según su perfil de demanda y cobertura, un modelo supervisado de predicción de
+  demanda de consultas contrastado contra líneas base estacionales, y un índice de
+  prioridad de mapeo. El resultado esperado no es un clasificador abstracto sino una
+  herramienta que Trufi App pueda usar para decidir dónde enviar a sus voluntarios primero.
+
+  % --- Párrafo 4: estado del proyecto ---------------------------
+  A la fecha de este documento se ha completado la Comprensión del Negocio y la
+  Comprensión de los Datos. Este documento reporta ese avance con evidencia verificable y
+  deja planteadas, con evidencia y no solo como promesa, las fases de Preparación,
+  Modelado, Evaluación y Despliegue que restan por desarrollar.
+
+  \vspace{6pt}
+  \noindent\textbf{Palabras clave:} Ciencia de Datos; movilidad urbana; brechas de
+  información; transporte público; análisis espacial; hexágonos H3; GTFS; CRISP-DM;
+  aprendizaje automático; Cochabamba.
+}
+\clearpage
+
+% ---------- GLOSARIO Y ABREVIATURAS -------------------------
+% Se incorpora solo cuando el proyecto usa términos técnicos,
+% siglas o conceptos que requieren aclaración.
+\chapter*{GLOSARIO Y ABREVIATURAS}
+\addcontentsline{toc}{chapter}{GLOSARIO Y ABREVIATURAS}
+\interlineadoResumen
+\begin{description}[leftmargin=3cm,style=nextline,font=\bfseries]
+  \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}. Metodología
+    estándar para proyectos de ciencia de datos.
+  \item[EDA] Análisis Exploratorio de Datos (\textit{Exploratory Data Analysis}).
+  \item[ML] Aprendizaje automático (\textit{Machine Learning}).
+  \item[POI] Punto de Interés (\textit{Point of Interest}): un lugar georreferenciado con
+    una categoría (tienda, salud, educación, etc.).
+  \item[GTFS] \textit{General Transit Feed Specification}. Formato estándar en el que Trufi
+    App publica las rutas de transporte que ha mapeado.
+  \item[OSM] OpenStreetMap, el mapa colaborativo del que se obtienen los POI.
+  \item[H3] Sistema de teselación jerárquica en hexágonos desarrollado por Uber, usado para
+    agregar datos geográficos en celdas de tamaño uniforme.
+  \item[MAUP] \textit{Modifiable Areal Unit Problem} (Problema de la Unidad de Área
+    Modificable): los resultados de un análisis territorial pueden cambiar según la
+    zonificación elegida.
+  \item[OTP] OpenTripPlanner, motor de cálculo de itinerarios de transporte público a
+    partir de un feed GTFS.
+  \item[PR-AUC] Área bajo la curva de precisión-recall; métrica preferida sobre ROC-AUC
+    cuando las clases están desbalanceadas.
+  \item[UUID] Identificador único universal; formato del \texttt{userID} recibido en los
+    datos.
+\end{description}
+\clearpage

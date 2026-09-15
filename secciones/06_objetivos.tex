@@ -1,0 +1,73 @@
+% ============================================================
+%  5. OBJETIVOS   (guía, 2.5)
+%  Coherencia exigida: CADA objetivo específico debe tener
+%  evidencia de cumplimiento dentro del desarrollo (sección 7)
+%  y debe contribuir al objetivo general.
+% ============================================================
+\chapter{Objetivos}
+\label{cap:objetivos}
+
+\section{Objetivo General}
+\label{sec:objetivo-general}
+
+Construir un diagnóstico espacial de las brechas de información de transporte público en el
+eje metropolitano de Cochabamba, a partir de las consultas de ruta de Trufi App del período
+septiembre de 2022 a junio de 2024, y derivar de él una lista priorizada de zonas para
+orientar el trabajo de mapeo de la organización.
+
+\section{Objetivos Específicos}
+\label{sec:objetivos-especificos}
+
+Los objetivos específicos descomponen el objetivo general en resultados parciales y
+verificables, alineados con el proceso de trabajo:
+
+\begin{enumerate}
+  \item [OE1.] Consolidar y auditar los 85 archivos semanales de consultas en un conjunto
+        único y trazable, documentando esquema, calidad, duplicados, vacíos temporales y
+        procedencia de las variables derivadas recibidas. \textbf{(Completado --- ver
+        sección~\ref{sec:comprension-datos}.)}
+  \item [OE2.] Caracterizar la demanda de información mediante análisis exploratorio
+        espacio-temporal sobre una teselación H3, evaluando la sensibilidad de los
+        resultados a la resolución espacial elegida.
+  \item [OE3.] Construir indicadores por celda territorial que integren demanda de
+        consultas, cobertura de rutas GTFS y entorno urbano (POI), documentando el método
+        de cálculo de cada uno.
+  \item [OE4.] Segmentar el territorio en tipologías interpretables, comparando al menos
+        tres algoritmos de agrupamiento y evaluando la calidad y estabilidad de las
+        soluciones obtenidas.
+  \item [OE5.] Entrenar y comparar modelos de predicción de demanda de consultas por celda
+        y período frente a líneas base explícitas, con validación cronológica.
+  \item [OE6.] Derivar y validar un índice de prioridad de mapeo a partir de los
+        indicadores y modelos anteriores, analizando su estabilidad ante cambios de
+        resolución espacial y de período de observación.
+  \item [OE7.] Proponer una arquitectura de actualización periódica del diagnóstico para su
+        uso operativo por parte de Trufi App.
+\end{enumerate}
+
+\vspace{6pt}
+\noindent
+Nota de coherencia: cada objetivo específico se corresponde con una fase del desarrollo
+presentado en el capítulo~\ref{cap:desarrollo} y es retomado explícitamente en las
+conclusiones del capítulo~\ref{cap:conclusiones}. La tabla~\ref{tab:matriz-coherencia}
+resume esa correspondencia y el estado de avance de cada objetivo.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Matriz de coherencia objetivos-resultados-evidencias}
+  \label{tab:matriz-coherencia}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.28\textwidth}p{0.32\textwidth}X@{}}
+    \toprule
+    \textbf{Objetivo específico} & \textbf{Resultado esperado} & \textbf{Evidencia en la monografía} \\
+    \midrule
+    OE1. Auditar y consolidar datos & Conjunto de datos único, trazable y con calidad documentada & Sección~\ref{sec:comprension-datos} (completa) \\
+    OE2. Caracterizar demanda (EDA espacial) & Tablas y figuras de distribución espacio-temporal; análisis de sensibilidad de resolución H3 & Agregación preliminar (sección~\ref{sec:comprension-datos}); ampliación pendiente en Preparación \\
+    OE3. Construir indicadores por celda & Tabla de celdas con demanda, cobertura GTFS y entorno POI & Pendiente --- fase de Preparación \\
+    OE4. Segmentar el territorio & Tipologías de zona con métricas de calidad y estabilidad & Pendiente --- fase de Modelado \\
+    OE5. Predecir demanda & Modelos comparados contra línea base, con métricas de error & Pendiente --- fase de Modelado/Evaluación \\
+    OE6. Índice de prioridad de mapeo & Ranking de celdas con análisis de estabilidad & Pendiente --- fase de Evaluación \\
+    OE7. Proponer despliegue & Arquitectura de actualización periódica & Pendiente --- fase de Despliegue \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}

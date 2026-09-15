@@ -1,0 +1,98 @@
+% ============================================================
+%  MONOGRAFÍA — UNIVERSIDAD MAYOR DE SAN SIMÓN
+%  Facultad de Ciencias y Tecnología — Dirección de Posgrado
+%  Diplomado en Ciencia de Datos
+%  ------------------------------------------------------------
+%  COMPILACIÓN (IMPORTANTE):
+%     lualatex main.tex      <- recomendado
+%     lualatex main.tex      <- segunda pasada: resuelve índices
+%                               y referencias cruzadas
+%  (XeLaTeX también funciona: xelatex main.tex, dos veces.)
+%
+%  NO usar pdflatex: este documento carga fuentes del sistema
+%  (Arial / Garamond) vía fontspec, lo cual pdflatex no soporta.
+%  Ver README.md para el detalle.
+% ============================================================
+
+\input{preambulo.tex}
+
+% ============================================================
+%  DATOS DEL PROYECTO  — EDITE SOLO ESTAS LÍNEAS
+%  Todo lo demás (carátula, encabezados, índices) se completa
+%  automáticamente a partir de estos valores.
+% ============================================================
+\newcommand{\tituloMonografia}{Identificación de Brechas de Información de Transporte
+  Público en el Eje Metropolitano de Cochabamba\\mediante Análisis Espacial de Consultas
+  de Ruta de Trufi App\\(2022-2024)}
+% Versión en una sola línea, solo para metadatos del PDF (pdftitle no admite \\).
+\newcommand{\tituloMonografiaPlano}{Identificación de Brechas de Información de Transporte
+  Público en el Eje Metropolitano de Cochabamba mediante Análisis Espacial de Consultas de
+  Ruta de Trufi App (2022-2024)}
+\newcommand{\nombreDiplomado}{Ciencia de Datos}
+\newcommand{\nombreVersion}{4ta.}
+\newcommand{\nombrePostulante}{José Roberto Vargas Orellana}
+\newcommand{\anioMonografia}{2026}
+
+% Metadatos internos del PDF (buscables, aparecen en Propiedades)
+\hypersetup{
+  pdftitle={\tituloMonografiaPlano},
+  pdfauthor={\nombrePostulante},
+  pdfsubject={Monografía — Diplomado en \nombreDiplomado},
+  pdfkeywords={Ciencia de Datos, CRISP-DM, UMSS}
+}
+
+\begin{document}
+
+% ============================================================
+%  SECCIÓN PRELIMINAR
+%  \frontmatter activa la numeración romana en minúsculas
+%  (i, ii, iii, iv...) de forma automática — regla 3.1.
+% ============================================================
+\frontmatter
+
+% Carátula: no muestra número de página, pero SÍ se cuenta.
+\include{secciones/00_caratula}
+
+% Dedicatoria, agradecimientos, resumen, glosario.
+\include{secciones/01_preliminares}
+
+% ---------- ÍNDICE GENERAL ----------------------------------
+% La versión con asterisco (\tableofcontents*) evita que el
+% índice se liste a sí mismo dentro del índice.
+% \encabezadoIndice imprime la palabra "Página" sobre la columna
+% de números, tal como exige la regla 3.4.
+\clearpage
+\tableofcontents*
+\clearpage
+
+% ---------- ÍNDICE DE TABLAS --------------------------------
+% Se genera automáticamente a partir de cada \caption dentro de
+% un entorno "table". Comente esta línea si el documento no
+% contiene tablas.
+\listoftables*
+\clearpage
+
+% ---------- ÍNDICE DE FIGURAS -------------------------------
+% Se genera automáticamente a partir de cada \caption dentro de
+% un entorno "figure". Comente esta línea si no hay figuras.
+\listoffigures*
+\clearpage
+
+% ============================================================
+%  CUERPO DE LA MONOGRAFÍA
+%  \mainmatter reinicia la numeración en arábigo desde 1 — 3.1.
+%  Cada \chapter empieza automáticamente en página nueva.
+% ============================================================
+\mainmatter
+
+\include{secciones/02_introduccion}     % 1. Introducción
+\include{secciones/03_problema}         % 2. Identificación del Problema
+\include{secciones/04_justificacion}    % 3. Justificación
+\include{secciones/05_alcance}          % 4. Alcance
+\include{secciones/06_objetivos}        % 5. Objetivos
+\include{secciones/07_marco_teorico}    % 6. Marco Teórico
+\include{secciones/08_desarrollo}       % 7. Desarrollo (CRISP-DM)
+\include{secciones/09_conclusiones}     % 8. Conclusiones y Recomendaciones
+\include{secciones/10_bibliografia}     % 9. Bibliografía y Anexos
+
+\end{document}

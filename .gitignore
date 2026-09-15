@@ -1,0 +1,14 @@
+# Salida de compilación LaTeX (latexmk): todo lo auxiliar vive aquí
+/build/
+main.pdf
+
+# Por si alguien compila a mano con lualatex/xelatex directo en la raíz
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk

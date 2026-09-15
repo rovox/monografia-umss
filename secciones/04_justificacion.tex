@@ -1,0 +1,54 @@
+% ============================================================
+%  3. JUSTIFICACIÓN   (guía, 2.3)
+%  Propósito: explicar POR QUÉ y PARA QUÉ es necesario realizar
+%  el proyecto. Debe relacionarse directamente con el problema.
+% ============================================================
+\chapter{Justificación}
+\label{cap:justificacion}
+
+\section{Justificación práctica}
+
+Trufi App no dispone hoy de un mecanismo sistemático para decidir dónde enfocar el trabajo
+de mapeo de sus voluntarios, un recurso limitado. Un diagnóstico territorial de brechas de
+información permite: priorizar el mapeo de rutas en las zonas donde más se necesita;
+auditar la calidad de la cobertura GTFS existente, detectando zonas con alta demanda y baja
+cobertura como señales de información desactualizada; y sustentar decisiones de producto
+(por ejemplo, mensajes de advertencia al usuario cuando consulta en una zona de baja
+cobertura conocida).
+
+\section{Justificación académica y científica}
+
+El proyecto aporta metodológicamente en tres frentes: la construcción de un pipeline
+reproducible que integra datos de consulta, datos de transporte público (GTFS) y datos de
+entorno urbano (OSM) sobre una teselación espacial uniforme, apto para replicarse en otras
+ciudades intermedias con condiciones similares de transporte informal; la aplicación de
+técnicas de aprendizaje no supervisado y supervisado a un dominio de movilidad urbana en un
+contexto de datos limitados y desiguales, común en ciudades del sur global; y una discusión
+explícita de las limitaciones metodológicas de trabajar con datos de consulta —en lugar de
+datos de viaje confirmado— que puede ser de utilidad para investigaciones similares.
+
+\section{Justificación social}
+
+El eje metropolitano de Cochabamba enfrenta desafíos de equidad en el acceso a información
+de transporte. Es razonable esperar que las zonas periféricas, cuya población suele
+depender en mayor medida del transporte público, sean también las que enfrentan mayor
+dificultad para encontrar información confiable sobre cómo moverse. Si el proyecto confirma
+esa hipótesis (H1, sección~\ref{sec:formulacion-problema}), produce evidencia cuantificada
+de una brecha que hoy es solo intuida, y esa evidencia puede orientar tanto el trabajo de
+Trufi App como el de otras organizaciones o entidades municipales interesadas en mejorar la
+información de transporte disponible para la población.
+
+\section{Beneficiarios directos e indirectos}
+
+\textbf{Beneficiarios directos:} Trufi App, que obtiene una herramienta de priorización
+basada en evidencia; y los usuarios de la aplicación, que potencialmente reciben información
+más confiable en las zonas donde hoy no la tienen.
+
+\textbf{Beneficiarios indirectos:} los municipios del eje metropolitano, investigadores de
+movilidad urbana en ciudades intermedias latinoamericanas, y la comunidad de OpenStreetMap,
+que puede beneficiarse de la identificación de zonas sub-mapeadas.
+
+El proyecto integra y aplica, sobre un caso real, los contenidos desarrollados a lo largo
+del Diplomado en Ciencia de Datos: la metodología CRISP-DM completa, el análisis espacial
+sobre teselaciones H3, el aprendizaje no supervisado para segmentación territorial y el
+aprendizaje supervisado para predicción de demanda con validación cronológica.

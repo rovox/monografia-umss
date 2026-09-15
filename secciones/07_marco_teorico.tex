@@ -1,0 +1,186 @@
+% ============================================================
+%  6. MARCO TEÓRICO   (guía, 2.6)
+%  Propósito: sustentar conceptualmente el proyecto.
+%  CUIDADO: no debe ser una recopilación extensa de definiciones
+%  desconectadas. SOLO se desarrollan conceptos que después se
+%  utilizan efectivamente en el proyecto.
+%  CRISP-DM: aquí se EXPLICA la metodología; su aplicación
+%  práctica se documenta en el capítulo 7.
+% ============================================================
+\chapter{Marco Teórico}
+\label{cap:marco-teorico}
+
+\section{Fundamentos del dominio}
+\label{sec:fundamentos-dominio}
+
+\subsection{Movilidad urbana en ciudades intermedias latinoamericanas}
+
+Las ciudades intermedias de América Latina presentan sistemas de transporte público
+predominantemente informales o semiformales, con ausencia de horarios fijos y de
+información oficial consolidada, lo que dificulta la planificación de desplazamientos por
+parte de la población. En este contexto, las aplicaciones de planificación de rutas
+construidas sobre el aporte de comunidades voluntarias —como Trufi App— cumplen una
+función que en otras ciudades correspondería a la autoridad de transporte formal.
+
+\subsection{Datos de consulta frente a datos de viaje}
+
+Conviene distinguir con precisión entre datos de viaje (\textit{trip data}), que registran
+desplazamientos confirmados —por ejemplo, mediante tarjetas inteligentes de pago o GPS de
+vehículos—, y datos de consulta (\textit{query data}), que registran una intención de viaje
+en el momento en que la persona no sabe cómo desplazarse y pide información al sistema.
+Ambas fuentes son valiosas para el estudio de la movilidad urbana, pero exigen
+interpretaciones distintas: los datos de consulta capturan mejor los puntos de fricción
+informativa del sistema, mientras que los datos de viaje capturan mejor los patrones
+efectivos de desplazamiento \cita{Wang y Hess}{2021}. Este proyecto trabaja exclusivamente
+con datos de consulta, y esa elección metodológica se sostiene a lo largo de todo el
+documento.
+
+\subsection{De la fricción de datos a la brecha de información}
+
+El concepto de fricción aplicado a sistemas de información describe los obstáculos que
+impiden o dificultan el flujo de información entre un sistema y quien la necesita
+\cita{Bates}{2018}, aplicado originalmente al intercambio de datos entre organizaciones.
+Este proyecto adapta esa idea —sin pretender una equivalencia estricta— a un contexto
+distinto: la dificultad de una persona para obtener, de una aplicación de rutas, la
+información de transporte que necesita en un punto determinado del territorio. Dado que esa
+dificultad es un constructo no observable directamente, se opera mediante proxies medibles:
+la repetición direccional de consultas y la distancia a la cobertura de rutas mapeadas.
+
+\subsection{Legibilidad urbana y entorno construido}
+
+La noción de legibilidad urbana \cita{Lynch}{1960} sostiene que la facilidad con la que una
+persona puede orientarse y describir un lugar depende de la presencia de referencias
+reconocibles en el entorno construido. La investigación sobre los llamados ``3D'' del
+entorno urbano —densidad, diversidad y diseño— y su relación con el comportamiento de
+desplazamiento \cita{Cervero y Kockelman}{1997}, con meta-análisis posterior en
+\cita{Ewing y Cervero}{2010}, da sustento empírico a la idea de que zonas con mayor
+densidad y diversidad de puntos de interés son, en términos generales, más legibles y más
+fáciles de describir que zonas dispersas. Este proyecto traslada esa idea al contexto de
+consultas digitales de ruta, con la prevención ya señalada sobre la calidad desigual de los
+datos de POI disponibles.
+
+\subsection{GTFS y cobertura de transporte público}
+
+El \textit{General Transit Feed Specification} (GTFS) es el formato estándar en el que se
+publican las rutas, paradas y horarios de un sistema de transporte público. En el caso de
+Trufi App, el feed GTFS es generado por voluntarios que mapean manualmente las rutas de
+transporte informal, por lo que su cobertura no es uniforme: es más completa en zonas donde
+ha habido más actividad de mapeo, típicamente el centro urbano, y más incompleta en la
+periferia. La distancia de un punto a la ruta mapeada más cercana es, en este proyecto, la
+variable más directa y objetivamente medible de calidad de cobertura, y no depende de
+ningún supuesto sobre el comportamiento del usuario.
+
+\section{Fundamentos de Ciencia de Datos}
+\label{sec:fundamentos-cd}
+
+\subsection{Teselación H3 frente a buffers circulares}
+
+El análisis de proximidad mediante buffers circulares alrededor de puntos es una técnica
+clásica de sistemas de información geográfica, pero presenta dos limitaciones cuando se
+aplica a un volumen grande de puntos: los buffers de puntos cercanos se solapan, lo que
+impide sumar sus conteos sin contar dos veces la misma área, y no ofrecen una clave espacial
+estable y reutilizable. La teselación H3, desarrollada originalmente por Uber, divide el
+territorio en hexágonos de tamaño uniforme sin solapes ni huecos, organizados en una
+jerarquía de resoluciones. Esto permite calcular una sola vez los atributos de cada celda
+(demanda, cobertura, entorno) y reutilizarlos mediante una simple operación de unión, lo
+cual es además la base técnica que permitiría, en una fase de despliegue, transformar unas
+coordenadas nuevas en una predicción en milisegundos.
+
+\subsection{El problema de la unidad de área modificable (MAUP)}
+
+Todo análisis que agrega datos sobre unidades territoriales definidas por quien investiga
+—sean municipios, cuadrantes o hexágonos— está sujeto al problema de la unidad de área
+modificable: los resultados pueden cambiar según el tamaño y la forma de la unidad elegida.
+Este proyecto no ignora esa limitación: la resolución H3 empleada se trata como un
+parámetro a validar, no como un dato fijo, mediante análisis de sensibilidad en
+resoluciones contiguas (aproximadamente 1,2~km, 460~m y 175~m de arista) para verificar si
+los patrones y el ranking de prioridad de mapeo se mantienen estables.
+
+\section{Técnicas y algoritmos relacionados}
+\label{sec:tecnicas-algoritmos}
+
+\textbf{Aprendizaje no supervisado: segmentación de zonas.} La segmentación de celdas
+territoriales en tipologías interpretables (por ejemplo, ``alta demanda y buena
+cobertura'', ``alta demanda y baja cobertura'', ``baja demanda'') se aborda mediante
+algoritmos de agrupamiento no supervisado. Se contempla comparar al menos K-Means, un
+modelo de mezclas gaussianas y un algoritmo basado en densidad (HDBSCAN), evaluando la
+calidad de cada solución con el coeficiente de silueta y el índice de Davies-Bouldin, y su
+estabilidad mediante remuestreo bootstrap de las celdas.
+
+\textbf{Aprendizaje supervisado: predicción de demanda.} Para el componente predictivo, el
+problema se plantea como una regresión: estimar el número de consultas que recibirá una
+celda territorial en un período futuro. Se contempla comparar una línea base ingenua
+(repetir el valor del período anterior) y una línea base estacional, contra modelos de
+regresión regularizada y modelos de ensamble basados en árboles --- Random Forest
+\cita{Breiman}{2001} y XGBoost \cita{Chen y Guestrin}{2016} ---, evaluados mediante error
+absoluto medio y raíz del error cuadrático medio. Dado que el volumen de consultas no es
+estacionario en el período observado (sección~\ref{sec:comprension-datos}), la validación se
+realiza mediante ventanas temporales deslizantes y nunca mediante partición aleatoria, para
+evitar que el modelo se entrene y se evalúe sobre regímenes de uso de la aplicación que en
+la realidad nunca coexistieron.
+
+Ninguno de estos algoritmos ha sido entrenado ni evaluado todavía: el proyecto se
+encuentra en la fase de Comprensión de los Datos (sección~\ref{sec:comprension-datos}). La
+tabla~\ref{tab:comparacion-algoritmos} resume los algoritmos \textit{candidatos} y el
+fundamento de su selección; los resultados comparados se reportarán en la
+sección~\ref{sec:evaluacion-resultados} una vez completada la fase de Modelado.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Algoritmos candidatos para las fases de Modelado (aún no evaluados)}
+  \label{tab:comparacion-algoritmos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}XX@{}}
+    \toprule
+    \textbf{Algoritmo} & \textbf{Fundamento} & \textbf{Aplicabilidad prevista} \\
+    \midrule
+    K-Means & Minimiza la distancia intra-clúster a un centroide & Segmentación de zonas, línea base rápida \\
+    Mezcla de gaussianas & Modela clústeres como distribuciones gaussianas solapables & Zonas con fronteras difusas entre tipologías \\
+    HDBSCAN & Agrupa por densidad, sin fijar el número de clústeres & Detección de zonas atípicas o de baja densidad \\
+    Regresión regularizada & Penaliza coeficientes para evitar sobreajuste & Línea base interpretable de predicción de demanda \\
+    Random Forest & Ensamble de árboles sobre submuestras aleatorias & Relaciones no lineales entre demanda y variables de zona \\
+    XGBoost & Ensamble de árboles por potenciación de gradiente & Máximo desempeño predictivo bajo validación cronológica \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia con base en \cita{Breiman}{2001} y \cita{Chen y Guestrin}{2016}.}
+\end{table}
+
+\section{Métricas de evaluación}
+\label{sec:metricas}
+
+Para los componentes de clasificación que puedan derivarse del proyecto (por ejemplo,
+``celda con cobertura suficiente'' frente a ``celda con brecha''), se privilegian métricas
+robustas al desbalance de clases, en particular el área bajo la curva de precisión-recall
+(PR-AUC), preferible al área bajo la curva ROC cuando la clase de interés es minoritaria
+\cita{Saito y Rehmsmeier}{2015}. Para los componentes de regresión, se emplean el error
+absoluto medio y la raíz del error cuadrático medio, siempre contrastados contra una línea
+base explícita (sección~\ref{sec:tecnicas-algoritmos}) y nunca reportados de forma aislada.
+Estas métricas se reportan efectivamente en la sección~\ref{sec:evaluacion-resultados}, una
+vez completadas las fases de Modelado y Evaluación.
+
+\section{Metodología CRISP-DM}
+\label{sec:crisp-dm}
+
+CRISP-DM (\textit{Cross-Industry Standard Process for Data Mining}) organiza un proyecto de
+ciencia de datos en seis fases interconectadas e iterativas: comprensión del negocio,
+comprensión de los datos, preparación de los datos, modelado, evaluación y despliegue
+\cita{Chapman et al.}{2000}. Su carácter iterativo es especialmente relevante en este
+proyecto: la reformulación del problema descrita en la
+sección~\ref{sec:descripcion-problema} es en sí misma un ejemplo de cómo un hallazgo de la
+fase de comprensión de datos —la imprecisión de la segmentación municipal— obligó a revisar
+decisiones tomadas en la fase de comprensión del negocio. En este documento, la metodología
+se explica conceptualmente aquí y se aplica en el capítulo~\ref{cap:desarrollo}, donde cada
+sección corresponde a una fase.
+
+% ------------------------------------------------------------
+% PLANTILLA DE FIGURA (formato exigido en 3.2)
+% Igual criterio: \caption ANTES de \includegraphics.
+% Reemplace el archivo por su propio diagrama en imagenes/.
+% ------------------------------------------------------------
+\begin{figure}[htbp]
+  \centering
+  \caption{Fases de la metodología CRISP-DM}
+  \label{fig:crisp-dm}
+  \includegraphics[width=0.55\textwidth]{imagenes/logo_posgrado.png}
+  \fuente{Adaptado de \cita{Chapman et al.}{2000}.}
+\end{figure}

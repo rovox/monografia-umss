@@ -1,0 +1,156 @@
+% ============================================================
+%  9. BIBLIOGRAFÍA Y ANEXOS   (guía, 2.9 y 3.6)
+%  Formato de registro exigido por la guía (norma norteamericana
+%  institucional):
+%   - Número de registro y autor(es) en NEGRILLA.
+%   - Apellido seguido de iniciales; "et al" para más de dos autores.
+%   - Año entre paréntesis.
+%   - Título de la obra.
+%   - Datos editoriales, lugar y páginas.
+%   - Interlineado SIMPLE dentro de un registro, DOBLE entre
+%     registros (ambos automáticos en el entorno bibliografiaUMSS).
+%  Uso: \registrobiblio{Autor(es)}{Año}{Título}{Datos editoriales}
+% ============================================================
+\chapter{Bibliografía y Anexos}
+\label{cap:bibliografia}
+
+\section{Bibliografía}
+\label{sec:bibliografia}
+
+\begin{bibliografiaUMSS}
+
+  \registrobiblio{BATES, J.}{2018}
+    {The politics of data friction}
+    {Journal of Documentation, 74(2), 412--429}
+
+  \registrobiblio{BREIMAN, L.}{2001}
+    {Random forests}
+    {Machine Learning, 45(1), 5--32}
+
+  \registrobiblio{BRIER, G. W.}{1950}
+    {Verification of forecasts expressed in terms of probability}
+    {Monthly Weather Review, 78(1), 1--3}
+
+  \registrobiblio{CERVERO, R. \& K. KOCKELMAN}{1997}
+    {Travel demand and the 3Ds: Density, diversity, and design}
+    {Transportation Research Part D: Transport and Environment, 2(3), 199--219}
+
+  \registrobiblio{CHAPMAN, P. et al.}{2000}
+    {CRISP-DM 1.0: Step-by-step data mining guide}
+    {SPSS Inc.}
+
+  \registrobiblio{CHEN, T. \& C. GUESTRIN}{2016}
+    {XGBoost: A scalable tree boosting system}
+    {En Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery
+     and Data Mining, pp. 785--794}
+
+  \registrobiblio{EDWARDS, P. N.}{2010}
+    {A vast machine: Computer models, climate data, and the politics of global warming}
+    {MIT Press}
+
+  \registrobiblio{EWING, R. \& R. CERVERO}{2010}
+    {Travel and the built environment: A meta-analysis}
+    {Journal of the American Planning Association, 76(3), 265--294}
+
+  \registrobiblio{LYNCH, K.}{1960}
+    {The image of the city}
+    {MIT Press}
+
+  \registrobiblio{SAITO, T. \& M. REHMSMEIER}{2015}
+    {The precision-recall plot is more informative than the ROC plot when evaluating binary
+     classifiers on imbalanced datasets}
+    {PLOS ONE, 10(3), e0118432}
+
+  \registrobiblio{SHANNON, C. E.}{1948}
+    {A mathematical theory of communication}
+    {Bell System Technical Journal, 27(3), 379--423}
+
+  \registrobiblio{WANG, C. \& D. B. HESS}{2021}
+    {Role of urban big data in travel behavior research}
+    {Journal of the Indian Institute of Science, 101(3), 351--369}
+
+  \registrobiblio{UBER TECHNOLOGIES}{s.f.}
+    {H3: Uber's hexagonal hierarchical spatial index}
+    {Consultado en 2026, \url{https://h3geo.org}}
+
+  \registrobiblio{MOBILITY DATA}{s.f.}
+    {General Transit Feed Specification (GTFS) reference}
+    {Consultado en 2026, \url{https://gtfs.org}}
+
+\end{bibliografiaUMSS}
+
+\vspace{6pt}
+\noindent{\footnotesize\itshape Nota sobre la bibliografía: las 14 referencias anteriores
+fueron verificadas por título, autoría y año antes de incorporarse a este documento. Las
+referencias específicas al contexto boliviano (movilidad urbana en Cochabamba, transporte
+informal en ciudades bolivianas) no pudieron verificarse en las bases consultadas y se
+retiraron en lugar de mantenerse sin confirmar; se recomienda buscar fuentes reales para ese
+punto en el repositorio institucional de la UMSS, SciELO Bolivia o Redalyc antes de la
+entrega final, dado que el argumento sobre transporte informal en Cochabamba
+(sección~\ref{sec:descripcion-problema}) se sostiene actualmente sin cita académica de
+respaldo.\par}
+
+\section{Anexos}
+\label{sec:anexos}
+
+Los anexos incorporan la evidencia técnica que respalda la monografía sin recargar el
+cuerpo principal del documento.
+
+\subsection*{Anexo A. Diccionario de datos completo}
+
+Ver tabla~\ref{tab:diccionario-datos} (sección~\ref{sec:comprension-datos}) para el
+diccionario completo del conjunto consolidado, incluyendo los campos de trazabilidad
+(\texttt{source\_file}, \texttt{source\_batch}) añadidos durante la consolidación.
+
+\subsection*{Anexo B. Trazabilidad de scripts y evidencias}
+
+Ver tabla~\ref{tab:scripts-evidencias} (sección~\ref{sec:comprension-datos}) para la
+correspondencia entre los ocho scripts ejecutados y la evidencia que produce cada uno.
+Estructura del repositorio del proyecto de datos: \texttt{data/raw} (85 CSV originales,
+solo lectura), \texttt{data/interim} (conjunto consolidado y agregados H3 en formato
+Parquet), \texttt{data/processed} (reservado para las tablas de indicadores por celda de la
+fase de Preparación), \texttt{src} (scripts numerados del pipeline),
+\texttt{reports/01\_data\_understanding} (informes y figuras de la fase de Comprensión de
+los Datos).
+
+\subsection*{Anexo C. Fragmentos relevantes de código}
+[Incluya únicamente los fragmentos que resulten necesarios para comprender decisiones
+técnicas clave. El código extenso debe permanecer en el repositorio del proyecto. Pendiente:
+se incorporará junto con las fases de Preparación y Modelado.]
+
+\subsection*{Anexo D. Resultados adicionales}
+[Incluya tablas y gráficos complementarios que no forman parte del cuerpo principal.
+Pendiente: se incorporará junto con la fase de Evaluación.]
+
+\subsection*{Anexo E. Capturas del prototipo}
+[Incluya las capturas de la aplicación, tablero o servicio desarrollado. Pendiente: se
+incorporará junto con la fase de Despliegue.]
+
+\subsection*{Anexo F. README y reproducibilidad}
+[Incluya las instrucciones mínimas para ejecutar el proyecto: requisitos, estructura de
+carpetas, orden de ejecución de los notebooks o scripts y origen del conjunto de datos.
+Pendiente de consolidar en un README único del repositorio de datos.]
+
+\subsection*{Apéndice C. Control de coherencia}
+
+Verificaciones pendientes antes de considerar cerrado cada capítulo, a completar conforme
+avance el proyecto:
+
+\begin{enumerate}
+  \item Confirmar con Trufi App la hipótesis planteada en las secciones~\ref{sec:auditoria-esquema}
+        y~\ref{sec:cobertura-temporal} sobre el cambio de proceso de exportación en abril de
+        2024; actualizar la redacción si se obtiene confirmación o desmentido.
+  \item Sustituir las referencias bibliográficas señaladas como pendientes de verificación
+        en la nota final de la sección~\ref{sec:bibliografia} antes de la entrega
+        definitiva.
+  \item Una vez definida la resolución H3 final (capítulo~\ref{cap:marco-teorico} y
+        sección~\ref{sec:agregacion-h3}), actualizar de forma consistente todas las
+        menciones a ``resolución 8'' y a los conteos de celdas en los
+        capítulos~\ref{cap:alcance} y~\ref{cap:desarrollo}.
+  \item Verificar que cada cifra cuantitativa de los capítulos~\ref{cap:introduccion} a
+        \ref{cap:marco-teorico} tenga respaldo directo en una tabla, figura o script del
+        capítulo~\ref{cap:desarrollo} y sus apéndices.
+  \item Actualizar el índice general, el índice de tablas y el índice de figuras conforme
+        se incorporen las secciones de Preparación en adelante.
+  \item Eliminar esta nota de control una vez cerrada la versión final de entrega.
+\end{enumerate}

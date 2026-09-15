@@ -1,0 +1,92 @@
+% ============================================================
+%  CARÁTULA  (Instrucción 3.3 + modelo del Anexo)
+%  ------------------------------------------------------------
+%  Reglas implementadas literalmente:
+%   - Línea 1: UNIVERSIDAD MAYOR DE SAN SIMÓN  (Arial 16, negrilla)
+%   - Línea 2: FACULTAD DE CIENCIAS Y TECNOLOGÍA (Arial 14, negrilla)
+%   - Línea 3: DIRECCIÓN DE POSGRADO           (Arial 12, negrilla)
+%     ...las tres en INTERLINEADO SIMPLE.
+%   - Logo UMSS y logo FCyT: justificación IZQUIERDA.
+%   - Logo Dirección de Posgrado: sección DERECHA, alineado con
+%     la parte superior de la primera línea.
+%   - TÍTULO: mayúsculas, Arial 20 negrilla, centrado; si ocupa
+%     más de una línea, en forma de PIRÁMIDE INVERTIDA.
+%   - 3 líneas abajo: "MONOGRAFÍA PRESENTADA..." (Arial 12, neg.)
+%   - 5 líneas abajo: "POSTULANTE" (Arial 14, neg.) y a 1 cm
+%     a la derecha ": NOMBRE".
+%   - Al pie, centrado: "Cochabamba – Bolivia" y el AÑO (Arial 12).
+%  La carátula NO muestra número de página pero SÍ cuenta (3.1).
+% ============================================================
+
+\begin{titlingpage}
+\thispagestyle{empty}     % sin folio visible (pero la página se cuenta)
+\interlineadoSimple       % toda la carátula va en interlineado simple
+
+% ---------- Bloque superior: logos + encabezado institucional
+% Se usa una fila de tres cajas superiores (\raisebox/[t]) para
+% que los logos queden alineados con la PARTE SUPERIOR de la
+% primera línea de texto, tal como pide la guía.
+\noindent
+\begin{minipage}[t]{0.21\textwidth}
+  \vspace{0pt}
+  \includegraphics[height=1.5cm]{imagenes/logo_umss.png}%
+  \hspace{1mm}%
+  \includegraphics[height=1.5cm]{imagenes/logo_facultad.png}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.65\textwidth}
+  \vspace{0pt}
+  \centering
+  {\fontsize{16}{18}\selectfont\bfseries UNIVERSIDAD MAYOR DE SAN SIMÓN\par}
+  {\fontsize{14}{16}\selectfont\bfseries FACULTAD DE CIENCIAS Y TECNOLOGÍA\par}
+  {\fontsize{12}{14}\selectfont\bfseries DIRECCIÓN DE POSGRADO\par}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.13\textwidth}
+  \vspace{0pt}
+  \raggedleft
+  \includegraphics[height=1.5cm]{imagenes/logo_posgrado.png}
+\end{minipage}
+
+\vspace{4.5cm}
+
+% ---------- TÍTULO DE LA MONOGRAFÍA -------------------------
+% \tituloMonografia se define en main.tex (datos del proyecto).
+% Para la "pirámide invertida" cuando el título ocupa varias
+% líneas, escribir el título con \\ donde se desee el corte:
+% la primera línea más larga y las siguientes más cortas.
+\begin{center}
+  {\fontsize{20}{26}\selectfont\bfseries
+   \MakeUppercase{\tituloMonografia}\par}
+\end{center}
+
+\vspace{3\baselineskip}   % "tres líneas por debajo"
+
+% ---------- Leyenda de presentación -------------------------
+\noindent
+\begin{center}
+  {\fontsize{12}{16}\selectfont\bfseries
+   MONOGRAFÍA PRESENTADA PARA OBTENER EL CERTIFICADO\\[2pt]
+   DE DIPLOMADO EN \MakeUppercase{\nombreDiplomado}\ \nombreVersion\ VERSIÓN\par}
+\end{center}
+
+\vspace{5\baselineskip}   % "cinco líneas por debajo"
+
+% ---------- Postulante --------------------------------------
+% "POSTULANTE" y, 1 cm a la derecha, ": NOMBRE DEL POSTULANTE".
+\noindent\hspace{1.5cm}%
+\begin{minipage}{\dimexpr\textwidth-1.5cm\relax}
+  \raggedright   % sin justificar: evita que el nombre se estire entre palabras
+  {\fontsize{14}{16}\selectfont\bfseries
+   POSTULANTE\hspace{1cm}: \MakeUppercase{\nombrePostulante}\par}
+\end{minipage}
+
+\vfill
+
+% ---------- Pie: lugar y año --------------------------------
+\begin{center}
+  {\fontsize{12}{14}\selectfont\bfseries Cochabamba -- Bolivia\par}
+  {\fontsize{12}{14}\selectfont\bfseries \anioMonografia\par}
+\end{center}
+
+\end{titlingpage}

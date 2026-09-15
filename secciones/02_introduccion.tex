@@ -1,0 +1,66 @@
+% ============================================================
+%  1. INTRODUCCIÓN   (guía, 2.1)
+%  Propósito: presentar el tema, el contexto, la importancia del
+%  trabajo y la solución que será desarrollada.
+%  Debe responder: ¿sobre qué trata el proyecto?, ¿en qué contexto
+%  se desarrolla?, ¿por qué es relevante para Ciencia de Datos?,
+%  ¿qué encontrará el lector en la monografía?
+%  Recomendación: comprensible para un lector que aún no conoce
+%  los detalles técnicos.
+% ============================================================
+\chapter{Introducción}
+\label{cap:introduccion}
+
+Imaginemos a una persona en Sacaba que necesita llegar a un hospital en Cercado. No conoce
+la ruta. Abre Trufi App, escribe el destino, y la aplicación le responde. Si la respuesta es
+buena, el problema queda resuelto y esa persona nunca vuelve a pensar en ello. Si la
+respuesta es mala o no existe, esa persona probablemente vuelve a intentarlo minutos
+después, o simplemente se queda sin saber cómo llegar. Ese segundo intento —esa necesidad
+de información que no quedó satisfecha a la primera— es exactamente lo que este proyecto se
+propone encontrar y ubicar en el mapa.
+
+El transporte público en el eje metropolitano de Cochabamba (Cercado, Sacaba, Quillacollo y
+zonas aledañas) es mayoritariamente informal: no hay horarios fijos, las rutas cambian según
+decisiones de cada operador, y no existe una fuente oficial y actualizada de ``cómo moverse
+por la ciudad''. Trufi App nació justamente para llenar ese vacío. Un grupo de personas
+voluntarias mapea las rutas de transporte y las publica en un formato estándar llamado GTFS,
+y la aplicación usa ese mapeo para responder consultas de la gente.
+
+El problema es que ese mapeo no es parejo. Hay zonas —sobre todo el centro de la ciudad—
+muy bien mapeadas, y zonas periféricas donde la información es escasa o inexistente. Trufi
+App lo sabe de manera general, pero no tiene hoy una forma sistemática de saber exactamente
+dónde falta mapear primero. El trabajo de sus voluntarios, que es limitado, se reparte más
+por intuición que por evidencia.
+
+Este proyecto propone usar los propios registros de consultas de la aplicación para
+resolver esa pregunta. Cada consulta que alguien hace es, en sí misma, una señal de que
+existe una necesidad de información de transporte en ese punto del mapa y en ese momento. Si
+se analizan cientos de miles de esas señales en conjunto, es posible ver patrones: zonas
+donde la gente pregunta mucho y probablemente no obtiene una buena respuesta, zonas donde
+casi no hay cobertura de rutas mapeadas, y la relación entre ambas cosas. A partir de ahí, se
+puede construir algo directamente útil: una lista priorizada de zonas donde mapear rendiría
+más.
+
+Dicho en una frase, sin tecnicismos: \textbf{este proyecto usa las búsquedas de ruta de la
+gente en Trufi App para averiguar en qué partes de Cochabamba es más difícil saber cómo
+moverse, y le entrega a Trufi App una guía de dónde conviene mapear primero.}
+
+Para llegar a eso, el proyecto combina varias herramientas de Ciencia de Datos. No se trata
+solamente de mirar tablas y gráficos (eso sería quedarse en la superficie): se trata de
+agrupar zonas parecidas entre sí mediante aprendizaje no supervisado, de construir un modelo
+que intente predecir dónde va a crecer la demanda de consultas, y de comparar ese modelo
+contra una línea base simple para saber si realmente aporta algo. Cada una de esas piezas se
+explica en el capítulo~\ref{cap:marco-teorico}, en un lenguaje que no exige conocimientos
+previos de Ciencia de Datos para entender por qué se usa.
+
+Este documento sigue el orden de CRISP-DM, la metodología estándar para proyectos de este
+tipo: primero se presenta el problema (capítulo~\ref{cap:problema}), se justifica por qué
+vale la pena resolverlo (capítulo~\ref{cap:justificacion}), se delimita qué entra y qué no
+entra en el proyecto (capítulo~\ref{cap:alcance}), se fijan los objetivos
+(capítulo~\ref{cap:objetivos}) y se desarrolla el marco teórico necesario para entender las
+decisiones técnicas (capítulo~\ref{cap:marco-teorico}). El capítulo~\ref{cap:desarrollo}
+documenta el trabajo aplicado: hasta este punto del proyecto, se ha completado la
+comprensión del negocio y una auditoría exhaustiva de los datos disponibles, cuyos
+resultados —incluidos varios hallazgos no anticipados— se reportan en detalle. Las fases
+siguientes, de preparación de datos en adelante, quedan explícitamente señaladas como
+trabajo pendiente.

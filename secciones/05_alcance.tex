@@ -1,0 +1,98 @@
+% ============================================================
+%  4. ALCANCE   (guía, 2.4)
+%  Propósito: definir hasta dónde llegará el proyecto y qué queda
+%  FUERA. La guía advierte: evitar prometer resultados que no
+%  puedan desarrollarse o evaluarse en el tiempo de la materia.
+% ============================================================
+\chapter{Alcance}
+\label{cap:alcance}
+
+\section{Aspectos incluidos}
+
+\subsection{Alcance temporal}
+
+El período de análisis corresponde a los datos efectivamente disponibles: \textbf{12 de
+septiembre de 2022 a 3 de junio de 2024}, verificado a partir de las marcas de tiempo reales
+del conjunto consolidado (sección~\ref{sec:comprension-datos}). Dentro de ese rango existe
+un vacío estructural documentado de siete semanas consecutivas, entre el 11 de marzo y el 22
+de abril de 2024, que se declara como limitación y no se imputa.
+
+\subsection{Alcance espacial}
+
+Área de estudio: eje metropolitano de Cochabamba, delimitado operativamente por un
+rectángulo envolvente entre las latitudes -17,6 y -17,2 y las longitudes -66,4 y -65,8,
+dentro del cual se encuentra el 99,82~\% de los registros. El análisis territorial se
+realiza sobre una teselación de hexágonos H3, con resolución preliminar 8 (\textasciitilde
+460~m de arista) sujeta a análisis de sensibilidad.
+
+\subsection{Alcance de datos}
+
+\textbf{Fuente primaria:} 85 archivos CSV semanales de consultas de Trufi App, con las
+columnas \texttt{date/ts}, \texttt{origin\_latitude}, \texttt{origin\_longitude},
+\texttt{destination\_latitude}, \texttt{destination\_longitude}, \texttt{userID},
+\texttt{distancia}, \texttt{origin\_municipio}, \texttt{dest\_municipio} y variables
+temporales derivadas. Total consolidado: 1.927.675 registros.
+
+\textbf{Fuentes secundarias, previstas para la fase de Preparación:} el feed GTFS de rutas
+de Trufi App, y Puntos de Interés de OpenStreetMap descargados vía Overpass Turbo, con la
+limitación de cobertura desigual y desactualización relativa ya señalada en la
+sección~\ref{sec:descripcion-problema}.
+
+\textbf{Criterios de inclusión y exclusión aplicados en la consolidación:} se excluyeron
+los duplicados exactos (104 registros); se conservaron, marcados, los registros con
+coordenadas fuera del área de estudio (3.514) y con coordenadas en cero (3), por tratarse
+de casos válidos que requieren tratamiento distinto al de un error de calidad.
+
+\subsection{Alcance metodológico}
+
+El proyecto combina tres tipos de análisis: \textbf{descriptivo y diagnóstico}
+(caracterización espacio-temporal de la demanda sobre la teselación H3), \textbf{no
+supervisado} (segmentación de celdas en tipologías mediante comparación de al menos dos
+algoritmos de agrupamiento) y \textbf{supervisado} (modelo de predicción de demanda de
+consultas por celda y período, contrastado contra líneas base explícitas, con validación
+cronológica y no aleatoria, dada la falta de estacionariedad del volumen de consultas
+documentada en la sección~\ref{sec:comprension-datos}). El análisis espacial se apoya en H3
+y no en buffers circulares individuales, por las razones de aditividad y estabilidad de
+clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}.
+
+\section{Aspectos excluidos}
+
+\begin{enumerate}
+  \item Modelado de la ruta específica elegida por cada usuario entre las opciones
+        ofrecidas.
+  \item Predicción del propósito individual del viaje.
+  \item Uso de datos demográficos, por no estar disponibles.
+  \item Simulación completa de itinerarios mediante motor de ruteo (OpenTripPlanner) sobre
+        la totalidad del dataset; de emplearse, se limitará a los pares origen-destino
+        agregados más frecuentes, por razones de costo computacional.
+  \item Implementación de un sistema en producción; el despliegue se documentará como
+        propuesta arquitectónica fundamentada, no como sistema operativo.
+\end{enumerate}
+
+\section{Limitaciones conocidas}
+
+\begin{enumerate}
+  \item Vacío estructural de siete semanas (11 de marzo -- 22 de abril de 2024) que no
+        puede imputarse y que condiciona cualquier análisis estacional.
+  \item El identificador de usuario corresponde a una instalación de la aplicación, no
+        verificadamente a una persona; reinstalaciones y dispositivos compartidos
+        introducen ruido no cuantificable con la información disponible
+        (sección~\ref{sec:comprension-datos}).
+  \item La cobertura de POI de OpenStreetMap es desigual entre el centro y la periferia del
+        área de estudio, lo que puede introducir sesgo espacial si se usa sin las
+        prevenciones señaladas.
+  \item Los datos de \texttt{origin\_municipio} y \texttt{dest\_municipio} fueron recibidos
+        ya calculados y sin documentación del procedimiento que los generó; su precisión no
+        puede darse por establecida hasta completar la verificación prevista en la fase de
+        Preparación.
+  \item Los datos registran intenciones de consulta, no viajes confirmados; ninguna
+        conclusión del proyecto puede afirmar que los desplazamientos consultados se hayan
+        realizado efectivamente.
+  \item El feed GTFS que se utilizará para calcular cobertura corresponde al estado actual
+        del mapeo de Trufi App, que no necesariamente coincide con el estado del mapeo en
+        2022 o 2023; esta limitación se declarará explícitamente al presentar cualquier
+        resultado que cruce demanda histórica con cobertura actual.
+\end{enumerate}
+
+Estas limitaciones deberán retomarse de forma coherente en las conclusiones y
+recomendaciones (capítulo~\ref{cap:conclusiones}).

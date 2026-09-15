@@ -1,0 +1,205 @@
+% ============================================================
+%  2. IDENTIFICACIÓN DEL PROBLEMA   (guía, 2.2)
+%  Propósito: identificar y delimitar con precisión la situación
+%  problemática que da origen al proyecto.
+%  CUIDADO (regla explícita de la guía): no confundir el problema
+%  con la solución. "Implementar Random Forest" NO es un problema:
+%  es una técnica que podría evaluarse después.
+% ============================================================
+\chapter{Identificación del Problema}
+\label{cap:problema}
+
+La identificación del problema debe permitir comprender qué situación se desea analizar o
+mejorar mediante el uso de datos, diferenciando claramente el problema de las posibles
+técnicas o soluciones que serán evaluadas más adelante.
+
+\section{Descripción del Problema}
+\label{sec:descripcion-problema}
+
+\subsection{El contexto: una ciudad que se mueve sin mapa oficial}
+
+El eje metropolitano de Cochabamba enfrenta un desafío estructural de movilidad: el
+transporte público es predominantemente informal y sindicalizado, opera sin horarios fijos,
+con rutas variables sujetas a decisiones discrecionales de los operadores, y sin
+información oficial consolidada y accesible para la población. En ese vacío, Trufi App
+—desarrollada por una organización sin fines de lucro y sostenida por el trabajo de
+voluntarios que mapean y actualizan las rutas en formato GTFS— se ha convertido en una de
+las pocas fuentes de información disponibles.
+
+\subsection{Qué son realmente los datos: consultas, no viajes}
+
+Es indispensable aclarar esto desde el principio porque condiciona todo el proyecto: Trufi
+App no registra los viajes que la gente hace. Registra las veces que alguien le pregunta a
+la aplicación cómo llegar a algún lado. Cada fila del conjunto de datos es una consulta:
+una marca de tiempo, un identificador anónimo de quien preguntó, y las coordenadas del
+punto de origen y del punto de destino.
+
+Esto tiene una consecuencia directa: la base de datos no dice qué ruta eligió finalmente la
+persona, no confirma si el viaje se realizó, y no sabe nada sobre quién pregunta (edad,
+género, para qué necesita el viaje). Lo único que se observa, con total certeza, es que en
+ese momento y en ese lugar alguien necesitaba información de transporte y no la tenía.
+
+\subsection{De ``fricción'' a ``necesidad de información no resuelta''}
+\label{sec:friccion-a-brecha}
+
+Una primera versión de este proyecto intentó capturar la insatisfacción del usuario
+definiendo una variable llamada ``fricción informativa'': si el mismo usuario repetía una
+consulta con el mismo par de municipios de origen y destino dentro de 24 horas, se
+consideraba que la primera respuesta no había sido suficiente.
+
+Esa definición resultó tener un problema de diseño que conviene explicar, porque el
+proyecto se reformuló justamente a partir de detectarlo. Cercado, el municipio central,
+concentra la gran mayoría de las consultas. Si el target se define a nivel de municipio,
+casi cualquier persona activa termina ``repitiendo consulta dentro del mismo municipio''
+tarde o temprano, sin que eso tenga relación alguna con si la zona específica que consultó
+está bien o mal cubierta por rutas mapeadas. Además, esa definición confundía viajes de ida
+y de vuelta —alguien que consulta casa→trabajo por la mañana y trabajo→casa por la tarde—
+con una genuina repetición por insatisfacción, y la verificación del proceso de asignación
+de municipios (ver sección~\ref{sec:comprension-datos}) mostró que esa variable fue recibida
+ya calculada, sin documentación de cómo se generó.
+
+El proyecto se reformula, entonces, a partir de la idea correcta que subyacía a esa primera
+versión: \textbf{cada consulta, por definición, expresa una necesidad de información que el
+sistema no resolvió por adelantado.} Lo que cambia es la unidad de análisis. En lugar de
+intentar clasificar si una consulta puntual ``tuvo fricción'' usando una geografía demasiado
+gruesa (el municipio) y un identificador cuya relación con una persona real es incierta, el
+proyecto agrega las consultas sobre celdas territoriales pequeñas y uniformes, y estudia en
+qué celdas se concentra la demanda de información y en qué medida esa demanda coincide con
+la ausencia de cobertura de rutas mapeadas.
+
+\subsection{El papel de la cobertura de rutas y del entorno urbano}
+
+Dos factores del territorio pueden explicar por qué una zona genera más necesidad de
+información que otra.
+
+El primero, y el más directo, es la cobertura real de rutas mapeadas en el feed GTFS de
+Trufi App. Si el origen o el destino de una consulta está lejos de cualquier ruta que la
+aplicación conoce, la aplicación no puede dar una buena respuesta, sin importar qué tan
+sofisticado sea su motor de búsqueda. Esta es una limitación objetiva y medible: basta
+calcular la distancia de cada punto a la ruta mapeada más cercana.
+
+El segundo es el entorno urbano construido alrededor de cada punto, aproximado mediante la
+densidad y diversidad de Puntos de Interés (POI) de OpenStreetMap. La literatura sobre
+legibilidad urbana sugiere que zonas con mayor densidad y variedad de puntos de referencia
+son más fáciles de describir y ubicar \cita{Lynch}{1960}, mientras que zonas dispersas son
+más ambiguas. En Cochabamba, sin embargo, la cobertura de POI en OpenStreetMap es en sí
+misma desigual —densa en el centro, escasa en la periferia— y los datos disponibles
+corresponden aproximadamente al período septiembre de 2022 a 2024, por lo que su uso
+requiere las mismas prevenciones de calidad que se aplican a cualquier fuente comunitaria y
+desactualizada: se usa como variable agregada por zona, nunca como asignación puntual de
+``propósito'' a un destino, y se contempla además la posibilidad de invertir su uso, es
+decir, emplear la propia demanda de consultas como señal de qué zonas están sub-mapeadas en
+OpenStreetMap.
+
+\subsection{El problema central}
+
+En consecuencia, el problema que aborda este proyecto es la ausencia, en Trufi App, de un
+diagnóstico territorial sistemático que le permita saber en qué zonas del eje metropolitano
+se concentra la demanda de información de transporte no resuelta, y en qué medida esa
+concentración coincide con vacíos de cobertura en su propio mapeo de rutas. Sin ese
+diagnóstico, la asignación del trabajo voluntario de mapeo se hace sin evidencia, y no es
+posible priorizar las zonas donde una hora adicional de mapeo tendría más impacto sobre la
+calidad del servicio que presta la aplicación.
+
+\subsection{Delimitación del problema}
+
+\begin{enumerate}
+  \item Registros de consultas del período efectivamente disponible (septiembre de 2022 a
+        junio de 2024) dentro del eje metropolitano de Cochabamba (Cercado, Sacaba,
+        Quillacollo y municipios colindantes con registros).
+  \item Unidad de análisis territorial: celdas de una teselación H3, no municipios ni
+        puntos individuales.
+  \item Variables derivadas del timestamp, las coordenadas de origen y destino, el
+        identificador de usuario, la cobertura de rutas GTFS y métricas de entorno POI.
+  \item Análisis a dos niveles: nivel de celda territorial (demanda agregada, cobertura,
+        perfil de zona) y nivel de usuario individual, en la medida en que la auditoría de
+        datos (sección~\ref{sec:comprension-datos}) confirme que es una unidad de análisis
+        viable.
+  \item Exclusión explícita del propósito del viaje, datos demográficos de usuarios, ruta
+        elegida entre opciones ofrecidas y confirmación de que el viaje se haya realizado,
+        por no estar disponibles en la fuente.
+\end{enumerate}
+
+En términos de Ciencia de Datos, este problema requiere apoyar tres tareas: un diagnóstico
+territorial descriptivo (dónde se concentra la demanda no resuelta), una segmentación de
+zonas según su perfil de demanda y cobertura, y una estimación de la demanda futura de
+consultas por celda que permita anticipar dónde priorizar el mapeo.
+
+\section{Formulación del Problema}
+\label{sec:formulacion-problema}
+
+\subsection{Pregunta principal de investigación}
+
+¿En qué zonas del eje metropolitano de Cochabamba se concentra la demanda de información de
+transporte que Trufi App no logra resolver adecuadamente, y qué características del
+territorio —cobertura de rutas mapeadas en GTFS, densidad y diversidad del entorno urbano,
+posición centro-periferia— se asocian con esa concentración?
+
+\subsection{Preguntas secundarias de investigación}
+
+\begin{enumerate}
+  \item ¿Cómo se distribuyen en el espacio y en el tiempo las consultas de ruta, y cómo
+        evolucionó esa distribución entre 2022 y 2024?
+  \item ¿Qué proporción de la demanda de consultas se origina o termina en zonas sin
+        cobertura cercana de rutas mapeadas, y dónde se concentran esas zonas?
+  \item ¿Es posible agrupar las celdas del territorio en tipologías interpretables según su
+        volumen de demanda, su cobertura de rutas y su entorno urbano?
+  \item ¿Puede un modelo de aprendizaje automático anticipar la demanda de consultas por
+        zona y por período con mejor desempeño que una línea base estacional simple?
+  \item ¿Qué ranking de zonas prioritarias para el trabajo de mapeo se deriva del análisis,
+        y qué tan estable es ese ranking ante cambios en la resolución espacial de la
+        teselación y en el período de observación?
+\end{enumerate}
+
+\subsection{Enfoque e hipótesis de trabajo}
+
+Este proyecto no se limita a una prueba de hipótesis confirmatoria: combina un componente
+descriptivo y diagnóstico (dónde y cómo se distribuye la demanda), uno no supervisado (qué
+tipos de zona existen) y uno predictivo (si el comportamiento es anticipable). Aun así, se
+fijan de antemano dos hipótesis de trabajo verificables, para evitar que la interpretación
+de resultados se ajuste después de conocerlos.
+
+\textbf{H1 (hipótesis de la periferia).} Las celdas territoriales ubicadas fuera del núcleo
+urbano central presentan una tasa de demanda de información no resuelta —medida mediante
+repetición direccional de consultas dentro de una ventana temporal corta y mediante
+distancia a la ruta GTFS mapeada más cercana— significativamente mayor que las celdas del
+centro urbano.
+
+\textbf{H0 (hipótesis nula).} No existe una diferencia sistemática en la tasa de demanda no
+resuelta entre celdas centrales y periféricas.
+
+\textbf{H2 (hipótesis del modelo predictivo).} Un modelo de aprendizaje automático entrenado
+con variables temporales, de historial de usuario, de cobertura GTFS y de entorno POI supera
+en desempeño (medido en error absoluto medio) a una línea base estacional ingenua para la
+predicción de demanda de consultas por celda y por semana.
+
+Ambas hipótesis se contrastarán, cuando se llegue a la fase de Evaluación
+(sección~\ref{sec:evaluacion-resultados}), mediante pruebas apropiadas al tipo de
+comparación (pruebas de diferencia de medianas entre grupos para H1, comparación de error de
+predicción contra línea base para H2), y el resultado se reportará sea cual sea, incluido el
+caso en que no se confirmen.
+
+\subsection{Definiciones operativas clave}
+
+\begin{itemize}
+  \item \textbf{Celda territorial.} Hexágono de la teselación H3 en la resolución que se
+        determine tras el análisis de sensibilidad (sección~\ref{sec:comprension-datos});
+        la resolución 8, de aproximadamente 460 metros de arista, se usa como referencia
+        preliminar.
+  \item \textbf{Consulta con repetición direccional.} Una consulta para la que el mismo
+        usuario realiza una segunda consulta con origen y destino dentro de un radio de
+        proximidad del primer par (no del mismo municipio), en la misma dirección
+        origen→destino, dentro de una ventana temporal a definir en la fase de preparación.
+  \item \textbf{Cobertura GTFS cercana.} Existencia de al menos una ruta mapeada en el feed
+        GTFS de Trufi App dentro de una distancia umbral del punto de origen o destino de
+        la consulta.
+  \item \textbf{Densidad y diversidad de POI.} Conteo normalizado por área y diversidad de
+        categorías (índice de Shannon-Wiener) de Puntos de Interés de OpenStreetMap dentro
+        de la celda territorial correspondiente.
+\end{itemize}
+
+La pregunta formulada cumple las condiciones exigidas: se deriva directamente de la
+descripción del problema, expresa con claridad qué se busca diagnosticar y priorizar, puede
+responderse mediante datos y resultados verificables, no define anticipadamente un algoritmo
+específico, y mantiene coherencia con el objetivo general (capítulo~\ref{cap:objetivos}) y
+con las conclusiones (capítulo~\ref{cap:conclusiones}).

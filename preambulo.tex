@@ -1,0 +1,343 @@
+% ============================================================
+%  PREAMBULO.TEX
+%  Configuración maestra de la Monografía UMSS — Dirección de Posgrado
+%  Motor requerido: LuaLaTeX (recomendado) o XeLaTeX
+%  ------------------------------------------------------------
+%  Todo lo que define el "look" del documento vive AQUI.
+%  Las secciones de contenido (secciones/*.tex) NO deben tocar
+%  formato: solo texto. Así, un cambio de estilo se hace UNA vez.
+% ============================================================
+
+% ---------- 1. CLASE BASE ----------------------------------
+% Se usa memoir: es la clase con mejor soporte nativo para
+% frontmatter/mainmatter (numeración romana -> arábiga),
+% control fino de índices (TOC/LOF/LOT) y estilos de "caption",
+% todo sin necesitar media docena de paquetes que compitan entre sí
+% (evita choques típicos de report+tocloft+titlesec+fancyhdr).
+\documentclass[12pt,oneside,letterpaper]{memoir}
+
+% ---------- 2. IDIOMA Y CODIFICACIÓN ------------------------
+% Con LuaLaTeX/XeLaTeX el motor ya trabaja en UTF-8 nativo;
+% NO se cargan inputenc/fontenc (son innecesarios y darían
+% advertencias de obsolescencia en un motor moderno).
+\usepackage{polyglossia}
+\setmainlanguage{spanish}
+% Alternativa equivalente si se prefiere babel:
+% \usepackage[spanish,es-noindentfirst]{babel}
+
+% ---------- 3. MARGENES (Instrucción 3, formato general) ----
+% Izq 3cm / Der 2.5cm / Sup 2.5cm / Inf 2.5cm, carta (letter).
+\usepackage[
+  letterpaper,
+  left=3cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm,
+  headheight=15pt,
+  includehead,
+  includefoot
+]{geometry}
+
+% ---------- 4. TIPOGRAFIA (fontspec) ------------------------
+% pdflatex NO puede cargar fuentes TrueType/OpenType del sistema
+% (Arial, Garamond) de forma nativa: solo soporta fuentes Type1
+% de 8 bits, obliga a "fingir" Arial con métricas de sustitución
+% manuales, y no tiene soporte real de OpenType (kerning, small
+% caps, ligaduras contextuales) ni de Unicode de entrada. Por eso
+% se exige LuaLaTeX/XeLaTeX + fontspec, que cargan la fuente real
+% instalada en el sistema (o su clon métricamente compatible).
+\usepackage{fontspec}
+\usepackage{microtype}   % micro-tipografía: protrusion, expansion, kerning fino
+
+% --- Fuente general del cuerpo: Arial (Instrucción 3) -------
+% Cadena de respaldo EXPLÍCITA y verificada (\IfFontExistsTF
+% consulta fontconfig de forma estricta, sin sustituciones
+% "difusas"): si "Arial" está instalada de verdad (típico en
+% Windows/macOS y en Overleaf con fuentes del sistema activas)
+% se usa tal cual; si no, se usa Liberation Sans -- el clon libre
+% y métricamente IDÉNTICO a Arial (mismos anchos de carácter,
+% mismo interlineado, 4 variantes Regular/Bold/Italic/
+% BoldItalic) -- de modo que el documento SIEMPRE compila y
+% pagina igual en cualquier máquina, sin intervención manual.
+\IfFontExistsTF{Arial}
+  {\setmainfont{Arial}}
+  {\setmainfont{Liberation Sans}}
+% Alias interno: todo el documento (títulos, índices, captions)
+% referencia \arialfont, que simplemente es la fuente principal
+% ya cargada arriba. Si se quisiera una fuente de títulos
+% distinta a la del cuerpo, basta con redefinir SOLO esta línea.
+\newcommand{\arialfont}{\normalfont}
+
+% --- Fuente del Resumen: Garamond, 11.5pt (Sección preliminar)
+% Mismo criterio de respaldo en cascada: Garamond real (Windows/
+% Overleaf) -> EB Garamond (clon libre estándar académico,
+% instalable gratis) -> Latin Modern Roman (siempre presente en
+% cualquier instalación TeX Live, garantiza compilación).
+\IfFontExistsTF{Garamond}
+  {\newfontfamily\garamondfont{Garamond}}
+  {\IfFontExistsTF{EB Garamond}
+    {\newfontfamily\garamondfont{EB Garamond}}
+    {\newfontfamily\garamondfont{Latin Modern Roman}}
+  }
+
+% ---------- 5. INTERLINEADO ---------------------------------
+% memoir trae su PROPIO sistema de interlineado (reemplaza y
+% "emula" a setspace internamente): se usa el comando nativo
+% \setSpacing{factor} y las macros \DoubleSpacing/\SingleSpacing
+% en vez de cargar el paquete setspace por separado -- cargarlo
+% aparte solo generaría un aviso de "emulated by memoir" y un
+% posible choque de nombres, sin aportar nada nuevo.
+\DoubleSpacing*          % interlineado doble: cuerpo principal (Instrucción 3)
+                         % (memoir calibra el factor exacto según el
+                         % tamaño de fuente: más fiel que un x2 literal)
+\newcommand{\interlineadoResumen}{\setSpacing{1.2}} % Resumen: 1.2 (Sección preliminar)
+\newcommand{\interlineadoSimple}{\setSpacing{1}}    % carátula, bibliografía interna, notas
+
+% ---------- 6. NUMERACION DE PAGINAS ------------------------
+% memoir define \frontmatter (activa romanos i,ii,iii...) y
+% \mainmatter (reinicia en arábigo 1,2,3...) automáticamente:
+% así se cumple 3.1 sin tocar contadores a mano.
+\pagestyle{plain}   % memoir: folio centrado en el pie -> exige "inferior y centrada"
+\aliaspagestyle{chapter}{plain}   % la 1a página de cada capítulo también usa "plain"
+
+% ---------- 7. TITULOS DE SECCIONES (Instrucción 3) ---------
+% "Títulos principales en Arial 14 y negrilla": se usa \chapter
+% para las 9 secciones principales del Anexo A (fuerza salto de
+% página automático, como exige la guía) y \section para el
+% siguiente nivel (2.1, 5.1, 7.1, etc.).
+\makeatletter
+\setlength{\beforechapskip}{0pt}
+\setlength{\midchapskip}{6pt}
+\setlength{\afterchapskip}{30pt}
+% NOTA TÉCNICA: memoir reutiliza \printchaptertitle tanto para
+% capítulos numerados como para los títulos SIN número del
+% índice general / índice de figuras / índice de tablas (los
+% genera internamente como si fueran "capítulos"). Por eso el
+% número ("1.", "2.", ...) se resuelve en \printchapternum (que
+% memoir SOLO invoca para capítulos numerados reales) y NO
+% dentro de \printchaptertitle: así "ÍNDICE"/"ÍNDICE DE FIGURAS"
+% nunca arrastran un "0." espurio.
+\makechapterstyle{umss}{
+  \renewcommand{\chaptitlefont}{\arialfont\fontsize{14}{16}\selectfont\bfseries}
+  \renewcommand{\chapterheadstart}{\vspace*{\beforechapskip}}
+  % Camino NUMERADO (\chapter{...} normal):
+  \renewcommand{\printchaptername}{\chaptitlefont\centering}% activa fuente+centrado (sin texto)
+  \renewcommand{\chapternamenum}{}
+  \renewcommand{\printchapternum}{\thechapter.\space}% "N. "
+  \renewcommand{\afterchapternum}{}% SIN salto de línea: numero y título van juntos
+  % Camino SIN NÚMERO (índice general, índice de figuras/tablas):
+  \renewcommand{\printchapternonum}{\chaptitlefont\centering}% misma fuente+centrado, sin texto
+  % Título (para ambos caminos, ya con la fuente activa):
+  \renewcommand{\printchaptertitle}[1]{\MakeUppercase{##1}\par}
+  \renewcommand{\afterchaptertitle}{\par\nobreak\vskip\afterchapskip}
+}
+\chapterstyle{umss}
+\makeatother
+
+% Subtítulos (\section, ej. "2.1 Descripción del Problema"):
+% mismo criterio tipográfico que el título principal pero un
+% cuerpo menor y alineado a la izquierda (ajustable aquí mismo).
+\setsecheadstyle{\arialfont\fontsize{13}{15}\selectfont\bfseries}
+\setbeforesecskip{-2.5ex plus -1ex minus -.2ex}
+\setaftersecskip{1.3ex plus .2ex}
+\setsubsecheadstyle{\arialfont\fontsize{12}{14}\selectfont\bfseries\itshape}
+
+% Cuerpo general en Arial 12: ya queda cubierto por la opción
+% de clase [12pt] (arriba) + \DoubleSpacing* (sección 5). No se
+% redefine \normalsize a mano: eso rompería las proporciones
+% internas de memoir para encabezados/pies de página y otros
+% tamaños relativos (\small, \footnotesize, etc.).
+
+% ---------- 8. INDICE GENERAL / LOF / LOT (3.4) --------------
+% Reglas exigidas: sin negrillas, doble espacio entre entradas
+% de nivel principal, puntos de relleno hasta el número de
+% página, palabra "Página" sobre la columna de números,
+% secciones principales sin sangría, subtítulos sangrados.
+% IMPORTANTE: polyglossia (gloss-spanish.ldf) reasigna
+% \contentsname -> "Índice general", \listtablename -> "Índice de
+% cuadros" y \tablename -> "Cuadro" AL INICIAR EL DOCUMENTO, es
+% decir DESPUÉS de este preámbulo. Por eso un \renewcommand suelto
+% aquí se perdería silenciosamente, y ni siquiera \AtBeginDocument
+% basta (polyglossia activa el idioma en una fase posterior).
+% Se usa el gancho moderno "begindocument/end" del núcleo LaTeX,
+% que se ejecuta al FINAL del arranque del documento: así estos
+% nombres son los últimos en aplicarse y siempre ganan.
+\AddToHook{begindocument/end}{%
+  \renewcommand{\contentsname}{ÍNDICE}%
+  \renewcommand{\listfigurename}{ÍNDICE DE FIGURAS}%
+  \renewcommand{\listtablename}{ÍNDICE DE TABLAS}%
+  % La guía (3.2) rotula "Tabla 1" y "Figura 1", no el "Cuadro"
+  % que impone el español de polyglossia:
+  \renewcommand{\tablename}{Tabla}%
+  \renewcommand{\figurename}{Figura}%
+}
+
+\maxsecnumdepth{subsection}
+\settocdepth{section}
+
+% Nivel "chapter" (secciones principales 1..9): memoir ya trae
+% ganchos "cft" propios para este nivel -> se renuevan directo.
+\renewcommand{\cftchapterfont}{\arialfont\normalsize}      % SIN negrilla (regla explícita)
+\renewcommand{\cftchapterpagefont}{\arialfont\normalsize}
+\cftsetindents{chapter}{0em}{1.5em}   % secciones principales SIN sangría
+\renewcommand{\cftchapterleader}{\normalfont\cftdotfill{\cftdotsep}} % puntos, sin negrilla
+\renewcommand{\cftchapterafterpnum}{\par\addvspace{6pt}}  % doble espacio entre entradas ppales.
+\renewcommand{\cftchapterpresnum}{}
+\renewcommand{\cftchapteraftersnum}{.}  % "1. Introducción" en el índice
+\setlength{\cftbeforechapterskip}{0pt}
+
+% Niveles "section"/"subsection"/"figure"/"table": memoir NO
+% define ganchos "cft*font" para estos (solo para chapter/part/
+% book); en vez de forzar el paquete tocloft encima de memoir
+% (choca: ambos declaran \cftchapterfont, etc., con \newcommand
+% no condicional) se redefine directamente el mecanismo clásico
+% de LaTeX \l@<nivel>, que es el que memoir usa por debajo para
+% estos niveles. Así se logra el mismo resultado (fuente Arial,
+% sin negrilla, sangría, puntos de relleno) sin ningún paquete
+% adicional ni conflicto de nombres.
+% (\@dottedtocline es un comando interno con "@" en el nombre:
+%  se necesita \makeatletter/\makeatother alrededor, aquí sí.)
+\makeatletter
+\renewcommand*{\l@section}[2]{%
+  {\arialfont\normalsize\@dottedtocline{1}{1.5em}{2.3em}{#1}{#2}}}
+\renewcommand*{\l@subsection}[2]{%
+  {\arialfont\normalsize\@dottedtocline{2}{3em}{3em}{#1}{#2}}}
+\renewcommand*{\l@figure}[2]{%
+  {\arialfont\normalsize\@dottedtocline{1}{0em}{2.3em}{#1}{#2}}}
+\renewcommand*{\l@table}[2]{%
+  {\arialfont\normalsize\@dottedtocline{1}{0em}{2.3em}{#1}{#2}}}
+\makeatother
+
+% Encabezado "Página" alineado a la derecha, sobre la columna
+% de folios, tal como exige 3.4. Se invoca antes de cada índice.
+\newcommand{\encabezadoIndice}{%
+  \noindent\hfill{\arialfont\normalsize\bfseries Página}\par\vspace{2pt}
+}
+% memoir ofrece un gancho que se ejecuta justo DESPUÉS del título
+% del índice y ANTES de la primera entrada: es el punto exacto
+% donde debe aparecer la palabra "Página". Así se aplica solo, en
+% los tres índices, sin escribir nada en main.tex.
+\renewcommand{\cfttocbeforelisthook}{\encabezadoIndice}
+\renewcommand{\cftlofbeforelisthook}{\encabezadoIndice}
+\renewcommand{\cftlotbeforelisthook}{\encabezadoIndice}
+
+% ---------- 9. TABLAS Y FIGURAS (3.2) ------------------------
+% Regla visual exigida: "Tabla N" en negrita centrado, debajo el
+% título en cursiva centrado (caption ARRIBA del contenido),
+% cuerpo de la tabla con SOLO líneas horizontales (booktabs),
+% y una línea "Fuente: ..." en cursiva debajo. Como el orden
+% físico de \caption y \includegraphics/tabular dentro del
+% entorno determina si el título queda arriba o abajo, basta con
+% escribir \caption{} ANTES del contenido (ver plantillas de
+% ejemplo en cada sección).
+\usepackage{booktabs}       % líneas horizontales limpias, sin verticales
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{
+  labelfont={bf,sf},
+  textfont={it,sf},
+  justification=centering,
+  singlelinecheck=false,
+  labelsep=newline,
+  skip=4pt
+}
+% La guía numera de forma CONSECUTIVA en todo el documento
+% ("Tabla 1", "Tabla 2", ... "Figura 1", "Figura 2"), no por
+% capítulo ("Tabla 1.1"). En memoir los contadores table/figure
+% cuelgan de "chapter", así que no basta con redefinir \thetable:
+% hay que DESACOPLAR el contador, o seguiría reiniciándose en
+% cada sección principal (dando dos "Tabla 1" distintas).
+% TRAMPA IMPORTANTE DE MEMOIR: el propio comando \mainmatter
+% ejecuta internamente \counterwithin{table}{chapter} y
+% \counterwithin{figure}{chapter}, es decir, RE-ACOPLA los
+% contadores al capítulo en tiempo de ejecución y deshace lo que
+% se haya configurado en el preámbulo (por eso aparecía
+% "Tabla 1.1"). La solución estable es vaciar ese gancho interno
+% (\@memmain@floats) para que \mainmatter ya no re-acople nada.
+\counterwithout{table}{chapter}
+\counterwithout{figure}{chapter}
+\makeatletter
+\renewcommand\@memmain@floats{}   % \mainmatter ya no re-acopla
+\renewcommand\@memfront@floats{}  % \frontmatter tampoco toca los contadores
+\makeatother
+\renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\thefigure}{\arabic{figure}}
+
+% MARCADOR DE POSICIÓN SEGURO PARA TABLAS
+% Dentro de un "tabular", si una celda comienza con un corchete
+% justo después de un salto de fila (\\), LaTeX interpreta ese
+% corchete como el argumento OPCIONAL de \\ (un espaciado
+% vertical) e intenta leer su contenido como una longitud: el
+% documento queda esperando indefinidamente. Por eso los textos
+% de relleno dentro de tablas se escriben con \ph{...}, que
+% imprime el corchete de forma segura.
+\newcommand{\ph}[1]{[#1]}
+
+% Línea de fuente bajo tabla/figura (cursiva, tal como pide 3.2/Anexo)
+\newcommand{\fuente}[1]{%
+  \par\vspace{2pt}
+  {\arialfont\footnotesize\itshape Fuente: #1\par}
+}
+
+% ---------- 10. CITAS Y REFERENCIAS (3.5 / 3.6) --------------
+% La guía usa un formato de citación propio, tipo "americano"
+% simple: (Apellido, año) -- ver ejemplo con "(Fardel, 1984)" --
+% y una lista de bibliografía con reglas de formato MUY
+% específicas e institucionales (número + autor en negrilla,
+% título en cursiva, abreviaturas particulares) que NO
+% corresponden a ningún estilo estándar de BibTeX/biblatex
+% (APA, IEEE, etc.). Además este contenedor no tiene "biber"
+% instalado (offline), así que en vez de forzar un .bst
+% personalizado no verificable, se define un sistema simple,
+% 100% controlado y sin dependencias externas:
+%   \cita{Apellido}{año}            -> (Apellido, año)
+%   \citap{Apellido}{año}{página}   -> (Apellido, año, p. página)
+%   entorno bibliografiaUMSS + \registrobiblio{...}  -> lista
+%     numerada automáticamente, con el formato exacto de 3.6.
+\newcommand{\cita}[2]{(#1, #2)}
+\newcommand{\citap}[3]{(#1, #2, p.~#3)}
+
+\newcounter{numregistro}
+\newenvironment{bibliografiaUMSS}{%
+  \setcounter{numregistro}{0}%
+  \interlineadoSimple
+  \begin{list}{}{%
+      \setlength{\leftmargin}{0pt}%
+      \setlength{\itemindent}{0pt}%
+      \setlength{\listparindent}{0pt}%
+      \setlength{\itemsep}{12pt} % doble espacio ENTRE registros
+      \setlength{\parsep}{0pt}}
+}{%
+  \end{list}
+}
+% \registrobiblio{Autor(es)}{Año}{Título}{Detalle editorial/fuente}
+% Reproduce las reglas (a)-(l) de 3.6 de forma consolidada:
+% número + autor en negrilla, año entre paréntesis, título en
+% cursiva, y el resto de datos editoriales en texto normal.
+\newcommand{\registrobiblio}[4]{%
+  \stepcounter{numregistro}%
+  \item[]\noindent
+  \textbf{\thenumregistro. #1} (#2) \textit{#3}. #4.\par
+}
+
+% ---------- 11. HYPERREF (siempre al final del preámbulo) ----
+\usepackage[
+  pdfusetitle,
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=black,
+  bookmarksopen=true,
+  bookmarksnumbered=true
+]{hyperref}
+\usepackage{bookmark}
+
+% ---------- 12. UTILIDADES VARIAS ----------------------------
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\setlist{topsep=4pt,itemsep=2pt}
+\frenchspacing
+\clubpenalty=10000
+\widowpenalty=10000
+\sloppy
