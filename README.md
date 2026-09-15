@@ -1,5 +1,7 @@
 # Plantilla LaTeX — Monografía UMSS
 
+[![Compilar monografía](https://github.com/rovox/monografia-umss/actions/workflows/build.yml/badge.svg)](https://github.com/rovox/monografia-umss/actions/workflows/build.yml)
+
 Universidad Mayor de San Simón · Facultad de Ciencias y Tecnología · Dirección de Posgrado
 Diplomado en Ciencia de Datos — 4ta. Versión
 
@@ -305,3 +307,21 @@ Técnico:
 - [ ] Logos reales en lugar de los marcadores de posición
 - [ ] Sin texto de relleno entre corchetes olvidado
 - [ ] Índices reflejan los títulos finales
+
+---
+
+## 10. Contribuir / mantenimiento
+
+- Cada `push` o `pull request` dispara un workflow de GitHub Actions
+  (`.github/workflows/build.yml`) que compila `main.tex` con LuaLaTeX y sube
+  `main.pdf` como artefacto descargable. Si el badge de arriba está en rojo,
+  la compilación se rompió con el último cambio.
+- El `build/` generado localmente y `main.pdf` no se versionan (ver
+  `.gitignore`); cada quien compila su propia copia.
+- Antes de un PR grande, corre `./compilar.sh` localmente y revisa que no
+  aparezcan referencias indefinidas.
+
+## Licencia
+
+Este proyecto está bajo licencia [CC BY 4.0](LICENSE): puedes reutilizar y
+adaptar la plantilla dando crédito.

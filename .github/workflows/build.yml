@@ -1,0 +1,28 @@
+name: Compilar monografía
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Compilar con LuaLaTeX (latexmk)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_lualatex: true
+          extra_system_packages: "texlive-lang-spanish"
+
+      - name: Subir main.pdf como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: monografia-pdf
+          path: main.pdf
+          if-no-files-found: error
