@@ -2,6 +2,10 @@
 /build/
 main.pdf
 
+# Salida de la conversión a Word (ver convertir_docx.sh); se regenera
+# desde secciones/*.tex, no hace falta versionarla.
+monografia.docx
+
 # Por si alguien compila a mano con lualatex/xelatex directo en la raíz
 *.aux
 *.log

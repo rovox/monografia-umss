@@ -1,0 +1,68 @@
+% ============================================================
+%  PREAMBULO_PANDOC.TEX
+%  Preámbulo "espejo" de preambulo.tex, pero para consumo de
+%  Pandoc en vez de LuaLaTeX/XeLaTeX.
+%  ------------------------------------------------------------
+%  Pandoc NO renderiza LaTeX: solo interpreta su ESTRUCTURA
+%  (capítulos, tablas, negritas, referencias cruzadas...) para
+%  reconstruirla como un documento .docx nativo de Word. Por eso
+%  este preámbulo no intenta reproducir tipografía (Arial,
+%  Garamond, interlineado doble, márgenes 3/2.5/2.5/2.5 cm): todo
+%  eso se define UNA vez en la plantilla docx/referencia_umss.docx
+%  (estilos "Normal", "Título 1", etc.) y Word lo aplica solo.
+%
+%  Lo único que este archivo debe resolver son los comandos y
+%  entornos PROPIOS del proyecto (definidos en preambulo.tex) que
+%  aparecen dentro de secciones/*.tex, para que Pandoc sepa qué
+%  hacer con ellos. La lista de comandos está auditada por
+%  scripts/verificar_comandos.sh --> no debe quedar ningún
+%  comando de secciones/*.tex sin una definición equivalente aquí.
+% ============================================================
+\documentclass[12pt]{report}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+% ---------- Entornos de maquetación de memoir que no existen
+% ---------- en report: se simplifican a algo equivalente.
+\newenvironment{titlingpage}{\clearpage}{\clearpage}
+
+% ---------- Comandos de idioma/fuente de preambulo.tex: en el
+% ---------- flujo a docx no aplican (la fuente la define la
+% ---------- plantilla de Word), se vuelven no-operativos.
+\newcommand{\arialfont}{\normalfont}
+\newcommand{\garamondfont}{\normalfont}
+\newcommand{\interlineadoSimple}{}
+\newcommand{\interlineadoResumen}{}
+
+% ---------- Marcador seguro de relleno en tablas (idéntico al
+% ---------- de preambulo.tex: imprime el corchete tal cual).
+\newcommand{\ph}[1]{[#1]}
+
+% ---------- Línea "Fuente: ..." bajo tablas/figuras.
+\newcommand{\fuente}[1]{\par\textit{Fuente: #1}\par}
+
+% ---------- Citas en texto (formato "(Autor, año)").
+\newcommand{\cita}[2]{(#1, #2)}
+\newcommand{\citap}[3]{(#1, #2, p.~#3)}
+
+% ---------- Bibliografía numerada (entorno + macro de registro).
+% Se traduce a una lista NUMERADA nativa de Word (\begin{enumerate}):
+% pandoc no ejecuta contadores de LaTeX (\stepcounter/\thecounter no
+% se resuelven al convertir, a diferencia de compilar el PDF), así
+% que la numeración "1. 2. 3." la aporta el propio estilo de lista
+% de Word, no un contador de LaTeX.
+\newenvironment{bibliografiaUMSS}{\begin{enumerate}}{\end{enumerate}}
+\newcommand{\registrobiblio}[4]{\item \textbf{#1} (#2) \textit{#3}. #4.}
+
+% NOTA: este archivo NO incluye \begin{document}/\end{document} ni
+% las variables \tituloMonografia/\nombrePostulante/etc.: el script
+% convertir_docx.sh las extrae en vivo de main.tex y las concatena
+% aquí antes de abrir el documento, para no duplicar esos datos en
+% dos lugares del repositorio.

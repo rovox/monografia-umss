@@ -59,6 +59,39 @@ requiere ninguna instalación adicional.
 
 ---
 
+## 1B. Exportar a Word (.docx)
+
+```bash
+./convertir_docx.sh            # genera monografia.docx
+./convertir_docx.sh plantilla  # regenera docx/referencia_umss.docx (normalmente no hace falta)
+./convertir_docx.sh limpiar    # borra build/docx/ y monografia.docx
+```
+
+Usa **Pandoc** (no "tex2word"/"rstex2word": no son paquetes reales instalables en
+este entorno). El script arma un documento LaTeX equivalente con un preámbulo
+compatible (`docx/preambulo_pandoc.tex`, en vez de `preambulo.tex`, que usa
+comandos de `memoir`/`fontspec` que Pandoc no necesita) y lo convierte con el
+estilo de partida de `docx/referencia_umss.docx` (Liberation Sans, interlineado
+doble, márgenes 3/2.5/2.5/2.5 cm — una aproximación a la guía; el estilo final
+se ajusta en Word en un clic).
+
+Pandoc reconstruye capítulos, secciones, tablas, figuras, negritas/cursivas y
+referencias cruzadas (`\label`/`\ref`) como un `.docx` nativo y editable — no es
+una imagen del PDF. Lo único que **no** automatiza (limitación de Pandoc, no de
+este script) es el índice general y el índice de tablas/figuras, porque Pandoc
+solo puede insertarlos al principio del documento: se generan una vez, a mano,
+dentro de Word después de abrir el archivo:
+
+1. *Referencias → Tabla de contenido*, después de la carátula/preliminares.
+2. *Referencias → Insertar tabla de ilustraciones*, una vez para el estilo
+   `TableCaption` (índice de tablas) y otra para `ImageCaption` (índice de
+   figuras) — son los estilos que Pandoc ya aplicó a cada `\caption`.
+
+Si agregas una nueva sección a `main.tex`, agrégala también al arreglo
+`SECCIONES` de `convertir_docx.sh` (mismo orden).
+
+---
+
 ## 2. Estructura del proyecto
 
 ```
@@ -68,6 +101,11 @@ compilar.sh               Script de compilación (usa latexmk; ver sección 1).
 Makefile                  Alias de compilar.sh (make / make watch / make clean).
 .latexmkrc                Configuración del motor de compilación (LuaLaTeX).
 build/                    Archivos auxiliares de la compilación (generado, no versionado).
+convertir_docx.sh         Exporta a Word con Pandoc (ver sección 1B).
+docx/
+  preambulo_pandoc.tex    Preámbulo compatible con Pandoc (equivalente a preambulo.tex).
+  referencia_umss.docx    Estilos Word de partida (Normal/Título) para la exportación.
+  estilizar_referencia.py Genera/actualiza referencia_umss.docx (uso interno del script).
 README.md                 Este archivo.
 imagenes/
   logo_umss.png           Reemplazar por el logo real
