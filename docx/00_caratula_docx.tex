@@ -1,0 +1,40 @@
+% ============================================================
+%  00_CARATULA_DOCX.TEX
+%  Versión de la carátula SOLO para el flujo a Word
+%  (convertir_docx.sh la usa en vez de secciones/00_caratula.tex).
+%  ------------------------------------------------------------
+%  Por qué existe un archivo aparte: secciones/00_caratula.tex usa
+%  maquetación de bajo nivel (\fontsize{20}{26}, tres \minipage en
+%  fila) que Pandoc no traduce a Word --- se comprobó que Pandoc
+%  ni siquiera respeta \begin{center} o \Large/\LARGE en un .docx
+%  (los descarta en silencio). La fila de logos SÍ se resuelve bien
+%  como tabla de 3 columnas sin bordes (Pandoc convierte tabular en
+%  tabla real de Word). El tamaño y centrado del resto del texto
+%  NO se resuelve aquí: lo aplica docx/estilizar_caratula.py después
+%  de la conversión, buscando cada párrafo por su posición --- ver
+%  ese script para la lista exacta de párrafos que ajusta.
+%
+%  Si cambias el CONTENIDO de esta carátula, mantén un párrafo por
+%  bloque (sin líneas en blanco de más) para que las posiciones que
+%  usa estilizar_caratula.py sigan siendo válidas.
+% ============================================================
+\noindent
+\begin{tabular}{p{0.25\textwidth}p{0.5\textwidth}p{0.25\textwidth}}
+\includegraphics[height=1.3cm]{imagenes/logo_umss.png}\includegraphics[height=1.3cm]{imagenes/logo_facultad.png}
+&
+UNIVERSIDAD MAYOR DE SAN SIMÓN \newline FACULTAD DE CIENCIAS Y TECNOLOGÍA \newline DIRECCIÓN DE POSGRADO
+&
+\includegraphics[height=1.3cm]{imagenes/logo_posgrado.png}
+\end{tabular}
+
+\textbf{\MakeUppercase{\tituloMonografia}}
+
+\textbf{MONOGRAFÍA PRESENTADA PARA OBTENER EL CERTIFICADO DE DIPLOMADO EN \MakeUppercase{\nombreDiplomado}\ \nombreVersion\ VERSIÓN}
+
+\textbf{POSTULANTE: \MakeUppercase{\nombrePostulante}}
+
+\textbf{Cochabamba -- Bolivia}
+
+\textbf{\anioMonografia}
+
+\clearpage

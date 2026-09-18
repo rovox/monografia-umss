@@ -29,6 +29,7 @@ monografia.docx
 .idea/
 *.swp
 *~
+.~lock.*#
 
 # Sistema operativo
 .DS_Store

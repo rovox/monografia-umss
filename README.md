@@ -67,8 +67,11 @@ requiere ninguna instalación adicional.
 ./convertir_docx.sh limpiar    # borra build/docx/ y monografia.docx
 ```
 
-Usa **Pandoc** (no "tex2word"/"rstex2word": no son paquetes reales instalables en
-este entorno). El script arma un documento LaTeX equivalente con un preámbulo
+Usa **Pandoc**. `tex2word` (Python, PyPI) y `tex2word-cli` (Rust, crates.io) sí
+existen, pero se probaron contra este documento real y ambos pierden o corrompen
+contenido de forma no determinista (truncan capítulos enteros, o `\chapter`
+directamente no está soportado en la versión Rust) — quedaron descartados hasta
+que maduren. El script arma un documento LaTeX equivalente con un preámbulo
 compatible (`docx/preambulo_pandoc.tex`, en vez de `preambulo.tex`, que usa
 comandos de `memoir`/`fontspec` que Pandoc no necesita) y lo convierte con el
 estilo de partida de `docx/referencia_umss.docx` (Liberation Sans, interlineado
@@ -77,10 +80,18 @@ se ajusta en Word en un clic).
 
 Pandoc reconstruye capítulos, secciones, tablas, figuras, negritas/cursivas y
 referencias cruzadas (`\label`/`\ref`) como un `.docx` nativo y editable — no es
-una imagen del PDF. Lo único que **no** automatiza (limitación de Pandoc, no de
-este script) es el índice general y el índice de tablas/figuras, porque Pandoc
-solo puede insertarlos al principio del documento: se generan una vez, a mano,
-dentro de Word después de abrir el archivo:
+una imagen del PDF. La única página que no se convierte con el resto es la
+carátula: `\fontsize{}{}` y los `\minipage` en fila que usa
+`secciones/00_caratula.tex` no tienen equivalente en Pandoc (se comprobó que
+ni `\Large`/`\LARGE` ni `\begin{center}` sobreviven la conversión), así que el
+script usa en su lugar `docx/00_caratula_docx.tex` (misma información, con una
+tabla de 3 columnas sin bordes para los logos) y luego `docx/estilizar_caratula.py`
+ajusta tamaño y centrado directamente en el XML del `.docx` ya generado.
+
+Lo único que **no** automatiza (limitación de Pandoc, no de este script) es el
+índice general y el índice de tablas/figuras, porque Pandoc solo puede
+insertarlos al principio del documento: se generan una vez, a mano, dentro de
+Word después de abrir el archivo:
 
 1. *Referencias → Tabla de contenido*, después de la carátula/preliminares.
 2. *Referencias → Insertar tabla de ilustraciones*, una vez para el estilo
@@ -106,6 +117,8 @@ docx/
   preambulo_pandoc.tex    Preámbulo compatible con Pandoc (equivalente a preambulo.tex).
   referencia_umss.docx    Estilos Word de partida (Normal/Título) para la exportación.
   estilizar_referencia.py Genera/actualiza referencia_umss.docx (uso interno del script).
+  00_caratula_docx.tex    Carátula compatible con Pandoc (reemplaza a 00_caratula.tex solo en el docx).
+  estilizar_caratula.py   Ajusta tamaño/centrado de la carátula ya convertida (uso interno del script).
 README.md                 Este archivo.
 imagenes/
   logo_umss.png           Reemplazar por el logo real

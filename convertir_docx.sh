@@ -89,7 +89,13 @@ echo "Ensamblando documento plano para Pandoc..."
   echo
   for s in "${SECCIONES[@]}"; do
     echo "% ---------- secciones/${s}.tex ----------"
-    cat "secciones/${s}.tex"
+    if [ "$s" = "00_caratula" ]; then
+      # Versión simplificada compatible con Pandoc (ver el archivo
+      # para la explicación); secciones/00_caratula.tex es solo para PDF.
+      cat "docx/00_caratula_docx.tex"
+    else
+      cat "secciones/${s}.tex"
+    fi
     echo
   done
   echo '\end{document}'
@@ -120,6 +126,7 @@ pandoc "$FLAT_TEX" \
   -o "$SALIDA"
 
 if [ -f "$SALIDA" ]; then
+  python3 docx/estilizar_caratula.py "$SALIDA"
   echo "Listo: $SALIDA generado."
   echo
   echo "Pendiente de un clic en Word (no lo hace pandoc):"
