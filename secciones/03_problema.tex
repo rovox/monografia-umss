@@ -85,11 +85,13 @@ son más fáciles de describir y ubicar \cita{Lynch}{1960}, mientras que zonas d
 más ambiguas. En Cochabamba, sin embargo, la cobertura de POI en OpenStreetMap es en sí
 misma desigual —densa en el centro, escasa en la periferia— y los datos disponibles
 corresponden aproximadamente al período septiembre de 2022 a 2024, por lo que su uso
-requiere las mismas prevenciones de calidad que se aplican a cualquier fuente comunitaria y
-desactualizada: se usa como variable agregada por zona, nunca como asignación puntual de
-``propósito'' a un destino, y se contempla además la posibilidad de invertir su uso, es
-decir, emplear la propia demanda de consultas como señal de qué zonas están sub-mapeadas en
-OpenStreetMap.
+requeriría las mismas prevenciones de calidad que se aplican a cualquier fuente comunitaria
+y desactualizada. Esta segunda fuente se evaluó en la fase de Preparación
+(sección~\ref{sec:preparacion-datos}) y finalmente \textbf{no se incorporó} al perfil
+territorial de cada celda, precisamente por esa cobertura desigual; el perfil territorial
+del proyecto se apoya, en cambio, en cobertura de rutas GTFS, centralidad respecto del
+núcleo urbano y composición temporal del uso, y la incorporación de POI queda como
+recomendación de trabajo futuro (capítulo~\ref{cap:conclusiones}).
 
 \subsection{El problema central}
 
@@ -110,20 +112,21 @@ calidad del servicio que presta la aplicación.
   \item Unidad de análisis territorial: celdas de una teselación H3, no municipios ni
         puntos individuales.
   \item Variables derivadas del timestamp, las coordenadas de origen y destino, el
-        identificador de usuario, la cobertura de rutas GTFS y métricas de entorno POI.
-  \item Análisis a dos niveles: nivel de celda territorial (demanda agregada, cobertura,
-        perfil de zona) y nivel de usuario individual, en la medida en que la auditoría de
-        datos (sección~\ref{sec:comprension-datos}) confirme que es una unidad de análisis
-        viable.
+        identificador de usuario y la cobertura de rutas GTFS.
+  \item Análisis a nivel de celda territorial (demanda agregada por celda y semana,
+        cobertura, centralidad, perfil temporal); la auditoría de datos
+        (sección~\ref{sec:comprension-datos}) estableció que el identificador de usuario
+        también sostendría un análisis a nivel individual, opción que se evalúa y se
+        descarta en favor del agregado territorial en la sección~\ref{sec:tipo-problema}.
   \item Exclusión explícita del propósito del viaje, datos demográficos de usuarios, ruta
         elegida entre opciones ofrecidas y confirmación de que el viaje se haya realizado,
         por no estar disponibles en la fuente.
 \end{enumerate}
 
-En términos de Ciencia de Datos, este problema requiere apoyar tres tareas: un diagnóstico
-territorial descriptivo (dónde se concentra la demanda no resuelta), una segmentación de
-zonas según su perfil de demanda y cobertura, y una estimación de la demanda futura de
-consultas por celda que permita anticipar dónde priorizar el mapeo.
+En términos de Ciencia de Datos, este problema requiere apoyar dos tareas: un diagnóstico
+territorial descriptivo y confirmatorio (dónde se concentra la demanda no resuelta, y si esa
+concentración es estadísticamente distinta entre el centro y la periferia) y una estimación
+de la demanda futura de consultas por celda que permita anticipar dónde priorizar el mapeo.
 
 \section{Formulación del Problema}
 \label{sec:formulacion-problema}
@@ -142,36 +145,34 @@ posición centro-periferia— se asocian con esa concentración?
         evolucionó esa distribución entre 2022 y 2024?
   \item ¿Qué proporción de la demanda de consultas se origina o termina en zonas sin
         cobertura cercana de rutas mapeadas, y dónde se concentran esas zonas?
-  \item ¿Es posible agrupar las celdas del territorio en tipologías interpretables según su
-        volumen de demanda, su cobertura de rutas y su entorno urbano?
   \item ¿Puede un modelo de aprendizaje automático anticipar la demanda de consultas por
         zona y por período con mejor desempeño que una línea base estacional simple?
-  \item ¿Qué ranking de zonas prioritarias para el trabajo de mapeo se deriva del análisis,
-        y qué tan estable es ese ranking ante cambios en la resolución espacial de la
-        teselación y en el período de observación?
+  \item ¿Qué ranking de zonas prioritarias para el trabajo de mapeo se deriva de cruzar
+        demanda esperada con brecha de cobertura, y aporta el modelo predictivo una mejor
+        capacidad de ordenamiento territorial que esa misma línea base estacional?
 \end{enumerate}
 
 \subsection{Enfoque e hipótesis de trabajo}
 
 Este proyecto no se limita a una prueba de hipótesis confirmatoria: combina un componente
-descriptivo y diagnóstico (dónde y cómo se distribuye la demanda), uno no supervisado (qué
-tipos de zona existen) y uno predictivo (si el comportamiento es anticipable). Aun así, se
-fijan de antemano dos hipótesis de trabajo verificables, para evitar que la interpretación
-de resultados se ajuste después de conocerlos.
+descriptivo y diagnóstico (dónde y cómo se distribuye la demanda) con uno predictivo (si el
+comportamiento es anticipable). Aun así, se fijan de antemano dos hipótesis de trabajo
+verificables, para evitar que la interpretación de resultados se ajuste después de
+conocerlos.
 
 \textbf{H1 (hipótesis de la periferia).} Las celdas territoriales ubicadas fuera del núcleo
-urbano central presentan una tasa de demanda de información no resuelta —medida mediante
-repetición direccional de consultas dentro de una ventana temporal corta y mediante
-distancia a la ruta GTFS mapeada más cercana— significativamente mayor que las celdas del
-centro urbano.
+urbano central presentan una tasa de demanda de información no resuelta —medida como la
+proporción de consultas cuyo origen queda a más de 500 metros de cualquier ruta mapeada en
+el feed GTFS— significativamente mayor que las celdas del centro urbano.
 
 \textbf{H0 (hipótesis nula).} No existe una diferencia sistemática en la tasa de demanda no
 resuelta entre celdas centrales y periféricas.
 
 \textbf{H2 (hipótesis del modelo predictivo).} Un modelo de aprendizaje automático entrenado
-con variables temporales, de historial de usuario, de cobertura GTFS y de entorno POI supera
-en desempeño (medido en error absoluto medio) a una línea base estacional ingenua para la
-predicción de demanda de consultas por celda y por semana.
+con variables territoriales de cobertura GTFS y centralidad, de composición temporal del uso
+y autorregresivas de la propia serie de demanda, supera en desempeño (medido en error
+absoluto medio) a una línea base estacional ingenua para la predicción de demanda de
+consultas por celda y por semana.
 
 Ambas hipótesis se contrastarán, cuando se llegue a la fase de Evaluación
 (sección~\ref{sec:evaluacion-resultados}), mediante pruebas apropiadas al tipo de
@@ -182,20 +183,15 @@ caso en que no se confirmen.
 \subsection{Definiciones operativas clave}
 
 \begin{itemize}
-  \item \textbf{Celda territorial.} Hexágono de la teselación H3 en la resolución que se
-        determine tras el análisis de sensibilidad (sección~\ref{sec:comprension-datos});
-        la resolución 8, de aproximadamente 460 metros de arista, se usa como referencia
-        preliminar.
-  \item \textbf{Consulta con repetición direccional.} Una consulta para la que el mismo
-        usuario realiza una segunda consulta con origen y destino dentro de un radio de
-        proximidad del primer par (no del mismo municipio), en la misma dirección
-        origen→destino, dentro de una ventana temporal a definir en la fase de preparación.
+  \item \textbf{Celda territorial.} Hexágono de la teselación H3 en resolución 8
+        (aproximadamente 460 metros de arista), adoptada tras el análisis de sensibilidad
+        de la sección~\ref{sec:sensibilidad-h3}.
+  \item \textbf{Demanda de información no resuelta.} Consulta cuyo punto de origen se
+        encuentra a más de 500 metros de cualquier ruta mapeada en el feed GTFS; se
+        operacionaliza por celda como la proporción de consultas de la celda que cumplen
+        esa condición.
   \item \textbf{Cobertura GTFS cercana.} Existencia de al menos una ruta mapeada en el feed
-        GTFS de Trufi App dentro de una distancia umbral del punto de origen o destino de
-        la consulta.
-  \item \textbf{Densidad y diversidad de POI.} Conteo normalizado por área y diversidad de
-        categorías (índice de Shannon-Wiener) de Puntos de Interés de OpenStreetMap dentro
-        de la celda territorial correspondiente.
+        GTFS de Trufi App dentro de 500 metros del punto de origen o destino de la consulta.
 \end{itemize}
 
 La pregunta formulada cumple las condiciones exigidas: se deriva directamente de la

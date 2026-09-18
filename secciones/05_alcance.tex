@@ -33,10 +33,15 @@ columnas \texttt{date/ts}, \texttt{origin\_latitude}, \texttt{origin\_longitude}
 \texttt{distancia}, \texttt{origin\_municipio}, \texttt{dest\_municipio} y variables
 temporales derivadas. Total consolidado: 1.927.675 registros.
 
-\textbf{Fuentes secundarias, previstas para la fase de Preparación:} el feed GTFS de rutas
-de Trufi App, y Puntos de Interés de OpenStreetMap descargados vía Overpass Turbo, con la
-limitación de cobertura desigual y desactualización relativa ya señalada en la
-sección~\ref{sec:descripcion-problema}.
+\textbf{Fuente secundaria, incorporada en la fase de Preparación:} el feed GTFS de rutas de
+Trufi App (Mobility Database, identificador \texttt{mdb-3507}), con 141 líneas mapeadas y
+período de validez declarado 2024-01-01 a 2026-12-31 --- posterior a buena parte de las
+consultas analizadas, limitación que se declara explícitamente cada vez que se cruza
+demanda histórica con cobertura actual. Se evaluó incorporar Puntos de Interés de
+OpenStreetMap como variable adicional de entorno urbano; se descartó por la cobertura
+desigual entre el centro y la periferia del área de estudio, que habría introducido sesgo
+espacial no controlable con la información disponible, y queda como línea de trabajo futura
+(capítulo~\ref{cap:conclusiones}).
 
 \textbf{Criterios de inclusión y exclusión aplicados en la consolidación:} se excluyeron
 los duplicados exactos (104 registros); se conservaron, marcados, los registros con
@@ -45,15 +50,19 @@ de casos válidos que requieren tratamiento distinto al de un error de calidad.
 
 \subsection{Alcance metodológico}
 
-El proyecto combina tres tipos de análisis: \textbf{descriptivo y diagnóstico}
-(caracterización espacio-temporal de la demanda sobre la teselación H3), \textbf{no
-supervisado} (segmentación de celdas en tipologías mediante comparación de al menos dos
-algoritmos de agrupamiento) y \textbf{supervisado} (modelo de predicción de demanda de
-consultas por celda y período, contrastado contra líneas base explícitas, con validación
-cronológica y no aleatoria, dada la falta de estacionariedad del volumen de consultas
-documentada en la sección~\ref{sec:comprension-datos}). El análisis espacial se apoya en H3
-y no en buffers circulares individuales, por las razones de aditividad y estabilidad de
-clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}.
+El proyecto combina dos tipos de análisis: \textbf{descriptivo y diagnóstico}
+(caracterización espacio-temporal de la demanda sobre la teselación H3 y contraste
+estadístico formal de la brecha de cobertura centro-periferia) y \textbf{supervisado}
+(modelo de predicción de demanda de consultas por celda y período, contrastado contra
+líneas base explícitas, con validación cronológica y no aleatoria, dada la falta de
+estacionariedad del volumen de consultas documentada en la sección~\ref{sec:comprension-datos}).
+No se incluye un componente no supervisado de segmentación territorial por agrupamiento: se
+consideró en el diseño inicial del proyecto y se descartó en favor de profundizar el
+componente supervisado y el diagnóstico de cobertura, que responden de forma más directa a
+la pregunta de investigación (sección~\ref{sec:formulacion-problema}); queda como
+recomendación de trabajo futuro (capítulo~\ref{cap:conclusiones}). El análisis espacial se
+apoya en H3 y no en buffers circulares individuales, por las razones de aditividad y
+estabilidad de clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}.
 
 \section{Aspectos excluidos}
 
@@ -78,9 +87,10 @@ clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}.
         verificadamente a una persona; reinstalaciones y dispositivos compartidos
         introducen ruido no cuantificable con la información disponible
         (sección~\ref{sec:comprension-datos}).
-  \item La cobertura de POI de OpenStreetMap es desigual entre el centro y la periferia del
-        área de estudio, lo que puede introducir sesgo espacial si se usa sin las
-        prevenciones señaladas.
+  \item No se incorporaron Puntos de Interés de OpenStreetMap como variable de entorno
+        urbano, por la cobertura desigual entre el centro y la periferia del área de
+        estudio señalada más arriba; el perfil territorial de cada celda se limita, por
+        tanto, a cobertura GTFS, centralidad y patrones temporales de uso.
   \item Los datos de \texttt{origin\_municipio} y \texttt{dest\_municipio} fueron recibidos
         ya calculados y sin documentación del procedimiento que los generó; su precisión no
         puede darse por establecida hasta completar la verificación prevista en la fase de
