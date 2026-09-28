@@ -28,9 +28,9 @@ realiza sobre una teselación de hexágonos H3, con resolución preliminar 8 (\t
 \subsection{Alcance de datos}
 
 \textbf{Fuente primaria:} 85 archivos CSV semanales de consultas de Trufi App, con las
-columnas \texttt{date/ts}, \texttt{origin\_latitude}, \texttt{origin\_longitude},
-\texttt{destination\_latitude}, \texttt{destination\_longitude}, \texttt{userID},
-\texttt{distancia}, \texttt{origin\_municipio}, \texttt{dest\_municipio} y variables
+columnas \texttt{date/ts}, \var{origin_latitude}, \var{origin_longitude},
+\var{destination_latitude}, \var{destination_longitude}, \texttt{userID},
+\texttt{distancia}, \var{origin_municipio}, \var{dest_municipio} y variables
 temporales derivadas. Total consolidado: 1.927.675 registros.
 
 \textbf{Fuente secundaria, incorporada en la fase de Preparación:} el feed GTFS de rutas de
@@ -91,7 +91,7 @@ estabilidad de clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}
         urbano, por la cobertura desigual entre el centro y la periferia del área de
         estudio señalada más arriba; el perfil territorial de cada celda se limita, por
         tanto, a cobertura GTFS, centralidad y patrones temporales de uso.
-  \item Los datos de \texttt{origin\_municipio} y \texttt{dest\_municipio} fueron recibidos
+  \item Los datos de \var{origin_municipio} y \var{dest_municipio} fueron recibidos
         ya calculados y sin documentación del procedimiento que los generó; su precisión no
         puede darse por establecida hasta completar la verificación prevista en la fase de
         Preparación.

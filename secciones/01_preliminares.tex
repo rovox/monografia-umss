@@ -21,11 +21,13 @@
 % ---------- AGRADECIMIENTOS ---------------------------------
 \chapter*{AGRADECIMIENTOS}
 \thispagestyle{empty}   % debe ir DESPUÉS de \chapter*, que reimpone el estilo
+\begingroup           % \interlineadoResumen no debe filtrarse al resto del documento
 \interlineadoResumen
 Agradezco a mi familia que me sostiene, impulsa y ayuda sin importar las adversidades.
 Agradezco también a la vida por todas aquellas personas que por azares del destino llegué
 a conocer, con las cuales he pasado inolvidables momentos, mañanas de estudio, tardes de
 juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
+\endgroup
 \clearpage
 
 % ---------- RESUMEN -----------------------------------------
@@ -92,6 +94,7 @@ juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
 % siglas o conceptos que requieren aclaración.
 \chapter*{GLOSARIO Y ABREVIATURAS}
 \addcontentsline{toc}{chapter}{GLOSARIO Y ABREVIATURAS}
+\begingroup           % \interlineadoResumen no debe filtrarse al resto del documento
 \interlineadoResumen
 \begin{description}[leftmargin=3cm,style=nextline,font=\bfseries]
   \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}. Metodología
@@ -115,4 +118,5 @@ juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
   \item[UUID] Identificador único universal; formato del \texttt{userID} recibido en los
     datos.
 \end{description}
+\endgroup
 \clearpage

@@ -26,17 +26,19 @@
 % \usepackage[spanish,es-noindentfirst]{babel}
 
 % ---------- 3. MARGENES (Instrucción 3, formato general) ----
-% Izq 3cm / Der 2.5cm / Sup 2.5cm / Inf 2.5cm, carta (letter).
-\usepackage[
-  letterpaper,
-  left=3cm,
-  right=2.5cm,
-  top=2.5cm,
-  bottom=2.5cm,
-  headheight=15pt,
-  includehead,
-  includefoot
-]{geometry}
+% Izq 3cm / Der 2.5cm / Sup 2.5cm / Inf 2.5cm, carta (letter),
+% medidos sobre el BLOQUE DE TEXTO. El encabezado y el folio
+% viven DENTRO de los márgenes (guía 3.6): no descuentan del
+% cuerpo. Se usa el sistema de maquetación nativo de memoir (no
+% geometry) para que ninguna opción "includehead/includefoot"
+% vuelva a comerse 1,3 cm de cada margen.
+\setstocksize{11in}{8.5in}
+\settrimmedsize{\stockheight}{\stockwidth}{*}
+\setlrmarginsandblock{3cm}{2.5cm}{*}
+\setulmarginsandblock{2.5cm}{2.5cm}{*}
+\setheadfoot{14pt}{1.25cm}     % alto del encabezado; distancia última línea -> folio
+\setheaderspaces{*}{0.75cm}{*} % separación encabezado -> primera línea del texto
+\checkandfixthelayout[fixed]   % [fixed]: no reajusta el bloque a múltiplos de línea
 
 % ---------- 4. TIPOGRAFIA (fontspec) ------------------------
 % pdflatex NO puede cargar fuentes TrueType/OpenType del sistema
@@ -60,8 +62,9 @@
 % BoldItalic) -- de modo que el documento SIEMPRE compila y
 % pagina igual en cualquier máquina, sin intervención manual.
 \IfFontExistsTF{Arial}
-  {\setmainfont{Arial}}
-  {\setmainfont{Liberation Sans}}
+  {\def\arialnombre{Arial}\def\arialitalica{Arial Italic}}
+  {\def\arialnombre{Liberation Sans}\def\arialitalica{Liberation Sans Italic}}
+\setmainfont{\arialnombre}
 % Alias interno: todo el documento (títulos, índices, captions)
 % referencia \arialfont, que simplemente es la fuente principal
 % ya cargada arriba. Si se quisiera una fuente de títulos
@@ -70,26 +73,61 @@
 
 % --- Fuente del Resumen: Garamond, 11.5pt (Sección preliminar)
 % Mismo criterio de respaldo en cascada: Garamond real (Windows/
-% Overleaf) -> EB Garamond (clon libre estándar académico,
-% instalable gratis) -> Latin Modern Roman (siempre presente en
-% cualquier instalación TeX Live, garantiza compilación).
+% Overleaf) -> EB Garamond (clon libre estándar académico; viene
+% con TeX Live en el paquete "ebgaramond"). Sin respaldo a Latin
+% Modern: si faltara EB Garamond, mejor un error claro que un PDF
+% con una fuente fuera de la guía.
 \IfFontExistsTF{Garamond}
   {\newfontfamily\garamondfont{Garamond}}
-  {\IfFontExistsTF{EB Garamond}
-    {\newfontfamily\garamondfont{EB Garamond}}
-    {\newfontfamily\garamondfont{Latin Modern Roman}}
-  }
+  {\newfontfamily\garamondfont{EB Garamond}}
+
+% --- Monoespaciada (variables, código): IBM Plex Mono -------
+% Libre (OFL) y empaquetada en fuentes/ para que el PDF sea igual
+% en local, Overleaf y CI. Se escala a la altura de x de Arial
+% para que "origin_latitude" no parezca más grande que el texto.
+\setmonofont{IBMPlexMono}[
+  Path           = fuentes/,
+  Extension      = .otf,
+  UprightFont    = *-Regular,
+  BoldFont       = *-Bold,
+  ItalicFont     = *-Italic,
+  BoldItalicFont = *-BoldItalic,
+  Scale          = MatchLowercase]
+
+% --- Matemática en Arial ------------------------------------
+% Las pocas expresiones del texto (p = 0,033; ρ; α ∈ {…}; 10⁻⁹)
+% salían en Computer Modern. unicode-math necesita una fuente
+% matemática de base (solo aporta parámetros de composición: no
+% se incrusta ningún glifo suyo) y cada rango usado se toma de
+% Arial. Arial no tiene "∈": se dibuja con pict2e (vectorial).
+\usepackage{amsmath}
+\usepackage[math-style=TeX]{unicode-math}
+\setmathfont{Latin Modern Math}
+\setmathfont{\arialnombre}[range={up/{num,latin,Latin,greek,Greek},
+  "002B,"003D,"003C,"003E,"00D7,"2192,"2194,"2264,"2265,"002C,"002E,
+  "003B,"0025,"2032,"2013,"007B,"007D,"0028,"0029,"005B,"005D,"002F}]
+\setmathfont{\arialnombre}[range={\minus,"2212,"002D}]
+\setmathfont{\arialitalica}[range={it/{latin,Latin,greek,Greek}->up}]
+\usepackage{pict2e}
+\newcommand{\pertenece}{\mathrel{\setlength{\unitlength}{0.1em}%
+  \begin{picture}(6.2,6)(-0.3,-0.4)\linethickness{0.075em}%
+    \put(3.2,2.85){\arc[90,270]{2.85}}%
+    \polyline(3.2,5.7)(6,5.7)\polyline(3.2,0)(6,0)\polyline(0.35,2.85)(5.6,2.85)%
+  \end{picture}}}
+\AtBeginDocument{\let\in\pertenece}
+\usepackage{icomma}  % "0,5" en modo matemático sin espacio tras la coma
 
 % ---------- 5. INTERLINEADO ---------------------------------
-% memoir trae su PROPIO sistema de interlineado (reemplaza y
-% "emula" a setspace internamente): se usa el comando nativo
-% \setSpacing{factor} y las macros \DoubleSpacing/\SingleSpacing
-% en vez de cargar el paquete setspace por separado -- cargarlo
-% aparte solo generaría un aviso de "emulated by memoir" y un
-% posible choque de nombres, sin aportar nada nuevo.
-\DoubleSpacing*          % interlineado doble: cuerpo principal (Instrucción 3)
-                         % (memoir calibra el factor exacto según el
-                         % tamaño de fuente: más fiel que un x2 literal)
+% "Doble" en la guía = doble de Word con Arial 12 = 27,6 pt entre
+% líneas (el modelo mide 27,6). memoir 12pt tiene \baselineskip
+% de 14,5 pt, así que el factor exacto es 27,6/14,5 = 1,9034.
+% \setSpacing (sin asterisco) deja en sencillo flotantes (tablas,
+% figuras, captions, "Nota.") y notas al pie, como exige la guía.
+% NOTA TÉCNICA: \setSpacing solo toma efecto al final de un cambio
+% de tamaño de fuente (reinvoca \@currsize), y en el preámbulo esa
+% macro todavía no está ligada a \normalsize. Por eso el interlineado
+% doble se activa en \AtBeginDocument, ya con la fuente cargada.
+\AtBeginDocument{\setSpacing{1.9034}}
 \newcommand{\interlineadoResumen}{\setSpacing{1.2}} % Resumen: 1.2 (Sección preliminar)
 \newcommand{\interlineadoSimple}{\setSpacing{1}}    % carátula, bibliografía interna, notas
 
@@ -234,8 +272,9 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \captionsetup{
-  labelfont={bf,sf},
-  textfont={it,sf},
+  font=normalfont,
+  labelfont=bf,
+  textfont=it,
   justification=centering,
   singlelinecheck=false,
   labelsep=newline,
@@ -276,7 +315,7 @@
 % Línea de fuente bajo tabla/figura (cursiva, tal como pide 3.2/Anexo)
 \newcommand{\fuente}[1]{%
   \par\vspace{2pt}
-  {\arialfont\footnotesize\itshape Fuente: #1\par}
+  {\footnotesize\itshape Fuente: #1\par}
 }
 
 % ---------- 10. CITAS Y REFERENCIAS (3.5 / 3.6) --------------
@@ -331,6 +370,14 @@
   bookmarksnumbered=true
 ]{hyperref}
 \usepackage{bookmark}
+\urlstyle{same}   % \url y \nolinkurl heredan la fuente del cuerpo, no monoespaciada distinta
+
+% Identificador de variable/script/columna (Instrucción 2.5: "nombres de
+% variables con guion bajo deben poder cortarse sin desbordar la columna").
+% \nolinkurl (de hyperref) usa el mecanismo de \url --que ya rompe la línea
+% en "_", "/", "." y "-"-- pero sin color ni enlace, ideal para nombres de
+% columna/variable/script que no son URLs reales.
+\newcommand{\var}[1]{\nolinkurl{#1}}
 
 % ---------- 12. UTILIDADES VARIAS ----------------------------
 \usepackage{xcolor}
@@ -340,4 +387,8 @@
 \frenchspacing
 \clubpenalty=10000
 \widowpenalty=10000
-\sloppy
+% Sin \sloppy global: la justificación se resuelve con silabación
+% española (polyglossia carga los patrones "spanish") y un margen
+% de estiramiento de emergencia acotado, que solo actúa en los
+% párrafos que de otro modo desbordarían.
+\setlength{\emergencystretch}{1.5em}

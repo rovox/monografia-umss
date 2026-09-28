@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Verificación de formato de la monografía sobre el PDF compilado.
+
+Mide, sin dependencias externas de Python (solo poppler-utils):
+  - márgenes efectivos del texto (pdftotext -bbox-layout)
+  - interlineado de la prosa (distancia entre líneas consecutivas)
+  - fuentes incrustadas (pdffonts): solo Arial/Liberation Sans,
+    Garamond/EB Garamond e IBM Plex Mono
+  - número de páginas (pdfinfo)
+  - desbordes, referencias y citas indefinidas (build/main.log, build/main.blg)
+  - marcadores de borrador que quedaron en el PDF ("[...]", TODO)
+
+Uso:  scripts/verificar [main.pdf] [build/main.log]
+Sale con código 1 si algún criterio queda fuera de tolerancia.
+"""
+import os
+import re
+import statistics
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+CM = 72 / 2.54  # puntos PostScript por centímetro
+
+# Márgenes exigidos (cm) y tolerancia
+MARGENES = {"izquierdo": 3.0, "derecho": 2.5, "superior": 2.5, "inferior": 2.5}
+TOL_MARGEN = 0.15
+# Interlineado doble real con Arial 12 (pt) y tolerancia
+INTERLINEADO = 27.6
+TOL_INTERLINEADO = 0.5
+# Desborde máximo admitido (pt)
+DESBORDE_MAX = 2.0
+# Fuentes admitidas (nombre sin el prefijo de subconjunto "ABCDEF+")
+FUENTES_OK = re.compile(r"^(Arial|LiberationSans|Garamond|EBGaramond|IBMPlexMono)")
+
+
+def ejecutar(*args):
+    return subprocess.run(args, capture_output=True, text=True, check=True).stdout
+
+
+def paginas(pdf):
+    m = re.search(r"^Pages:\s+(\d+)", ejecutar("pdfinfo", pdf), re.M)
+    return int(m.group(1)) if m else 0
+
+
+def leer_cajas(pdf):
+    """Devuelve [(ancho, alto, [bloques [[líneas (xmin, ymin, xmax, ymax, texto)]]])]."""
+    xml = ejecutar("pdftotext", "-bbox-layout", pdf, "-")
+    xml = re.sub(r"<!DOCTYPE[^>]*>", "", xml)
+    xml = xml.replace(' xmlns="http://www.w3.org/1999/xhtml"', "")
+    raiz = ET.fromstring(xml)
+    salida = []
+    for pag in raiz.iter("page"):
+        ancho, alto = float(pag.get("width")), float(pag.get("height"))
+        bloques = []
+        for bloque in pag.iter("block"):
+            lineas = []
+            for linea in bloque.iter("line"):
+                palabras = [p for p in linea.iter("word")]
+                if not palabras:
+                    continue
+                caja = (
+                    min(float(p.get("xMin")) for p in palabras),
+                    min(float(p.get("yMin")) for p in palabras),
+                    max(float(p.get("xMax")) for p in palabras),
+                    max(float(p.get("yMax")) for p in palabras),
+                    " ".join(p.text or "" for p in palabras),
+                )
+                lineas.append(caja)
+            if lineas:
+                bloques.append(lineas)
+        salida.append((ancho, alto, bloques))
+    return salida
+
+
+def medir_margenes(cajas):
+    """Mediana por página de cada margen, excluyendo encabezado y folio,
+    que viven dentro de los márgenes (no descuentan del cuerpo)."""
+    zona_sup = (MARGENES["superior"] - 0.25) * CM
+    zona_inf = (MARGENES["inferior"] - 0.25) * CM
+    izq, der, sup, inf = [], [], [], []
+    for ancho, alto, bloques in cajas:
+        lineas = [l for b in bloques for l in b
+                  if l[3] > zona_sup and l[1] < alto - zona_inf]
+        if len(lineas) < 5:
+            continue
+        izq.append(min(l[0] for l in lineas) / CM)
+        der.append((ancho - max(l[2] for l in lineas)) / CM)
+        sup.append(min(l[1] for l in lineas) / CM)
+        inf.append((alto - max(l[3] for l in lineas)) / CM)
+    if not izq:
+        return {}
+    inf.sort()
+    llenas = inf[: max(1, len(inf) // 3)]  # páginas llenas: el tercio más bajo
+    return {
+        "izquierdo": statistics.median(izq),
+        "derecho": statistics.median(der),
+        "superior": statistics.median(sup),
+        "inferior": statistics.median(llenas),
+        "_minimos": {"izquierdo": min(izq), "derecho": min(der),
+                     "superior": min(sup), "inferior": min(inf)},
+    }
+
+
+def medir_interlineado(cajas):
+    """Moda de la distancia entre líneas consecutivas en cada página.
+
+    Con interlineado doble (27,6 pt) y texto de 12 pt, poppler separa
+    CADA línea en su propio <block> (el hueco entre líneas es mayor que
+    lo que su heurística de agrupación espera para un mismo párrafo), así
+    que agrupar por <block> subestima sistemáticamente el interlineado
+    real. Se comparan en cambio líneas consecutivas de toda la página que
+    se solapan horizontalmente (misma columna): el cuerpo de prosa domina
+    el conteo de líneas de todo el documento, así que su espaciado es,
+    por construcción, la moda global.
+    """
+    difs = []
+    for _, _, bloques in cajas:
+        lineas = sorted((l for b in bloques for l in b), key=lambda l: l[1])
+        for a, b in zip(lineas, lineas[1:]):
+            solape = min(a[2], b[2]) - max(a[0], b[0])
+            if solape <= 0:
+                continue
+            d = b[3] - a[3]
+            if 8 < d < 40:
+                difs.append(round(d, 1))
+    if not difs:
+        return None, 0.0
+    moda = statistics.mode(difs)
+    dentro = sum(abs(d - INTERLINEADO) <= TOL_INTERLINEADO for d in difs) / len(difs)
+    return moda, dentro
+
+
+def fuentes(pdf):
+    nombres = []
+    for fila in ejecutar("pdffonts", pdf).splitlines()[2:]:
+        if fila.strip():
+            nombres.append(fila.split()[0].split("+")[-1])
+    return sorted(set(nombres))
+
+
+def revisar_log(log):
+    if not os.path.exists(log):
+        return None
+    texto = open(log, encoding="utf-8", errors="replace").read()
+    desbordes = [float(x) for x in re.findall(r"Overfull \\hbox \(([\d.]+)pt too wide\)", texto)]
+    indef = re.findall(r"(?:Reference|Citation) `([^']+)' .*?undefined", texto)
+    indef += re.findall(r"Package biblatex Warning: The following entry could not be found", texto)
+    blg = os.path.splitext(log)[0] + ".blg"
+    if os.path.exists(blg):
+        indef += re.findall(r"WARN - I didn't find a database entry for '([^']+)'",
+                            open(blg, encoding="utf-8", errors="replace").read())
+    return {
+        "desbordes": desbordes,
+        "graves": [d for d in desbordes if d > DESBORDE_MAX],
+        "indefinidas": sorted(set(indef)),
+        "rerun": "Rerun to get" in texto or "Please rerun" in texto,
+    }
+
+
+def marcadores(pdf):
+    texto = ejecutar("pdftotext", pdf, "-")
+    encontrados = [re.sub(r"\s+", " ", x)[:40] for x in
+                   re.findall(r"\[(?:[A-ZÁÉÍÓÚÑ…][^\]]{2,400}?|…|\.\.\.)\]", texto)]
+    encontrados += re.findall(r"\b(?:TODO|FIXME|XXX)\b", texto)
+    return encontrados
+
+
+def main():
+    pdf = sys.argv[1] if len(sys.argv) > 1 else "main.pdf"
+    log = sys.argv[2] if len(sys.argv) > 2 else "build/main.log"
+    if not os.path.exists(pdf):
+        sys.exit(f"No existe {pdf}; compila primero.")
+    fallos = []
+
+    def informe(nombre, valor, ok):
+        print(f"  [{'OK ' if ok else 'MAL'}] {nombre}: {valor}")
+        if not ok:
+            fallos.append(nombre)
+
+    print(f"Verificando {pdf}")
+    print(f"  Páginas: {paginas(pdf)}")
+
+    cajas = leer_cajas(pdf)
+    m = medir_margenes(cajas)
+    for lado, objetivo in MARGENES.items():
+        if lado not in m:
+            informe(f"margen {lado}", "sin datos", False)
+            continue
+        valor, minimo = m[lado], m["_minimos"][lado]
+        ok = abs(valor - objetivo) <= TOL_MARGEN and minimo >= objetivo - TOL_MARGEN
+        informe(f"margen {lado}",
+                f"{valor:.2f} cm (mínimo {minimo:.2f}; objetivo {objetivo} ± {TOL_MARGEN})", ok)
+
+    moda, dentro = medir_interlineado(cajas)
+    informe("interlineado de la prosa",
+            f"{moda} pt ({dentro:.0%} de las líneas a {INTERLINEADO} ± {TOL_INTERLINEADO})",
+            moda is not None and abs(moda - INTERLINEADO) <= TOL_INTERLINEADO)
+
+    fs = fuentes(pdf)
+    ajenas = [f for f in fs if not FUENTES_OK.match(f)]
+    informe("fuentes", ", ".join(fs), not ajenas)
+    if ajenas:
+        print(f"        fuera de la lista: {', '.join(ajenas)}")
+
+    r = revisar_log(log)
+    if r is None:
+        print(f"  (sin {log}: se omiten desbordes y referencias)")
+    else:
+        informe(f"desbordes > {DESBORDE_MAX} pt",
+                f"{len(r['graves'])} (total Overfull: {len(r['desbordes'])})", not r["graves"])
+        informe("referencias/citas indefinidas",
+                ", ".join(r["indefinidas"]) or "0", not r["indefinidas"])
+        if r["rerun"]:
+            print("  [AVISO] el log pide otra pasada de compilación")
+
+    mk = marcadores(pdf)
+    informe("marcadores de borrador en el PDF", ", ".join(mk[:8]) or "0", not mk)
+
+    if fallos:
+        print(f"\nFuera de tolerancia: {', '.join(fallos)}")
+        sys.exit(1)
+    print("\nTodo dentro de tolerancia.")
+
+
+if __name__ == "__main__":
+    main()

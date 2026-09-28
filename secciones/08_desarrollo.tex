@@ -89,8 +89,8 @@ corresponden al período del 29 de abril al 9 de junio de 2024.
     \textbf{Característica} & \textbf{Lote 1 (79 archivos)} & \textbf{Lote 2 (6 archivos)} \\
     \midrule
     Período & sep. 2022 -- mar. 2024 & abr. 2024 -- jun. 2024 \\
-    Nombres de campos temporales & \texttt{hora}, \texttt{dia\_de\_semana}, \texttt{dia\_de\_mes}, \texttt{fin\_de\_semana} & \texttt{hour}, \texttt{day\_of\_week}, \texttt{day\_of\_month}, \texttt{weekend} \\
-    Campos adicionales & Ninguno & \texttt{year\_week\_number}, \texttt{time\_of\_day} \\
+    Nombres de campos temporales & \texttt{hora}, \var{dia_de_semana}, \var{dia_de_mes}, \var{fin_de_semana} & \texttt{hour}, \var{day_of_week}, \var{day_of_month}, \texttt{weekend} \\
+    Campos adicionales & Ninguno & \var{year_week_number}, \var{time_of_day} \\
     Codificación de caracteres & UTF-8 & UTF-8 con caracteres acentuados en Latin-1 \\
     Número de columnas & 13 & 15 \\
     \bottomrule
@@ -145,28 +145,28 @@ origen.
     \textbf{Variable} & \textbf{Tipo} & \textbf{Origen} & \textbf{Descripción} \\
     \midrule
     \texttt{date} / \texttt{ts} & fecha-hora & Observada & Instante exacto de la consulta \\
-    \texttt{origin\_latitude} & numérica & Observada & Latitud del punto de origen (grados, WGS84) \\
-    \texttt{origin\_longitude} & numérica & Observada & Longitud del punto de origen (grados, WGS84) \\
-    \texttt{destination\_latitude} & numérica & Observada & Latitud del punto de destino (grados, WGS84) \\
-    \texttt{destination\_longitude} & numérica & Observada & Longitud del punto de destino (grados, WGS84) \\
+    \var{origin_latitude} & numérica & Observada & Latitud del punto de origen (grados, WGS84) \\
+    \var{origin_longitude} & numérica & Observada & Longitud del punto de origen (grados, WGS84) \\
+    \var{destination_latitude} & numérica & Observada & Latitud del punto de destino (grados, WGS84) \\
+    \var{destination_longitude} & numérica & Observada & Longitud del punto de destino (grados, WGS84) \\
     \texttt{userID} & categórica & Observada & Identificador anónimo en formato UUID \\
     \texttt{distancia} & numérica & Derivada & Distancia euclidiana entre origen y destino, en metros (validada, sección~\ref{sec:validacion-distancia}) \\
-    \texttt{origin\_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de origen \\
-    \texttt{dest\_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de destino \\
+    \var{origin_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de origen \\
+    \var{dest_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de destino \\
     \texttt{hour} & entera & Derivada & Hora del día extraída de la marca de tiempo \\
-    \texttt{day\_of\_week} & entera & Derivada & Día de la semana (0 = lunes) \\
-    \texttt{day\_of\_month} & entera & Derivada & Día del mes \\
+    \var{day_of_week} & entera & Derivada & Día de la semana (0 = lunes) \\
+    \var{day_of_month} & entera & Derivada & Día del mes \\
     \texttt{weekend} & binaria & Derivada & Indicador de fin de semana \\
-    \texttt{year\_week\_number} & categórica & Derivada (solo lote 2) & Año y semana ISO \\
-    \texttt{time\_of\_day} & categórica & Derivada (solo lote 2) & Franja horaria nominal \\
-    \texttt{source\_file} & categórica & Trazabilidad & Archivo original del que proviene la fila \\
-    \texttt{source\_batch} & categórica & Trazabilidad & Lote de exportación de procedencia \\
+    \var{year_week_number} & categórica & Derivada (solo lote 2) & Año y semana ISO \\
+    \var{time_of_day} & categórica & Derivada (solo lote 2) & Franja horaria nominal \\
+    \var{source_file} & categórica & Trazabilidad & Archivo original del que proviene la fila \\
+    \var{source_batch} & categórica & Trazabilidad & Lote de exportación de procedencia \\
     \bottomrule
   \end{tabularx}
   \fuente{Elaboración propia, a partir de la auditoría de esquema descrita en la sección~\ref{sec:auditoria-esquema}.}
 \end{table}
 
-Debe señalarse que las variables \texttt{origin\_municipio} y \texttt{dest\_municipio}
+Debe señalarse que las variables \var{origin_municipio} y \var{dest_municipio}
 fueron recibidas ya calculadas y que la organización no documentó el procedimiento ni la
 capa de límites administrativos empleada para generarlas. Esta indeterminación se registra
 como limitación (capítulo~\ref{cap:alcance}) y su verificación se incorpora al plan de
@@ -308,7 +308,7 @@ historial prolongado para la mayoría de la población de usuarios.
   \caption{Distribuciones de consultas por usuario, vida útil del identificador y usuarios activos por mes}
   \label{fig:analisis-usuario}
   \includegraphics[width=0.75\textwidth]{imagenes/fig_user_analysis.png}
-  \fuente{Elaboración propia --- figura pendiente de regenerar con \texttt{05\_user\_analysis.py} sobre el conjunto consolidado.}
+  \fuente{Elaboración propia --- figura pendiente de regenerar con \var{05_user_analysis.py} sobre el conjunto consolidado.}
 \end{figure}
 
 \subsection{Cobertura temporal y detección de vacíos}
@@ -382,7 +382,7 @@ llegada.
   \caption{Densidad espacial de orígenes y destinos de consulta en el área metropolitana de Cochabamba}
   \label{fig:densidad-espacial}
   \includegraphics[width=0.75\textwidth]{imagenes/fig_spatial_heatmap.png}
-  \fuente{Elaboración propia --- figura pendiente de regenerar con \texttt{07\_spatial.py} sobre el conjunto consolidado.}
+  \fuente{Elaboración propia --- figura pendiente de regenerar con \var{07_spatial.py} sobre el conjunto consolidado.}
 \end{figure}
 
 \subsection{Agregación espacial preliminar}
@@ -462,14 +462,14 @@ crudos.
     \toprule
     \textbf{Script} & \textbf{Evidencia producida} \\
     \midrule
-    \texttt{01\_audit\_schema.py} & Comparación de esquemas por archivo \\
-    \texttt{02\_consolidate.py} & Conjunto consolidado particionado por año y semana \\
-    \texttt{03\_quality.py} & Informe de nulos y duplicados \\
-    \texttt{04\_validate\_haversine.py} & Validación de unidad y naturaleza de la distancia \\
-    \texttt{05\_user\_analysis.py} & Caracterización del identificador y figura~\ref{fig:analisis-usuario} \\
-    \texttt{06\_temporal\_coverage.py} & Cobertura semanal y detección de vacíos \\
-    \texttt{07\_spatial.py} & Validación del área de estudio y figura~\ref{fig:densidad-espacial} \\
-    \texttt{08\_h3\_preview.py} & Agregación preliminar en celdas H3 \\
+    \var{01_audit_schema.py} & Comparación de esquemas por archivo \\
+    \var{02_consolidate.py} & Conjunto consolidado particionado por año y semana \\
+    \var{03_quality.py} & Informe de nulos y duplicados \\
+    \var{04_validate_haversine.py} & Validación de unidad y naturaleza de la distancia \\
+    \var{05_user_analysis.py} & Caracterización del identificador y figura~\ref{fig:analisis-usuario} \\
+    \var{06_temporal_coverage.py} & Cobertura semanal y detección de vacíos \\
+    \var{07_spatial.py} & Validación del área de estudio y figura~\ref{fig:densidad-espacial} \\
+    \var{08_h3_preview.py} & Agregación preliminar en celdas H3 \\
     \bottomrule
   \end{tabularx}
   \fuente{Elaboración propia.}
@@ -479,13 +479,13 @@ Estructura del repositorio del proyecto de datos (referencia): \texttt{data/raw}
 originales, solo lectura), \texttt{data/interim} (conjunto consolidado y agregados H3 en
 formato Parquet), \texttt{data/processed} (reservado para las tablas de indicadores por
 celda de la fase de Preparación), \texttt{src} (scripts numerados del pipeline),
-\texttt{reports/01\_data\_understanding} (informes y figuras de esta fase).
+\var{reports/01_data_understanding} (informes y figuras de esta fase).
 
 \section{Preparación de los datos}
 \label{sec:preparacion-datos}
 
 Esta sección documenta la tercera fase de CRISP-DM, ejecutada mediante nueve scripts
-reproducibles (\texttt{09\_select\_filter.py} a \texttt{17\_train\_test\_split.py}) que
+reproducibles (\var{09_select_filter.py} a \var{17_train_test_split.py}) que
 consumen el conjunto consolidado de la sección~\ref{sec:comprension-datos} y producen la
 tabla de indicadores territoriales y la partición cronológica que alimentan el Modelado
 (sección~\ref{sec:modelado}). El orden de la exposición sigue el orden real del trabajo y
@@ -513,16 +513,16 @@ excluidos de un análisis, como los viajes interurbanos, reciban tratamiento pro
     \midrule
     Conjunto consolidado & 1.927.675 & --- & --- \\
     Tras eliminar duplicados exactos & 1.927.615 & $-60$ & Eliminar \\
-    Marca \texttt{zero\_coords} & 3 & --- & Excluir del análisis espacial \\
-    Marca \texttt{out\_of\_bbox} & 3.511 & --- & Conservar, excluir del análisis metropolitano \\
-    Marca \texttt{impossible\_jump} & 17.741 & --- & Conservar, excluir de variables secuenciales \\
+    Marca \var{zero_coords} & 3 & --- & Excluir del análisis espacial \\
+    Marca \var{out_of_bbox} & 3.511 & --- & Conservar, excluir del análisis metropolitano \\
+    Marca \var{impossible_jump} & 17.741 & --- & Conservar, excluir de variables secuenciales \\
     \midrule
     Total excluido (marcado) & 21.255 & $-1{,}10\,\%$ & --- \\
     \textbf{Incluido en el análisis} & \textbf{1.906.360} & \textbf{98,90\,\%} & --- \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{09\_select\_filter.py} ---
-  \texttt{reports/02\_data\_preparation/01\_filter\_flow.md}.}
+  \fuente{Elaboración propia, a partir de \var{09_select_filter.py} ---
+  \var{reports/02_data_preparation/01_filter_flow.md}.}
 \end{table}
 
 Los 104 registros que participaban en grupos de duplicación exacta identificados en la
@@ -550,7 +550,7 @@ aproximadamente 19.000 valores atípicos de \texttt{distancia} (por encima del p
 que se conservan marcados en lugar de recortarse, siguiendo el mismo criterio transversal de
 esta fase; su presencia es consistente con los viajes interurbanos ya caracterizados en la
 sección~\ref{sec:distribucion-espacial}. Los dos campos exclusivos del segundo lote de
-archivos, \texttt{year\_week\_number} y \texttt{time\_of\_day}, permanecen nulos en el
+archivos, \var{year_week_number} y \var{time_of_day}, permanecen nulos en el
 91,6~\% de las filas por diseño —son exclusivos de los archivos posteriores a abril de
 2024— y se documentan como tales en lugar de imputarse.
 
@@ -578,8 +578,8 @@ resultado son 934.096 sesiones sobre las 1.906.360 consultas incluidas.
     Percentil 95 de duración (sesiones múltiples) & 25 minutos \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{11\_sessionize.py} ---
-  \texttt{reports/02\_data\_preparation/03\_sessionization.md}.}
+  \fuente{Elaboración propia, a partir de \var{11_sessionize.py} ---
+  \var{reports/02_data_preparation/03_sessionization.md}.}
 \end{table}
 
 La distribución resultante valida el umbral elegido: tanto la mediana (1 minuto) como el
@@ -617,8 +617,8 @@ huecos, los hexágonos permiten agregar y comparar celdas entre sí sin ambigüe
     9 & \textasciitilde 0,17~km & 4.170 & 16,2~\% \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{12\_build\_h3.py} ---
-  \texttt{reports/02\_data\_preparation/04\_h3\_tessellation.md}.}
+  \fuente{Elaboración propia, a partir de \var{12_build_h3.py} ---
+  \var{reports/02_data_preparation/04_h3_tessellation.md}.}
 \end{table}
 
 La resolución 7 concentra el 79,6~\% de la demanda en apenas diez celdas, lo que vuelve el
@@ -661,8 +661,8 @@ público, que además absorbe el error típico de posicionamiento GPS urbano.
     Percentil 95 de distancia (orígenes) & 131~m \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{13\_gtfs\_coverage.py} ---
-  \texttt{reports/02\_data\_preparation/05\_gtfs\_coverage.md}.}
+  \fuente{Elaboración propia, a partir de \var{13_gtfs_coverage.py} ---
+  \var{reports/02_data_preparation/05_gtfs_coverage.md}.}
 \end{table}
 
 Esta cifra agregada de 99,4~\% de cobertura --- ponderada por consulta, y por tanto dominada
@@ -678,7 +678,7 @@ cuando se examina el territorio celda por celda.
 \subsection{Validación de las variables de municipio}
 \label{sec:validacion-municipios}
 
-Las variables \texttt{origin\_municipio} y \texttt{dest\_municipio}, recibidas ya calculadas
+Las variables \var{origin_municipio} y \var{dest_municipio}, recibidas ya calculadas
 y sin documentación de procedencia (sección~\ref{sec:comprension-datos}), se contrastaron
 contra la lista de municipios metropolitanos conocidos y se revisó la coherencia de
 asignación dentro de cada celda H3. Se identificaron 21 municipios de origen distintos; el
@@ -687,7 +687,7 @@ núcleo metropolitano concentra la enorme mayoría de la demanda: Cercado de Coc
 0,2~\% y Sipesipe 0,1~\%. El resto --- entre ellos Villa Santiváñez y Villa José Quintín
 Mendoza, cuyos nombres llegaron con codificación defectuosa y se corrigen aquí --- no supera
 individualmente el 0,05~\% y corresponde a los desplazamientos interurbanos ya identificados
-por la marca \texttt{out\_of\_bbox} (sección~\ref{sec:seleccion-filtros}). La validación no
+por la marca \var{out_of_bbox} (sección~\ref{sec:seleccion-filtros}). La validación no
 alcanza a reconstruir el procedimiento original de asignación --- esa limitación permanece
 declarada (capítulo~\ref{cap:alcance}) --- pero sí confirma que la distribución observada es
 internamente consistente con la delimitación espacial adoptada.
@@ -709,16 +709,16 @@ origen o como destino en algún momento del período de 84 semanas con datos.
     \toprule
     \textbf{Variable} & \textbf{Mediana} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Máximo} & \textbf{Nulos} \\
     \midrule
-    \texttt{n\_queries\_orig} & 3 & 44,67 & 165,79 & 3.663 & 0 \\
-    \texttt{n\_queries\_dest} & 4 & 44,67 & 140,57 & 2.307 & 0 \\
-    \texttt{dist\_gtfs\_mean\_orig\_m} & 50,93 & 240,65 & 925,81 & 25.081 & 11.367 \\
-    \texttt{pct\_uncovered\_orig} & 0,00 & 0,08 & 0,27 & 1,00 & 11.367 \\
-    \texttt{mean\_trip\_dist\_m} & 7.434,67 & 8.846,15 & 5.599,97 & 55.517,85 & 11.367 \\
+    \var{n_queries_orig} & 3 & 44,67 & 165,79 & 3.663 & 0 \\
+    \var{n_queries_dest} & 4 & 44,67 & 140,57 & 2.307 & 0 \\
+    \var{dist_gtfs_mean_orig_m} & 50,93 & 240,65 & 925,81 & 25.081 & 11.367 \\
+    \var{pct_uncovered_orig} & 0,00 & 0,08 & 0,27 & 1,00 & 11.367 \\
+    \var{mean_trip_dist_m} & 7.434,67 & 8.846,15 & 5.599,97 & 55.517,85 & 11.367 \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{15\_indicators\_table.py} ---
-  \texttt{reports/02\_data\_preparation/07\_indicators\_table.md}. La variable
-  \texttt{od\_balance} se excluye de esta tabla: sus estadísticos calculados presentan un
+  \fuente{Elaboración propia, a partir de \var{15_indicators_table.py} ---
+  \var{reports/02_data_preparation/07_indicators_table.md}. La variable
+  \var{od_balance} se excluye de esta tabla: sus estadísticos calculados presentan un
   desbordamiento de tipo entero de 32 bits y no son citables; queda fuera del conjunto de
   modelado por fuga de información (sección~\ref{sec:tipo-problema}), de modo que el defecto
   no afecta a ningún resultado.}
@@ -751,8 +751,8 @@ explícito entre las tres resoluciones H3 evaluadas (capítulo~\ref{cap:marco-te
     9 & 0,903 & $\rho_{8\leftrightarrow9}=0,9913$ \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{16\_sensitivity\_h3.py} ---
-  \texttt{reports/02\_data\_preparation/08\_h3\_sensitivity.md}.}
+  \fuente{Elaboración propia, a partir de \var{16_sensitivity_h3.py} ---
+  \var{reports/02_data_preparation/08_h3_sensitivity.md}.}
 \end{table}
 
 El coeficiente de Gini de la demanda de origen en resolución 8 es \textbf{0,934}, una
@@ -786,8 +786,8 @@ del desempeño real.
     Prueba & 4.038 & 9,5~\% & 8 & 2024-W09 -- 2024-W23 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{17\_train\_test\_split.py} ---
-  \texttt{reports/02\_data\_preparation/09\_train\_test\_split.md}. Estas cifras describen la
+  \fuente{Elaboración propia, a partir de \var{17_train_test_split.py} ---
+  \var{reports/02_data_preparation/09_train_test_split.md}. Estas cifras describen la
   tabla de indicadores dispersa, previa a la construcción del panel completo celda$\times$semana
   de la sección~\ref{sec:tipo-problema}; sobre ese panel completo la misma frontera cronológica
   produce 111.744 filas de entrenamiento y 12.416 de prueba.}
@@ -829,19 +829,19 @@ que se documenta más adelante --- no se trata de sobreajuste.
 
 Estructura de evidencia de esta fase (referencia): \texttt{data/processed} (tabla de
 indicadores y partición train/test en formato Parquet), \texttt{src} (scripts \texttt{09} a
-\texttt{17}), \texttt{reports/02\_data\_preparation} (informes de esta sección).
+\texttt{17}), \var{reports/02_data_preparation} (informes de esta sección).
 
 \section{Modelado}
 \label{sec:modelado}
 
 Esta sección documenta la cuarta fase de CRISP-DM, ejecutada mediante tres scripts
-(\texttt{18\_model\_training.py} a \texttt{20\_feature\_importance.py}) sobre la tabla de
+(\var{18_model_training.py} a \var{20_feature_importance.py}) sobre la tabla de
 indicadores de la sección~\ref{sec:tabla-indicadores}.
 
 \subsection{Tipo de problema analítico}
 \label{sec:tipo-problema}
 
-\textbf{Decisión: regresión supervisada.} La variable objetivo, \texttt{n\_queries\_orig}
+\textbf{Decisión: regresión supervisada.} La variable objetivo, \var{n_queries_orig}
 (consultas originadas por celda H3 y semana), es numérica continua; la pregunta de
 investigación --- cómo varía la demanda según las condiciones territoriales --- exige
 estimar una magnitud, no asignar una etiqueta, por lo que un problema de clasificación
@@ -891,20 +891,20 @@ informativo de esta fase.
     XGBoost & \textit{Boosting} & Optimización secuencial de residuos con regularización integrada; referencia de alto desempeño \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{18\_model\_training.py} ---
-  \texttt{reports/03\_modeling/01\_model\_training.md}.}
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py} ---
+  \var{reports/03_modeling/01_model_training.md}.}
 \end{table}
 
-\texttt{n\_queries\_orig} está fuertemente sesgada a la derecha (mediana~3, media~45,
+\var{n_queries_orig} está fuertemente sesgada a la derecha (mediana~3, media~45,
 máximo~3.663 consultas/semana). Los cuatro modelos se entrenan sobre
-\texttt{log1p(n\_queries\_orig)} y las predicciones se revierten con \texttt{expm1} antes de
+\var{log1p(n_queries_orig)} y las predicciones se revierten con \texttt{expm1} antes de
 calcular cualquier métrica, de modo que todas las cifras reportadas en esta y la siguiente
 sección están en la escala original de consultas por semana.
 
 Nueve variables se excluyen deliberadamente por \textbf{fuga de información}:
-\texttt{n\_users\_orig}, \texttt{n\_sessions\_orig}, \texttt{n\_queries\_dest},
-\texttt{n\_users\_dest}, \texttt{dist\_gtfs\_mean\_dest\_m}, \texttt{dist\_gtfs\_min\_dest\_m},
-\texttt{pct\_uncovered\_dest}, \texttt{n\_queries\_total} y \texttt{od\_balance}. Todas son
+\var{n_users_orig}, \var{n_sessions_orig}, \var{n_queries_dest},
+\var{n_users_dest}, \var{dist_gtfs_mean_dest_m}, \var{dist_gtfs_min_dest_m},
+\var{pct_uncovered_dest}, \var{n_queries_total} y \var{od_balance}. Todas son
 manifestaciones simultáneas del mismo evento de demanda semanal que se pretende estimar y no
 estarían disponibles de forma independiente al momento de predecir; incluirlas produciría un
 desempeño espectacular y carente de valor, porque el modelo estaría estimando la demanda a
@@ -920,14 +920,14 @@ rendimiento.
     \toprule
     \textbf{Grupo} & \textbf{Naturaleza} & \textbf{Variables} \\
     \midrule
-    Territoriales de cobertura & Territorial & \texttt{dist\_gtfs\_mean\_orig\_m}, \texttt{pct\_uncovered\_orig} \\
-    Territoriales de patrón & Territorial & \texttt{mean\_trip\_dist\_m}, \texttt{dist\_center\_km} \\
-    Composición temporal & Temporal & \texttt{pct\_weekend\_orig}, \texttt{pct\_morning\_rush\_orig}, \texttt{pct\_evening\_rush\_orig} \\
-    Estacionales y de tendencia & Estacional & \texttt{week\_sin}, \texttt{week\_cos}, \texttt{week\_idx} \\
-    Autorregresivas & Autorregresiva & \texttt{lag1\_n\_queries\_orig}, \texttt{lag4\_n\_queries\_orig}, \texttt{roll\_mean4\_n\_queries\_orig} \\
+    Territoriales de cobertura & Territorial & \var{dist_gtfs_mean_orig_m}, \var{pct_uncovered_orig} \\
+    Territoriales de patrón & Territorial & \var{mean_trip_dist_m}, \var{dist_center_km} \\
+    Composición temporal & Temporal & \var{pct_weekend_orig}, \var{pct_morning_rush_orig}, \var{pct_evening_rush_orig} \\
+    Estacionales y de tendencia & Estacional & \var{week_sin}, \var{week_cos}, \var{week_idx} \\
+    Autorregresivas & Autorregresiva & \var{lag1_n_queries_orig}, \var{lag4_n_queries_orig}, \var{roll_mean4_n_queries_orig} \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{18\_model\_training.py}.}
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py}.}
 \end{table}
 
 \subsection{Proceso de entrenamiento}
@@ -951,7 +951,7 @@ para los cuatro modelos.
 Como se advirtió en la sección~\ref{sec:particion-cronologica}, el vacío estructural de siete
 semanas queda comprimido dentro de la ventana de prueba: las últimas ocho semanas observadas
 son 2024-W09, W10, y luego W18 a W23. Como el panel se indexa por semanas observadas y no por
-semanas calendario, \texttt{lag1\_n\_queries\_orig} en 2024-W18 apunta en realidad a
+semanas calendario, \var{lag1_n_queries_orig} en 2024-W18 apunta en realidad a
 2024-W10, ocho semanas calendario antes. Las variables autorregresivas --las más importantes
 del modelo, sección~\ref{sec:importancia-variables}-- llegan debilitadas precisamente dentro
 del conjunto de prueba, lo que explica una parte de la caída de desempeño entre entrenamiento
@@ -972,12 +972,12 @@ sobreajuste.
     \midrule
     Ridge & $\alpha \in \{0{,}1;\ 1{,}0;\ 10{,}0\}$ & $\alpha = 0{,}1$ & 45,14 \\
     Lasso & $\alpha \in \{0{,}001;\ 0{,}01;\ 0{,}1\}$ & $\alpha = 0{,}1$ & 40,06 \\
-    Random Forest & \texttt{max\_depth} $\in \{10, 20, \text{None}\}$ (300 árboles) & \texttt{max\_depth}$=10$ & 3,58 \\
-    XGBoost & \texttt{max\_depth}$\in\{3,6\}\times$ \texttt{lr}$\in\{0{,}05;0{,}1\}$ (300 árboles) & \texttt{max\_depth}$=6$, \texttt{lr}$=0{,}1$ & 4,17 \\
+    Random Forest & \var{max_depth} $\in \{10, 20, \text{None}\}$ (300 árboles) & \var{max_depth}$=10$ & 3,58 \\
+    XGBoost & \var{max_depth}$\in\{3,6\}\times$ \texttt{lr}$\in\{0{,}05;0{,}1\}$ (300 árboles) & \var{max_depth}$=6$, \texttt{lr}$=0{,}1$ & 4,17 \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{18\_model\_training.py} ---
-  \texttt{reports/03\_modeling/01\_model\_training.md}. MAE promedio de los cuatro pliegues
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py} ---
+  \var{reports/03_modeling/01_model_training.md}. MAE promedio de los cuatro pliegues
   de validación (consultas/semana).}
 \end{table}
 
@@ -996,7 +996,7 @@ sección~\ref{sec:evaluacion-resultados}.
 \label{sec:evaluacion-resultados}
 
 Esta sección documenta la quinta fase de CRISP-DM, ejecutada mediante cinco scripts
-(\texttt{21\_hypothesis\_tests.py} a \texttt{28\_ranking\_explainer.py}) sobre las
+(\var{21_hypothesis_tests.py} a \var{28_ranking_explainer.py}) sobre las
 predicciones de los cuatro modelos de la sección~\ref{sec:modelado}.
 
 \subsection{Métricas y resultados por modelo}
@@ -1026,8 +1026,8 @@ siempre la media.
     Ridge & 48,97 & 559,13 & $-15,491$ \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{19\_model\_comparison.py} ---
-  \texttt{reports/03\_modeling/02\_model\_comparison.md}.}
+  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py} ---
+  \var{reports/03_modeling/02_model_comparison.md}.}
 \end{table}
 
 \begin{figure}[htbp]
@@ -1035,7 +1035,7 @@ siempre la media.
   \caption{Predicho vs. observado, Random Forest, conjunto de prueba}
   \label{fig:pred-vs-obs}
   \includegraphics[width=0.7\textwidth]{imagenes/fig_pred_vs_obs_rf.png}
-  \fuente{Elaboración propia, a partir de \texttt{19\_model\_comparison.py}.}
+  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py}.}
 \end{figure}
 
 \subsubsection{Hallazgo: inestabilidad de extrapolación de los modelos lineales}
@@ -1044,7 +1044,7 @@ Ridge y Lasso muestran R\textsuperscript{2} fuertemente negativo en prueba pese 
 razonable en entrenamiento (MAE de 30,06 y 25,57 respectivamente): 50 y 42 de las 12.416
 predicciones de cada uno alcanzan el techo de seguridad de extrapolación impuesto sobre la
 reversión \texttt{expm1} (sección~\ref{sec:tipo-problema}). La causa es la combinación de una
-tendencia sostenida --\texttt{week\_idx} toma en prueba valores nunca vistos en
+tendencia sostenida --\var{week_idx} toma en prueba valores nunca vistos en
 entrenamiento-- con la asimetría extrema del objetivo (Gini~$=0{,}934$,
 sección~\ref{sec:sensibilidad-h3}): un pequeño error en escala logarítmica se amplifica
 exponencialmente al revertir la transformación. \textbf{No es un defecto de implementación:
@@ -1070,7 +1070,7 @@ valores observados en las hojas de entrenamiento.
     Ridge & 30,06 & 48,97 & $+18,92$ \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{19\_model\_comparison.py}.}
+  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py}.}
 \end{table}
 
 La brecha de Random Forest ($+8{,}00$) es menor que la de XGBoost ($+11{,}76$) pese a
@@ -1083,15 +1083,15 @@ contra una ventana de validación de 13 semanas no vista-- refuerzan esta lectur
   \caption{Curva de aprendizaje de Random Forest}
   \label{fig:curva-aprendizaje}
   \includegraphics[width=0.7\textwidth]{imagenes/fig_learning_curve.png}
-  \fuente{Elaboración propia, a partir de \texttt{23\_error\_analysis.py} ---
-  \texttt{reports/04\_evaluation/03\_error\_analysis.md}.}
+  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py} ---
+  \var{reports/04_evaluation/03_error_analysis.md}.}
 \end{figure}
 
 La brecha entrenamiento-validación crece de forma moderada a medida que aumenta el tamaño de
 entrenamiento ($+1{,}96 \to +1{,}65 \to +1{,}71 \to +2{,}57 \to +3{,}74$), con un MAE de
 entrenamiento que se mantiene bajo (1,26 a 2,19) mientras el de validación oscila en un rango
 razonable (3,2 a 5,9): la firma esperada de un árbol de profundidad acotada
-(\texttt{max\_depth}$=10$) que ajusta ruido de forma limitada, sin señal de varianza
+(\var{max_depth}$=10$) que ajusta ruido de forma limitada, sin señal de varianza
 descontrolada. La curva tiene solo cinco puntos por costo computacional --cada uno reentrena
 un modelo completo--, suficiente para descartar sobreajuste severo pero no para un
 diagnóstico fino.
@@ -1102,12 +1102,12 @@ diagnóstico fino.
 \subsubsection{H1 --- Brecha de cobertura centro-periferia}
 
 Se contrasta si las celdas periféricas (mayor distancia al centro) tienen una tasa de
-demanda no resuelta (\texttt{pct\_uncovered\_orig}) significativamente mayor que las
+demanda no resuelta (\var{pct_uncovered_orig}) significativamente mayor que las
 centrales. La unidad de análisis es la \textbf{celda}, no la celda-semana: se promedia
-\texttt{pct\_uncovered\_orig} sobre todas las semanas de cada celda, porque tratar cada
+\var{pct_uncovered_orig} sobre todas las semanas de cada celda, porque tratar cada
 semana como observación independiente constituiría pseudorreplicación --inflaría el tamaño
 muestral de 1.552 a decenas de miles y produciría un valor p espuriamente pequeño. Los
-grupos se definen por la mediana de \texttt{dist\_center\_km} (15,49~km): 776 celdas
+grupos se definen por la mediana de \var{dist_center_km} (15,49~km): 776 celdas
 centrales y 776 periféricas, un corte simple y documentado pero arbitrario, que no
 corresponde a ningún límite administrativo real.
 
@@ -1118,14 +1118,14 @@ corresponde a ningún límite administrativo real.
   \interlineadoSimple
   \begin{tabular}{lrr}
     \toprule
-    \textbf{Grupo} & \textbf{n celdas} & \textbf{Media \texttt{pct\_uncovered\_orig}} \\
+    \textbf{Grupo} & \textbf{n celdas} & \textbf{Media \var{pct_uncovered_orig}} \\
     \midrule
     Central & 776 & 0,213 \\
     Periferia & 776 & 0,351 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{21\_hypothesis\_tests.py} ---
-  \texttt{reports/04\_evaluation/01\_hypothesis\_tests.md}.}
+  \fuente{Elaboración propia, a partir de \var{21_hypothesis_tests.py} ---
+  \var{reports/04_evaluation/01_hypothesis_tests.md}.}
 \end{table}
 
 La prueba de Shapiro-Wilk rechazó la normalidad en ambos grupos ($p=2{,}18\times10^{-41}$ en
@@ -1167,7 +1167,7 @@ celdas; la explicación está en la magnitud, no en el conteo:
     Empate exacto & 439 & --- & --- \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{21\_hypothesis\_tests.py}.}
+  \fuente{Elaboración propia, a partir de \var{21_hypothesis_tests.py}.}
 \end{table}
 
 Random Forest gana por un margen grande en celdas de alta demanda y pierde por un margen
@@ -1190,7 +1190,7 @@ parciales que se describen a continuación.
   \caption{Distribución de residuos por celda, conjunto de prueba}
   \label{fig:residuos}
   \includegraphics[width=0.65\textwidth]{imagenes/fig_residuals_by_cell.png}
-  \fuente{Elaboración propia, a partir de \texttt{23\_error\_analysis.py}.}
+  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py}.}
 \end{figure}
 
 \subsubsection{Hallazgo: dos semanas de prueba son fragmentos de un día}
@@ -1217,8 +1217,8 @@ artefacto de cobertura de exportación no advertido al fijar la partición
     Las 6 semanas completas (sin las parciales) & 5,91 & 52,87 & 0,889 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{23\_error\_analysis.py} ---
-  \texttt{reports/04\_evaluation/03\_error\_analysis.md}.}
+  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py} ---
+  \var{reports/04_evaluation/03_error_analysis.md}.}
 \end{table}
 
 Esta monografía reporta \textbf{ambas cifras juntas}, y no una sola. El MAE de 10,19 se
@@ -1236,14 +1236,14 @@ hasta el dato crudo.
   \caption{Estabilidad temporal del error semanal en el conjunto de prueba}
   \label{fig:estabilidad-error}
   \includegraphics[width=0.7\textwidth]{imagenes/fig_weekly_error_stability.png}
-  \fuente{Elaboración propia, a partir de \texttt{23\_error\_analysis.py}. Las semanas
+  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py}. Las semanas
   2024-W18 y 2024-W23 (parciales) se resaltan.}
 \end{figure}
 
 El artefacto no se limita a las dos semanas donde se originó: 2024-W19, la semana
 inmediatamente posterior a 2024-W18, también registra un MAE elevado (11,38, más del doble de
 la mediana de las semanas limpias) pese a no tener ningún problema de datos propio, porque
-hereda de 2024-W18 un \texttt{lag1\_n\_queries\_orig} artificialmente bajo (909 consultas en
+hereda de 2024-W18 un \var{lag1_n_queries_orig} artificialmente bajo (909 consultas en
 vez de un nivel normal de más de 40.000). El horizonte de pronóstico evaluado no muestra
 degradación progresiva por sí solo; la única inestabilidad detectada tiene una causa puntual
 e identificada, no un problema estructural del modelo.
@@ -1255,7 +1255,7 @@ La pregunta de investigación --cómo se distribuye la demanda de información d
 resuelta y qué características del territorio se asocian con esa distribución-- se responde
 con evidencia convergente de tres análisis. Primero, H1 confirma estadísticamente que la
 brecha de cobertura es mayor en la periferia. Segundo, el gradiente espacial de demanda es
-real: la correlación de Spearman entre \texttt{dist\_center\_km} y la demanda decae tanto
+real: la correlación de Spearman entre \var{dist_center_km} y la demanda decae tanto
 para la demanda observada ($\rho=-0{,}615$, $p=2{,}8\times10^{-162}$) como para la predicha
 ($\rho=-0{,}618$, $p=3{,}3\times10^{-164}$).
 
@@ -1264,8 +1264,8 @@ para la demanda observada ($\rho=-0{,}615$, $p=2{,}8\times10^{-162}$) como para 
   \caption{Demanda semanal observada vs. distancia al centro}
   \label{fig:demanda-distancia}
   \includegraphics[width=0.7\textwidth]{imagenes/fig_demand_vs_distance.png}
-  \fuente{Elaboración propia, a partir de \texttt{22\_results\_analysis.py} ---
-  \texttt{reports/04\_evaluation/02\_results\_analysis.md}.}
+  \fuente{Elaboración propia, a partir de \var{22_results_analysis.py} ---
+  \var{reports/04_evaluation/02_results_analysis.md}.}
 \end{figure}
 
 Tercero, H2 muestra que el valor predictivo del modelo está concentrado exactamente donde
@@ -1281,7 +1281,7 @@ desplazamientos confirmados.
   \caption{Demanda semanal agregada, observada vs. predicha (conjunto de prueba)}
   \label{fig:demanda-semanal}
   \includegraphics[width=0.7\textwidth]{imagenes/fig_weekly_demand_test.png}
-  \fuente{Elaboración propia, a partir de \texttt{22\_results\_analysis.py}. Las semanas
+  \fuente{Elaboración propia, a partir de \var{22_results_analysis.py}. Las semanas
   2024-W18 y 2024-W23 (parciales, sección~\ref{sec:semanas-parciales}) explican los mayores
   desvíos agregados de la serie.}
 \end{figure}
@@ -1290,7 +1290,7 @@ desplazamientos confirmados.
 \label{sec:importancia-variables}
 
 Las variables autorregresivas dominan la importancia en Random Forest y XGBoost
-(\texttt{roll\_mean4\_n\_queries\_orig} explica el 97,9~\% de la reducción de impureza en
+(\var{roll_mean4_n_queries_orig} explica el 97,9~\% de la reducción de impureza en
 Random Forest), coherente con la fuerte autocorrelación semanal de la demanda documentada en
 la sección~\ref{sec:cobertura-temporal}.
 
@@ -1299,18 +1299,18 @@ la sección~\ref{sec:cobertura-temporal}.
   \caption{Importancia de variables (Gini), Random Forest}
   \label{fig:importancia-rf}
   \includegraphics[width=0.65\textwidth]{imagenes/fig_feature_importance_rf.png}
-  \fuente{Elaboración propia, a partir de \texttt{20\_feature\_importance.py} ---
-  \texttt{reports/03\_modeling/03\_feature\_importance.md}.}
+  \fuente{Elaboración propia, a partir de \var{20_feature_importance.py} ---
+  \var{reports/03_modeling/03_feature_importance.md}.}
 \end{figure}
 
 La señal territorial es más relevante de lo que sugiere la importancia por ganancia: en
-XGBoost, \texttt{dist\_center\_km} ocupa la octava posición por ganancia pero asciende al
+XGBoost, \var{dist_center_km} ocupa la octava posición por ganancia pero asciende al
 tercer lugar por magnitud media de SHAP, un método de interpretabilidad que atribuye a cada
 variable su contribución marginal a cada predicción individual. Lasso --que lleva 9 de 13
 coeficientes a cero, actuando como selector de variables-- conserva precisamente
-\texttt{dist\_center\_km} (coeficiente estandarizado $-0{,}424$),
-\texttt{roll\_mean4\_n\_queries\_orig} ($+0{,}396$), \texttt{lag1\_n\_queries\_orig}
-($+0{,}187$) y \texttt{pct\_uncovered\_orig} ($-0{,}077$) como la señal independiente más
+\var{dist_center_km} (coeficiente estandarizado $-0{,}424$),
+\var{roll_mean4_n_queries_orig} ($+0{,}396$), \var{lag1_n_queries_orig}
+($+0{,}187$) y \var{pct_uncovered_orig} ($-0{,}077$) como la señal independiente más
 robusta, con signos coherentes con H1: mayor distancia al centro y mayor proporción sin
 cobertura se asocian con menor demanda.
 
@@ -1345,8 +1345,8 @@ excluyen las semanas parciales de la sección~\ref{sec:semanas-parciales}):
     Ranking aleatorio (piso) & 0,022 & 0,104 & 0,001 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \texttt{26\_ranking\_metrics.py} ---
-  \texttt{reports/04\_evaluation/04\_ranking\_metrics.md}.}
+  \fuente{Elaboración propia, a partir de \var{26_ranking_metrics.py} ---
+  \var{reports/04_evaluation/04_ranking_metrics.md}.}
 \end{table}
 
 Random Forest no supera a la media móvil de 4 semanas en ninguna de las 6 semanas completas,
@@ -1365,7 +1365,7 @@ Ningún corte rescata la comparación: ni el estrato de demanda media (correlaci
   \caption{Comparación de métricas de ordenamiento por método y semana}
   \label{fig:ranking-comparacion}
   \includegraphics[width=0.75\textwidth]{imagenes/fig_ranking_comparison.png}
-  \fuente{Elaboración propia, a partir de \texttt{26\_ranking\_metrics.py}.}
+  \fuente{Elaboración propia, a partir de \var{26_ranking_metrics.py}.}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -1373,7 +1373,7 @@ Ningún corte rescata la comparación: ni el estrato de demanda media (correlaci
   \caption{Cómo se calcula e interpreta la métrica de priorización}
   \label{fig:ranking-explicador}
   \includegraphics[width=0.75\textwidth]{imagenes/fig_ranking_explainer.png}
-  \fuente{Elaboración propia, a partir de \texttt{28\_ranking\_explainer.py}.}
+  \fuente{Elaboración propia, a partir de \var{28_ranking_explainer.py}.}
 \end{figure}
 
 Un coeficiente de correlación de rangos alto --como el $\rho=0{,}877$ entre demanda
@@ -1438,7 +1438,7 @@ sección~\ref{sec:comprension-negocio}, qué celdas de baja cobertura conviene a
 
 \subsection{Prototipo y arquitectura}
 
-Se construyó un \textbf{servicio real y ejecutable}, no solo un diagrama: \texttt{src/trufi\_ds/api.py}
+Se construyó un \textbf{servicio real y ejecutable}, no solo un diagrama: \var{src/trufi_ds/api.py}
 (FastAPI), que carga el modelo Random Forest final y reconstruye, para cualquier celda, el
 vector de variables de la semana siguiente a la última observada, con exactamente la misma
 lógica de ingeniería de características usada en el entrenamiento
@@ -1453,15 +1453,15 @@ verificable localmente satisface el requisito con evidencia y no solo con intenc
   \label{fig:arquitectura}
   \includegraphics[width=0.85\textwidth]{imagenes/logo_facultad.png}
   \fuente{Elaboración propia. Diagrama descrito textualmente a continuación; el flujo
-  completo (Mermaid) está documentado en \texttt{reports/05\_deployment/01\_deployment\_architecture.md}.}
+  completo (Mermaid) está documentado en \var{reports/05_deployment/01_deployment_architecture.md}.}
 \end{figure}
 
 El flujo conecta componentes que ya existen como código en este repositorio, sin
-componentes hipotéticos: el feed GTFS (actualización semanal, \texttt{run\_update\_pipeline.py})
+componentes hipotéticos: el feed GTFS (actualización semanal, \var{run_update_pipeline.py})
 y las exportaciones de consultas alimentan el cálculo de cobertura
 (sección~\ref{sec:cobertura-gtfs}) y la tabla de indicadores
 (sección~\ref{sec:tabla-indicadores}); de ahí se derivan, por un lado, el reentrenamiento
-trimestral del modelo (\texttt{18\_model\_training.py}) y, por otro, la reconstrucción del
+trimestral del modelo (\var{18_model_training.py}) y, por otro, la reconstrucción del
 panel de features que consume el servicio de predicción; el plan de monitoreo
 (sección~\ref{sec:monitoreo}) vigila el servicio en producción.
 
@@ -1482,7 +1482,7 @@ controlado.
     \midrule
     \texttt{\small GET /predict?\allowbreak cell=\allowbreak 888b2c8ae5fffff}\newline (celda central, alta demanda) &
       Demanda predicha para 2024-W24: 737,0 consultas; distancia al centro 2,2~km; sin
-      brecha de cobertura (\texttt{pct\_uncovered\_orig}$=0$) \\
+      brecha de cobertura (\var{pct_uncovered_orig}$=0$) \\
     \texttt{\small GET /predict?\allowbreak cell=\allowbreak 888b2c80d5fffff}\newline (celda periférica, baja demanda) &
       Demanda predicha: 8,2 consultas; distancia al centro 17,2~km \\
     \texttt{\small GET /predict?\allowbreak cell=\allowbreak celda\_inexistente} &
@@ -1492,8 +1492,8 @@ controlado.
       en vivo sobre la última semana observada \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{24\_deployment\_architecture.py} ---
-  \texttt{reports/05\_deployment/01\_deployment\_architecture.md}.}
+  \fuente{Elaboración propia, a partir de \var{24_deployment_architecture.py} ---
+  \var{reports/05_deployment/01_deployment_architecture.md}.}
 \end{table}
 
 Construir y ejercitar el prototipo --no solo describirlo-- expuso una limitación operativa
@@ -1520,8 +1520,8 @@ accionable.
   \caption{Cuadrantes de priorización: demanda esperada vs. cobertura GTFS}
   \label{fig:cuadrantes-priorizacion}
   \includegraphics[width=0.75\textwidth]{imagenes/fig_priority_quadrants.png}
-  \fuente{Elaboración propia, a partir de \texttt{27\_priority\_cells.py} ---
-  \texttt{reports/05\_deployment/03\_priority\_cells.md}.}
+  \fuente{Elaboración propia, a partir de \var{27_priority_cells.py} ---
+  \var{reports/05_deployment/03_priority_cells.md}.}
 \end{figure}
 
 El top-20 de celdas prioritarias concentra el \textbf{70,5~\%} de toda la demanda no resuelta
@@ -1555,13 +1555,13 @@ proyecto, no de valores convencionales.
     de las 6 semanas de prueba limpias) durante 2 semanas consecutivas $\to$ reentrenar antes
     del ciclo trimestral \\
     Actualización del feed GTFS & Semanal & Automática, ya implementada
-    (\texttt{run\_update\_pipeline.py}) \\
+    (\var{run_update_pipeline.py}) \\
     Reentrenamiento completo & Trimestral & Alineado con la ventana de 13 semanas de la
     validación cruzada (sección~\ref{sec:proceso-entrenamiento}) \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \texttt{25\_monitoring\_plan.py} ---
-  \texttt{reports/05\_deployment/02\_monitoring\_plan.md}.}
+  \fuente{Elaboración propia, a partir de \var{25_monitoring_plan.py} ---
+  \var{reports/05_deployment/02_monitoring_plan.md}.}
 \end{table}
 
 El chequeo de completitud de datos existe \emph{porque} la sección~\ref{sec:semanas-parciales}
