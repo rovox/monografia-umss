@@ -1,31 +1,40 @@
 % ============================================================
-%  CARÁTULA  (Instrucción 3.3 + modelo del Anexo)
+%  CARÁTULA  (guía §3.3 + modelo del Anexo)
 %  ------------------------------------------------------------
 %  Reglas implementadas literalmente:
-%   - Línea 1: UNIVERSIDAD MAYOR DE SAN SIMÓN  (Arial 16, negrilla)
-%   - Línea 2: FACULTAD DE CIENCIAS Y TECNOLOGÍA (Arial 14, negrilla)
-%   - Línea 3: DIRECCIÓN DE POSGRADO           (Arial 12, negrilla)
+%   - Línea 1: UNIVERSIDAD MAYOR DE SAN SIMÓN  (Arial 16, neg.)
+%   - Línea 2: FACULTAD DE CIENCIAS Y TECNOLOGÍA (Arial 14, neg.)
+%   - Línea 3: DIRECCIÓN DE POSGRADO           (Arial 12, neg.)
 %     ...las tres en INTERLINEADO SIMPLE.
-%   - Logo UMSS y logo FCyT: justificación IZQUIERDA.
-%   - Logo Dirección de Posgrado: sección DERECHA, alineado con
-%     la parte superior de la primera línea.
-%   - TÍTULO: mayúsculas, Arial 20 negrilla, centrado; si ocupa
-%     más de una línea, en forma de PIRÁMIDE INVERTIDA.
-%   - 3 líneas abajo: "MONOGRAFÍA PRESENTADA..." (Arial 12, neg.)
-%   - 5 líneas abajo: "POSTULANTE" (Arial 14, neg.) y a 1 cm
-%     a la derecha ": NOMBRE".
-%   - Al pie, centrado: "Cochabamba – Bolivia" y el AÑO (Arial 12).
-%  La carátula NO muestra número de página pero SÍ cuenta (3.1).
+%   - Logos UMSS y Facultad a la IZQUIERDA, lado a lado;
+%     logo de Posgrado a la DERECHA, alineado con el borde
+%     superior de la primera línea.
+%   - TÍTULO: mayúsculas, Arial 20 negrita, centrado, en
+%     pirámide invertida mediante saltos de línea explícitos
+%     configurables en configuracion.tex (sin reducir el tamaño).
+%   - Leyenda "MONOGRAFÍA PRESENTADA...": 3 líneas por debajo
+%     del título, a 2,5 cm del margen izquierdo, con
+%     justificación completa, Arial 12 negrita, mayúsculas.
+%   - POSTULANTE: 5 líneas por debajo de la leyenda; "POSTULANTE"
+%     en Arial 14 negrita y ": NOMBRE" 1 cm a su derecha,
+%     con justificación completa.
+%   - Pie centrado: "Cochabamba – Bolivia" y el AÑO (Arial 12
+%     negrita, interlineado sencillo) y dos líneas de espacio
+%     antes del salto de página.
+%   - Los espacios verticales NO son medidas fijas sino PEGAMENTO
+%     que se estira (\vfill): así el pie nunca empuja la carátula
+%     a una segunda hoja por mucho que el título crezca.
+%  La carátula NO muestra folio pero SÍ cuenta en la serie.
 % ============================================================
 
 \begin{titlingpage}
-\thispagestyle{empty}     % sin folio visible (pero la página se cuenta)
+\thispagestyle{empty}     % sin folio visible (pero la hoja se cuenta)
 \interlineadoSimple       % toda la carátula va en interlineado simple
 
 % ---------- Bloque superior: logos + encabezado institucional
-% Se usa una fila de tres cajas superiores (\raisebox/[t]) para
-% que los logos queden alineados con la PARTE SUPERIOR de la
-% primera línea de texto, tal como pide la guía.
+% Una fila de tres cajas superiores (\raisebox/[t]) para que los
+% logos queden alineados con la PARTE SUPERIOR de la primera
+% línea de texto, tal como pide la guía.
 \noindent
 \begin{minipage}[t]{0.21\textwidth}
   \vspace{0pt}
@@ -48,13 +57,12 @@
   \includegraphics[height=1.5cm]{imagenes/logo_posgrado.png}
 \end{minipage}
 
-\vspace{4.5cm}
+% Espacio proporcional: se estira hasta llenar la hoja.
+\vfill
 
 % ---------- TÍTULO DE LA MONOGRAFÍA -------------------------
-% \tituloMonografia se define en main.tex (datos del proyecto).
-% Para la "pirámide invertida" cuando el título ocupa varias
-% líneas, escribir el título con \\ donde se desee el corte:
-% la primera línea más larga y las siguientes más cortas.
+% \tituloMonografia (configuracion.tex) trae los renglones ya
+% cortados; aquí solo se pasa a mayúsculas y se centra.
 \begin{center}
   {\fontsize{20}{26}\selectfont\bfseries
    \MakeUppercase{\tituloMonografia}\par}
@@ -63,30 +71,55 @@
 \vspace{3\baselineskip}   % "tres líneas por debajo"
 
 % ---------- Leyenda de presentación -------------------------
-\noindent
-\begin{center}
-  {\fontsize{12}{16}\selectfont\bfseries
-   MONOGRAFÍA PRESENTADA PARA OBTENER EL CERTIFICADO\\[2pt]
-   DE DIPLOMADO EN \MakeUppercase{\nombreDiplomado}\ \nombreVersion\ VERSIÓN\par}
-\end{center}
+% A 2,5 cm del margen izquierdo y con justificación completa:
+% una caja de 13,59 cm de ancho (el resto del bloque útil) en la
+% que el texto se reparte a lo largo de la línea.
+\noindent\hspace*{2.5cm}%
+\begin{minipage}{\dimexpr\textwidth-2.5cm\relax}
+  \setlength{\parindent}{0pt}
+  \fontsize{12}{16}\selectfont\bfseries
+  MONOGRAFÍA PRESENTADA PARA OBTENER EL CERTIFICADO
+  DE DIPLOMADO EN \MakeUppercase{\nombreDiplomado}\ \nombreVersion\ VERSIÓN\par
+\end{minipage}\par
 
 \vspace{5\baselineskip}   % "cinco líneas por debajo"
 
 % ---------- Postulante --------------------------------------
 % "POSTULANTE" y, 1 cm a la derecha, ": NOMBRE DEL POSTULANTE".
-\noindent\hspace{1.5cm}%
-\begin{minipage}{\dimexpr\textwidth-1.5cm\relax}
-  \raggedright   % sin justificar: evita que el nombre se estire entre palabras
-  {\fontsize{14}{16}\selectfont\bfseries
-   POSTULANTE\hspace{1cm}: \MakeUppercase{\nombrePostulante}\par}
-\end{minipage}
+\noindent\hspace*{2.5cm}%
+\begin{minipage}{\dimexpr\textwidth-2.5cm\relax}
+  \setlength{\parindent}{0pt}
+  \fontsize{14}{16}\selectfont\bfseries
+  POSTULANTE\hspace{1cm}: \MakeUppercase{\nombrePostulante}\par
+\end{minipage}\par
 
+% ---------- Docente y módulo (interruptor, oculto por defecto)
+\ifmostrarDocente
+  \vspace{\baselineskip}
+  \noindent\hspace*{2.5cm}%
+  \begin{minipage}{\dimexpr\textwidth-2.5cm\relax}
+    \setlength{\parindent}{0pt}
+    \fontsize{12}{16}\selectfont\bfseries
+    DOCENTE: \MakeUppercase{\nombreDocente}\par
+    MÓDULO: \MakeUppercase{\nombreModulo}\par
+  \end{minipage}\par
+\fi
+
+% Espacio proporcional: empuja el pie al borde inferior.
 \vfill
 
 % ---------- Pie: lugar y año --------------------------------
-\begin{center}
-  {\fontsize{12}{14}\selectfont\bfseries Cochabamba -- Bolivia\par}
-  {\fontsize{12}{14}\selectfont\bfseries \anioMonografia\par}
-\end{center}
+{\centering
+  \fontsize{12}{14}\selectfont\bfseries
+  \MakeUppercase{\ciudadMonografia}\par
+  \anioMonografia\par}
+
+\vspace{2\baselineskip}   % "dos espacios antes del salto de página"
 
 \end{titlingpage}
+
+% El entorno "titlingpage" reinicia el contador de página a 1
+% al terminar, de modo que la hoja siguiente repetiría el número
+% de la carátula. La carátula ocupa exactamente una hoja y SÍ
+% cuenta en la serie, así que la siguiente es la número 2.
+\setcounter{page}{2}

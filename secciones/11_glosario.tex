@@ -1,0 +1,41 @@
+% ============================================================
+%  GLOSARIO Y ABREVIATURAS
+%  ------------------------------------------------------------
+%  Va al final de los preliminares, después del índice de
+%  figuras (orden exigido por la guía §2.2), y se incluye solo
+%  si el interruptor "mostrarOpcionales" está encendido.
+%  Se incorpora únicamente cuando el proyecto usa términos
+%  técnicos, siglas o conceptos que requieren aclaración: si el
+%  proyecto no los usa, basta con borrar el cuerpo del entorno
+%  y el capítulo desaparece del documento sin dejar hojas en
+%  blanco (no hay entradas vacías porque la lista está completa).
+% ============================================================
+
+\chapter*{GLOSARIO Y ABREVIATURAS}
+\addcontentsline{toc}{chapter}{GLOSARIO Y ABREVIATURAS}
+\begingroup           % \interlineadoResumen no debe filtrarse al resto del documento
+\interlineadoResumen
+\begin{description}[leftmargin=3cm,style=nextline,font=\bfseries]
+  \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}. Metodología
+    estándar para proyectos de ciencia de datos.
+  \item[EDA] Análisis Exploratorio de Datos (\textit{Exploratory Data Analysis}).
+  \item[ML] Aprendizaje automático (\textit{Machine Learning}).
+  \item[POI] Punto de Interés (\textit{Point of Interest}): un lugar georreferenciado con
+    una categoría (tienda, salud, educación, etc.).
+  \item[GTFS] \textit{General Transit Feed Specification}. Formato estándar en el que Trufi
+    App publica las rutas de transporte que ha mapeado.
+  \item[OSM] OpenStreetMap, el mapa colaborativo del que se obtienen los POI.
+  \item[H3] Sistema de teselación jerárquica en hexágonos desarrollado por Uber, usado para
+    agregar datos geográficos en celdas de tamaño uniforme.
+  \item[MAUP] \textit{Modifiable Areal Unit Problem} (Problema de la Unidad de Área
+    Modificable): los resultados de un análisis territorial pueden cambiar según la
+    zonificación elegida.
+  \item[OTP] OpenTripPlanner, motor de cálculo de itinerarios de transporte público a
+    partir de un feed GTFS.
+  \item[PR-AUC] Área bajo la curva de precisión-recall; métrica preferida sobre ROC-AUC
+    cuando las clases están desbalanceadas.
+  \item[UUID] Identificador único universal; formato del \var{userID} recibido en los
+    datos.
+\end{description}
+\endgroup
+\clearpage

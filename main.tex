@@ -14,78 +14,113 @@
 %  Ver README.md para el detalle.
 % ============================================================
 
-\input{preambulo.tex}
+%  PANEL DE CONTROL: datos del proyecto e interruptores.
+%  Va ANTES del preámbulo porque el formato reacciona a los
+%  interruptores (folio, numeración, color, tipografía).
+\input{configuracion.tex}
 
-% ============================================================
-%  DATOS DEL PROYECTO  — EDITE SOLO ESTAS LÍNEAS
-%  Todo lo demás (carátula, encabezados, índices) se completa
-%  automáticamente a partir de estos valores.
-% ============================================================
-\newcommand{\tituloMonografia}{Identificación de Brechas de Información de Transporte
-  Público en el Eje Metropolitano de Cochabamba\\mediante Análisis Espacial de Consultas
-  de Ruta de Trufi App\\(2022-2024)}
-% Versión en una sola línea, solo para metadatos del PDF (pdftitle no admite \\).
-\newcommand{\tituloMonografiaPlano}{Identificación de Brechas de Información de Transporte
-  Público en el Eje Metropolitano de Cochabamba mediante Análisis Espacial de Consultas de
-  Ruta de Trufi App (2022-2024)}
-\newcommand{\nombreDiplomado}{Ciencia de Datos}
-\newcommand{\nombreVersion}{4ta.}
-\newcommand{\nombrePostulante}{José Roberto Vargas Orellana}
-\newcommand{\anioMonografia}{2026}
+\input{preambulo.tex}
 
 % Metadatos internos del PDF (buscables, aparecen en Propiedades)
 \hypersetup{
   pdftitle={\tituloMonografiaPlano},
   pdfauthor={\nombrePostulante},
   pdfsubject={Monografía — Diplomado en \nombreDiplomado},
-  pdfkeywords={Ciencia de Datos, CRISP-DM, UMSS}
+  pdfkeywords={Ciencia de Datos, CRISP-DM, UMSS},
+  pdflang={es-BO}
 }
+
+% Interruptor "compilar un solo capítulo": \includeonly deja fuera
+% el resto sin tocar ni una línea de los archivos de contenido.
+% Es lo que permite escribir el capítulo 7 sin recompilar los 100
+% anteriores. La TeX exige que se emita en el PREÁMBULO, así que
+% va aquí y no junto a los \include.
+\ifcompilarUnCapitulo
+  \includeonly{secciones/\capituloUnico}
+\fi
 
 \begin{document}
 
 % ============================================================
-%  SECCIÓN PRELIMINAR
-%  \frontmatter activa la numeración romana en minúsculas
-%  (i, ii, iii, iv...) de forma automática — regla 3.1.
+%  NUMERACIÓN (interruptor "numeraciónContinua" del panel)
+%  ------------------------------------------------------------
+%  Guía (predeterminado): los preliminares van en romanos
+%  minúscula y el cuerpo arranca en arábigo 1.
+%  Modo "continua" (como el modelo): una sola serie arábiga
+%  desde la carátula.
 % ============================================================
-\frontmatter
+\ifnumeracionContinua
+  \pagenumbering{arabic}
+\else
+  \frontmatter
+\fi
 
-% Carátula: no muestra número de página, pero SÍ se cuenta.
+% ============================================================
+%  PRELIMINARES
+%  Orden exigido (guía §2.2, con el orden del modelo como
+%  desempate): carátula → dedicatoria → agradecimientos →
+%  resumen → índice → índice de tablas → índice de figuras →
+%  glosario y abreviaturas. Cada uno en página nueva.
+%  Solo se incluyen los que existen: no se dejan hojas en
+%  blanco ni entradas vacías (interruptor
+%  "mostrarOpcionales").
+% ============================================================
+
+% Carátula: no muestra folio, pero SÍ se cuenta.
 \include{secciones/00_caratula}
 
-% Dedicatoria, agradecimientos, resumen, glosario.
+% Dedicatoria, agradecimientos y resumen.
 \include{secciones/01_preliminares}
 
 % ---------- ÍNDICE GENERAL ----------------------------------
 % La versión con asterisco (\tableofcontents*) evita que el
 % índice se liste a sí mismo dentro del índice.
 % \encabezadoIndice imprime la palabra "Página" sobre la columna
-% de números, tal como exige la regla 3.4.
+% de folios, tal como exige la guía §3.4.
 \clearpage
 \tableofcontents*
 \clearpage
 
 % ---------- ÍNDICE DE TABLAS --------------------------------
 % Se genera automáticamente a partir de cada \caption dentro de
-% un entorno "table". Comente esta línea si el documento no
-% contiene tablas.
-\listoftables*
-\clearpage
+% un entorno "table". No se incluye si el interruptor de
+% preliminares opcionales está apagado.
+\ifmostrarOpcionales
+  \listoftables*
+  \clearpage
+\fi
 
 % ---------- ÍNDICE DE FIGURAS -------------------------------
-% Se genera automáticamente a partir de cada \caption dentro de
-% un entorno "figure". Comente esta línea si no hay figuras.
-\listoffigures*
+\ifmostrarOpcionales
+  \listoffigures*
+  \clearpage
+\fi
+
+% ---------- GLOSARIO Y ABREVIATURAS -------------------------
+% Va después de los índices (orden §2.2) y antes del cuerpo.
+\ifmostrarOpcionales
+  \include{secciones/11_glosario}
+\fi
+
+% Se recuerda la última hoja preliminar para poder continuar la
+% numeración arábiga desde ahí si el modo "continua" está activo.
+\guardarPagPreliminar
 \clearpage
 
 % ============================================================
 %  CUERPO DE LA MONOGRAFÍA
-%  \mainmatter reinicia la numeración en arábigo desde 1 — 3.1.
-%  Cada \chapter empieza automáticamente en página nueva.
+%  \mainmatter reinicia la numeración en arábigo desde 1 (guía
+%  §3.1); en modo "continua" se restaura el número que tenía
+%  la última hoja preliminar, de modo que la serie arábiga no
+%  se corta.  Cada \chapter empieza en página nueva por su
+%  cuenta.
 % ============================================================
 \mainmatter
+\ifnumeracionContinua
+  \setcounter{page}{\value{pagPreliminar}}
+\fi
 \setSpacing{1.9034}   % red de seguridad: reafirma el interlineado doble del
-                      % cuerpo por si algún preliminar cambió \baselinestretch
+                      % cuerpo por si algún preliminar cambió \baselineskip
                       % sin agruparlo (ver secciones/01_preliminares.tex)
 
 \include{secciones/02_introduccion}     % 1. Introducción

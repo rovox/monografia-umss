@@ -1,0 +1,123 @@
+% ============================================================
+%  PANEL DE CONTROL — configuracion.tex
+%  ------------------------------------------------------------
+%  TODO lo que cambia de una versión a otra vive AQUÍ. Ni
+%  main.tex ni los archivos de secciones/ llevan datos ni
+%  interruptores de formato.
+%
+%  Uso:  main.tex empieza con  \input{configuracion.tex}
+%        (antes del preámbulo, para que este pueda reaccionar a
+%        los interruptores) y después entra el contenido.
+% ============================================================
+
+% ============================================================
+%  1. DATOS DEL PROYECTO
+% ============================================================
+
+% ---------- Título de la monografía ------------------------
+% El título se imprime en MAYÚSCULAS, Arial 20 negrita, centrado
+% y con los saltos de línea ESCRITOS A MANO: la guía no permite
+% reducir el tamaño de la fuente, así que la pirámide invertida
+% se consigue cortando el título en renglones explícitos.
+% El bloque útil mide 16,09 cm; a Arial 20 negrita el renglón más
+% ancho que puede empezar por "IDENTIFICACIÓN" mide 11,8 cm
+% (la palabra siguiente ya no cabe), de modo que la pirámide
+% necesariamente tiene su base en los renglones 2 y 3 y se
+% estrecha hacia abajo, que es la silueta del modelo.
+% Anchuras de los renglones, de arriba abajo:
+%   11,8 · 15,8 · 15,3 · 12,0 · 12,6 · 3,8 cm
+% Para cambiar el corte basta reescribir estas líneas: si un
+% renglón no cabe en 16,09 cm se partirá en dos (y la pirámide se
+% pierde), así que conviene medir el resultado con
+% "scripts/verificar" tras cada ajuste.
+\newcommand{\tituloLineaA}{Identificación de Brechas de}
+\newcommand{\tituloLineaB}{Información de Transporte Público en}
+\newcommand{\tituloLineaC}{el Eje Metropolitano de Cochabamba}
+\newcommand{\tituloLineaD}{mediante Análisis Espacial de}
+\newcommand{\tituloLineaE}{Consultas de Ruta de Trufi App}
+\newcommand{\tituloAnio}{(2022-2024)}
+\newcommand{\tituloMonografia}{%
+  \tituloLineaA\\
+  \tituloLineaB\\
+  \tituloLineaC\\
+  \tituloLineaD\\
+  \tituloLineaE\\
+  \tituloAnio}
+% Versión en una sola línea, solo para los metadatos del PDF
+% (\hypersetup no admite saltos de línea).
+\newcommand{\tituloMonografiaPlano}{Identificación de Brechas de Información de Transporte
+  Público en el Eje Metropolitano de Cochabamba mediante Análisis Espacial de Consultas
+  de Ruta de Trufi App (2022-2024)}
+% Título corto: el del encabezado corrido del cuerpo (Fase 5).
+\newcommand{\tituloCorto}{Brechas de información de transporte público en Cochabamba}
+
+% ---------- Postulante, programa, versión y año --------------
+\newcommand{\nombreDiplomado}{Ciencia de Datos}
+\newcommand{\nombreVersion}{4ta.}
+\newcommand{\nombrePostulante}{José Roberto Vargas Orellana}
+\newcommand{\anioMonografia}{2026}
+\newcommand{\ciudadMonografia}{Cochabamba -- Bolivia}
+
+% ---------- Docente y módulo (línea oculta por defecto) -----
+% La guía los menciona en §2 pero no aparecen en el modelo de
+% la carátula, así que quedan ocultos. Para mostrarlos basta
+% poner \mostrarDocentetrue más abajo.
+\newcommand{\nombreDocente}{Nombre del docente}
+\newcommand{\nombreModulo}{Nombre del módulo}
+
+% ============================================================
+%  2. INTERRUPTORES
+% ------------------------------------------------------------
+%  El valor por defecto de cada línea es el de la guía; la
+%  alternativa se consigue cambiando solo el "true"/"false".
+% ============================================================
+
+% ---------- Numeración de páginas ---------------------------
+%   false (guía)  = romanos en los preliminares + arábigos desde 1
+%   true  (modelo)= arábiga continua desde la carátula
+\newif\ifnumeracionContinua
+\numeracionContinuafalse
+
+% ---------- Posición del folio ------------------------------
+%   false = abajo y centrado (lo exige la guía)
+%   true  = abajo a la derecha
+\newif\iffolioDerecha
+\folioDerechafalse
+
+% ---------- Línea docente/módulo en la carátula --------------
+%   false = oculta · true = visible
+\newif\ifmostrarDocente
+\mostrarDocentefalse
+
+% ---------- Modo del documento ------------------------------
+%   false = final      (falla la compilación si quedan marcadores)
+%   true  = borrador   (resalta los marcadores de trabajo)
+\newif\ifmodoBorrador
+\modoBorradorfalse
+
+% ---------- Color ------------------------------------------
+%   true  = digital, con el azul marino de acento
+%   false = impresión, todo en negro y gris
+\newif\ifcolorDigital
+\colorDigitaltrue
+
+% ---------- Preliminares opcionales ------------------------
+%   true  = mostrar dedicatoria, agradecimientos, glosario e
+%           índices de tablas y figuras si existen
+%   false = ocultarlos
+\newif\ifmostrarOpcionales
+\mostrarOpcionalestrue
+
+% ---------- Compilar un solo capítulo ----------------------
+%   false = documento completo
+%   true  = solo el capítulo indicado en \capituloUnico
+%           (útil para escribir una sección sin recompilar todo)
+\newif\ifcompilarUnCapitulo
+\compilarUnCapitulofalse
+\newcommand{\capituloUnico}{08_desarrollo}
+
+% ---------- Estilo de bibliografía -------------------------
+%   false = APA: alfabética, sin numerar (predeterminado)
+%   true  = numerada, formato de la guía §3.6
+\newif\ifbibNumerada
+\bibNumeradafalse

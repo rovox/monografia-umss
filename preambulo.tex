@@ -135,8 +135,33 @@
 % memoir define \frontmatter (activa romanos i,ii,iii...) y
 % \mainmatter (reinicia en arábigo 1,2,3...) automáticamente:
 % así se cumple 3.1 sin tocar contadores a mano.
-\pagestyle{plain}   % memoir: folio centrado en el pie -> exige "inferior y centrada"
-\aliaspagestyle{chapter}{plain}   % la 1a página de cada capítulo también usa "plain"
+% La POSICIÓN del folio (guía §3.1: abajo y centrada) la fija
+% el interruptor "folioDerecha" del panel de control; con
+% fancyhdr se cambia en una línea en vez de reescribir estilos.
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}   % Fase 5 añade el filete del encabezado
+\renewcommand{\footrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+\iffolioDerecha
+  \fancyfoot[C]{}\fancyfoot[R]{\thepage}
+\fi
+% La primera página de cada capítulo (memoir le aplica el
+% estilo "plain") lleva el mismo folio y ningún encabezado.
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\thepage}%
+  \iffolioDerecha\fancyfoot[C]{}\fancyfoot[R]{\thepage}\fi
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}}
+\aliaspagestyle{chapter}{plain}
+\aliaspagestyle{part}{plain}
+% Copia del número de la última hoja preliminar: permite que el
+% interruptor "numeracionContinua" reanude la serie arábica
+% donde terminó el índice de figuras, en vez de reiniciarla.
+\newcounter{pagPreliminar}
+\newcommand{\guardarPagPreliminar}{\setcounter{pagPreliminar}{\value{page}}}
 
 % ---------- 7. TITULOS DE SECCIONES (Instrucción 3) ---------
 % "Títulos principales en Arial 14 y negrilla": se usa \chapter

@@ -4,6 +4,7 @@
 Mide, sin dependencias externas de Python (solo poppler-utils):
   - márgenes efectivos del texto (pdftotext -bbox-layout)
   - interlineado de la prosa (distancia entre líneas consecutivas)
+  - secuencia y posición de los folios (romanos/arábigos, abajo y centrados)
   - fuentes incrustadas (pdffonts): solo Arial/Liberation Sans,
     Garamond/EB Garamond e IBM Plex Mono
   - número de páginas (pdfinfo)
@@ -32,6 +33,30 @@ TOL_INTERLINEADO = 0.5
 DESBORDE_MAX = 2.0
 # Fuentes admitidas (nombre sin el prefijo de subconjunto "ABCDEF+")
 FUENTES_OK = re.compile(r"^(Arial|LiberationSans|Garamond|EBGaramond|IBMPlexMono)")
+# Páginas que cuentan en la serie pero NO muestran folio (guía §3.1):
+# carátula, dedicatoria y agradecimientos, en ese orden.
+SIN_FOLIO_INICIAL = 3
+# Folio: forma admitida en el pie de página
+FOLIO = re.compile(r"^(?:[ivxlcdm]{1,7}|[0-9]{1,3})$")
+# Marcadores de borrador permitidos: los cuatro "[Incluya ...]" de los
+# Anexos C a F son el contenido provisional que el autor dejó escrito,
+# no notas internas de trabajo. Si el autor los sustituye por texto
+# definitivo, este patrón deja de encontrar nada y el aviso desaparece.
+# La lista se reconoce por su encabezado, no por el número de página.
+MARCADERES_PERMITIDOS = re.compile(
+    r"^\[(?:Incluya|pendiente de consolidar)", re.I)
+
+
+def roman(n):
+    """Convierte 1..20 en romanos minúscula (para comprobar la serie)."""
+    tabla = ((10, "x"), (9, "ix"), (5, "v"), (4, "iv"), (1, "i"))
+    salida = ""
+    for valor, simbolo in tabla:
+        while n >= valor:
+            salida += simbolo
+            n -= valor
+    return salida
+
 
 
 def ejecutar(*args):
@@ -131,6 +156,109 @@ def medir_interlineado(cajas):
     return moda, dentro
 
 
+def modo_continuo(ruta="configuracion.tex"):
+    """Lee del panel de control si la numeración es continua.
+
+    Así el verificador valida la serie que realmente está en marcha
+    (guía: romanos + arábigos; modelo: una sola serie arábiga) en vez
+    de dar por hecho el modo por defecto.
+    """
+    if not os.path.exists(ruta):
+        return False
+    return bool(re.search(r"^\\numeracionContinuatrue\s*$",
+                          open(ruta, encoding="utf-8").read(), re.M))
+
+
+def comprobar_folios(cajas, m, continua=False):
+    """Comprueba la serie y la posición de los folios (guía §3.1 y §3.2).
+
+    Exige: las tres primeras hojas (carátula, dedicatoria y
+    agradecimientos) sin folio visible; todas las demás con folio
+    abajo y centrado en el bloque de texto; serie romana
+    consecutiva en los preliminares y serie arábiga que arranca en
+    1 en la primera hoja del cuerpo y sigue sin saltos.
+
+    Devuelve (problemas, resumen legible).
+    """
+    problemas = []
+    for numero, (ancho, alto, bloques) in enumerate(cajas, start=1):
+        lineas = [l for b in bloques for l in b]
+        # El folio vive por debajo del bloque de texto (el cuerpo nunca
+        # baja de ahí), lo que además descarta como falso positivo
+        # cualquier número suelto al final de una tabla.
+        candidatos = [l for l in lineas
+                      if l[1] > alto - 2.9 * CM and l[3] < alto - 0.8 * CM
+                      and FOLIO.match(l[4].strip())]
+        if numero <= SIN_FOLIO_INICIAL:
+            if candidatos:
+                problemas.append(
+                    f"la hoja {numero} muestra el folio {candidatos[0][4].strip()!r} "
+                    f"y la guía pide que carátula, dedicatoria y "
+                    f"agradecimientos no lo muestren")
+            continue
+        if not candidatos:
+            problemas.append(f"la hoja {numero} no tiene folio")
+            continue
+        # Con el folio a la derecha (interruptor) o centrado: ambos
+        # valen, pero no puede quedar en otro sitio.
+        izquierda = m["izquierdo"] * CM
+        derecha = ancho - m["derecho"] * CM
+        centro = (izquierda + derecha) / 2
+        x0, x1 = candidatos[0][0], candidatos[0][2]
+        centrado = abs((x0 + x1) / 2 - centro) < 0.4 * CM
+        a_la_derecha = abs(x1 - derecha) < 0.4 * CM
+        if not (centrado or a_la_derecha):
+            problemas.append(
+                f"el folio de la hoja {numero} no está centrado en el bloque "
+                f"de texto (x de {x0 / CM:.2f} a {x1 / CM:.2f} cm)")
+
+    # Serie: en modo guía, romanos consecutivos y después arábigos
+    # desde 1; en modo continuo, una sola serie arábiga que arranca
+    # en la hoja siguiente a las tres que no muestran folio.
+    serie = []
+    for numero, (ancho, alto, bloques) in enumerate(cajas, start=1):
+        if numero <= SIN_FOLIO_INICIAL:
+            continue
+        candidatos = [l for b in bloques for l in b
+                      if l[1] > alto - 2.9 * CM and l[3] < alto - 0.8 * CM
+                      and FOLIO.match(l[4].strip())]
+        if candidatos:
+            serie.append(candidatos[0][4].strip())
+    arabes = [t for t in serie if t.isdigit()]
+    romanos = [t for t in serie if not t.isdigit()]
+    if continua:
+        esperado = [str(i) for i in
+                    range(SIN_FOLIO_INICIAL + 1, len(serie) + SIN_FOLIO_INICIAL + 1)]
+        if serie != esperado:
+            corte = next((i for i, (a, b) in enumerate(zip(serie, esperado))
+                          if a != b), min(len(serie), len(esperado)))
+            problemas.append(
+                f"en modo continuo la serie debe seguir arábiga y consecutiva; "
+                f"se esperaba {esperado[corte]!r} y hay {serie[corte]!r} en la "
+                f"hoja {SIN_FOLIO_INICIAL + 1 + corte}")
+        resumen = (f"continua: arábigos {serie[0] if serie else '-'}.."
+                   f"{serie[-1] if serie else '-'}; "
+                   f"{SIN_FOLIO_INICIAL} hojas iniciales sin folio")
+        return problemas, resumen
+    esperado = [roman(i) for i in range(SIN_FOLIO_INICIAL + 1, len(serie) + 1)]
+    if romanos != esperado[:len(romanos)]:
+        corte = next((i for i, (a, b) in enumerate(zip(romanos, esperado))
+                      if a != b), min(len(romanos), len(esperado)))
+        problemas.append(
+            "la serie de folios romanos no es consecutiva (se esperaba "
+            f"{esperado[corte]!r} y hay {romanos[corte]!r} en la hoja "
+            f"{SIN_FOLIO_INICIAL + 1 + corte})")
+    if arabes and arabes[0] != "1":
+        problemas.append(
+            f"el cuerpo debería arrancar en el folio 1 y arranca en {arabes[0]!r}")
+    if arabes != [str(i + 1) for i in range(len(arabes))]:
+        problemas.append("la serie de folios arábigos del cuerpo tiene saltos")
+    resumen = (f"romanos {romanos[0] if romanos else '-'}..{romanos[-1] if romanos else '-'}, "
+               f"arábigos 1..{arabes[-1] if arabes else '-'}; "
+               f"{SIN_FOLIO_INICIAL} hojas iniciales sin folio")
+    return problemas, resumen
+
+
 def fuentes(pdf):
     nombres = []
     for fila in ejecutar("pdffonts", pdf).splitlines()[2:]:
@@ -159,11 +287,21 @@ def revisar_log(log):
 
 
 def marcadores(pdf):
+    """Separa los marcadores de borrador bloqueantes de los permitidos.
+
+    Devuelve (bloqueantes, permitidos): los primeros son notas internas
+    o marcadores de trabajo que NO deben quedar en la entrega; los
+    segundos son los placeholders que el autor dejó escritos en los
+    Anexos C a F, que solo avisan.
+    """
     texto = ejecutar("pdftotext", pdf, "-")
-    encontrados = [re.sub(r"\s+", " ", x)[:40] for x in
+    encontrados = [re.sub(r"\s+", " ", x).strip()[:40] for x in
                    re.findall(r"\[(?:[A-ZÁÉÍÓÚÑ…][^\]]{2,400}?|…|\.\.\.)\]", texto)]
     encontrados += re.findall(r"\b(?:TODO|FIXME|XXX)\b", texto)
-    return encontrados
+    bloqueantes, permitidos = [], []
+    for x in encontrados:
+        (permitidos if MARCADERES_PERMITIDOS.match(x) else bloqueantes).append(x)
+    return bloqueantes, permitidos
 
 
 def main():
@@ -197,6 +335,11 @@ def main():
             f"{moda} pt ({dentro:.0%} de las líneas a {INTERLINEADO} ± {TOL_INTERLINEADO})",
             moda is not None and abs(moda - INTERLINEADO) <= TOL_INTERLINEADO)
 
+    problemas, resumen_folios = comprobar_folios(cajas, m, modo_continuo())
+    informe("serie y posición de los folios", resumen_folios, not problemas)
+    for p in problemas[:5]:
+        print(f"        - {p}")
+
     fs = fuentes(pdf)
     ajenas = [f for f in fs if not FUENTES_OK.match(f)]
     informe("fuentes", ", ".join(fs), not ajenas)
@@ -214,8 +357,13 @@ def main():
         if r["rerun"]:
             print("  [AVISO] el log pide otra pasada de compilación")
 
-    mk = marcadores(pdf)
-    informe("marcadores de borrador en el PDF", ", ".join(mk[:8]) or "0", not mk)
+    bloqueantes, permitidos = marcadores(pdf)
+    informe("marcadores de borrador en el PDF",
+            ", ".join(bloqueantes[:8]) or "0", not bloqueantes)
+    if permitidos:
+        print(f"  [AVISO] {len(permitidos)} placeholder(s) autorizado(s) de los "
+              f"Anexos C-F, pendientes de contenido del autor: "
+              f"{', '.join(sorted(set(permitidos))[:4])}")
 
     if fallos:
         print(f"\nFuera de tolerancia: {', '.join(fallos)}")
