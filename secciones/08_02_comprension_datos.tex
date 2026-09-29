@@ -1,0 +1,449 @@
+% ============================================================
+%  7.2. COMPRENSIÓN DE LOS DATOS  -- parte del capítulo 7
+%  ------------------------------------------------------------
+%  Archivo separado para que cada fase de CRISP-DM se pueda
+%  editar y compilar por separado. Solo contenido: el formato,
+%  los rótulos y las referencias los resuelve el preámbulo.
+%  Los \label originales se conservan sin cambios.
+% ============================================================
+\section{Comprensión de los datos}
+\label{sec:comprension-datos}
+
+Esta sección documenta la segunda fase de CRISP-DM. Su propósito es establecer, antes de
+aplicar cualquier transformación, un conocimiento auditable de qué datos existen realmente,
+en qué estado se encuentran y qué restricciones imponen al resto del proyecto. Todo lo que
+se reporta aquí proviene de la ejecución de ocho scripts reproducibles sobre los archivos
+originales, que se conservan en modo de solo lectura; ninguna cifra fue estimada ni
+supuesta. El orden de la exposición sigue el orden real del trabajo: primero se
+identificaron las fuentes, luego se auditó el esquema de los archivos, se consolidaron en
+un único conjunto, se midió la calidad, se validaron las variables derivadas recibidas, se
+caracterizó el identificador de usuario, y finalmente se examinaron las coberturas temporal
+y espacial. La sección cierra con las decisiones que esta fase deja fijadas para la
+preparación de los datos.
+
+\subsection{Fuentes de datos}
+
+La fuente primaria son los registros de consultas de planificación de rutas de Trufi App
+correspondientes al área metropolitana de Cochabamba: 85 archivos CSV con periodicidad
+semanal, cuyos nombres siguen el patrón fecha de inicio, fecha de fin y número de semana
+ISO. El archivo más antiguo corresponde a la semana del 12 al 18 de septiembre de 2022 y el
+más reciente a la semana del 3 al 9 de junio de 2024.
+
+Como se explicó en la sección~\ref{sec:descripcion-problema}, cada fila representa una
+consulta, no un viaje confirmado: no consta qué itinerario eligió finalmente el usuario, si
+el viaje se realizó, ni información demográfica alguna.
+
+Como fuentes secundarias, previstas para la fase de Preparación y no utilizadas todavía en
+esta fase, se contemplan el feed GTFS de rutas de transporte público mantenido por Trufi
+App y las capas de límites administrativos municipales necesarias para verificar la
+procedencia de las variables de municipio recibidas en los archivos.
+
+\subsection{Auditoría de esquema y consolidación}
+\label{sec:auditoria-esquema}
+
+Antes de unir los archivos se comparó el encabezado de los 85 CSV contra un esquema de
+referencia. La auditoría reveló que el conjunto no es homogéneo: 79 archivos comparten un
+mismo esquema y 6 presentan uno distinto. Los seis archivos divergentes son consecutivos y
+corresponden al período del 29 de abril al 9 de junio de 2024.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Variantes de esquema detectadas en los archivos originales}
+  \label{tab:esquema-variantes}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}XX@{}}
+    \toprule
+    \textbf{Característica} & \textbf{Lote 1 (79 archivos)} & \textbf{Lote 2 (6 archivos)} \\
+    \midrule
+    Período & sep. 2022 -- mar. 2024 & abr. 2024 -- jun. 2024 \\
+    Nombres de campos temporales & \texttt{hora}, \var{dia_de_semana}, \var{dia_de_mes}, \var{fin_de_semana} & \texttt{hour}, \var{day_of_week}, \var{day_of_month}, \texttt{weekend} \\
+    Campos adicionales & Ninguno & \var{year_week_number}, \var{time_of_day} \\
+    Codificación de caracteres & UTF-8 & UTF-8 con caracteres acentuados en Latin-1 \\
+    Número de columnas & 13 & 15 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+La inconsistencia de codificación no estaba prevista y se detectó porque la lectura en
+UTF-8 de esos seis archivos falla. El origen son nombres de municipio con caracteres
+acentuados --- Villa Santiváñez, Villa José Quintín Mendoza --- codificados en Latin-1
+dentro de archivos por lo demás UTF-8. Se resolvió mediante una función de lectura que
+intenta UTF-8 y recurre a Latin-1 únicamente cuando la primera decodificación falla,
+registrando qué archivos requirieron el respaldo.
+
+Ambas anomalías, el cambio de esquema y el cambio de codificación, afectan exactamente a
+los mismos seis archivos y aparecen inmediatamente después del vacío temporal descrito en
+la sección~\ref{sec:cobertura-temporal}. La coincidencia sugiere que en abril de 2024 se
+modificó el proceso de exportación de la organización; esta hipótesis no pudo confirmarse
+con la fuente y queda registrada como pregunta abierta.
+
+La consolidación normalizó los nombres de campo a una nomenclatura canónica única antes de
+concatenar. Los dos campos exclusivos del segundo lote se conservaron —quedando nulos para
+los archivos del primer lote— en lugar de descartarse, ya que su retención no implica
+pérdida ni distorsión de información. El resultado es un único conjunto de datos en formato
+Parquet, particionado por año y semana, con \textbf{1.927.675 registros}, cifra que
+coincide exactamente con la suma de filas de los 85 archivos originales, verificando que la
+consolidación no perdió ni duplicó registros.
+
+La cobertura real derivada de las marcas de tiempo efectivamente presentes en los datos va
+del \textbf{12 de septiembre de 2022 a las 09:55:24} hasta el \textbf{3 de junio de 2024 a
+las 11:01:07}.
+
+\subsection{Variables y diccionario de datos}
+
+El conjunto consolidado distingue entre variables observadas —registradas directamente por
+la aplicación— y variables derivadas —calculadas por la organización antes de la
+entrega—. Esta distinción importa porque las variables derivadas requieren verificación
+independiente, tratada en la sección~\ref{sec:validacion-distancia}. Los dos últimos campos
+de la tabla~\ref{tab:diccionario-datos} no provienen de los datos originales: se añadieron
+durante la consolidación para conservar la trazabilidad de cada fila hasta su archivo de
+origen.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Diccionario de datos del conjunto consolidado}
+  \label{tab:diccionario-datos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}
+                                   >{\raggedright\arraybackslash}p{0.10\textwidth}
+                                   >{\raggedright\arraybackslash}p{0.19\textwidth}X@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Tipo} & \textbf{Origen} & \textbf{Descripción} \\
+    \midrule
+    \texttt{date} / \texttt{ts} & fecha-hora & Observada & Instante exacto de la consulta \\
+    \var{origin_latitude} & numérica & Observada & Latitud del punto de origen (grados, WGS84) \\
+    \var{origin_longitude} & numérica & Observada & Longitud del punto de origen (grados, WGS84) \\
+    \var{destination_latitude} & numérica & Observada & Latitud del punto de destino (grados, WGS84) \\
+    \var{destination_longitude} & numérica & Observada & Longitud del punto de destino (grados, WGS84) \\
+    \texttt{userID} & categórica & Observada & Identificador anónimo en formato UUID \\
+    \texttt{distancia} & numérica & Derivada & Distancia euclidiana entre origen y destino, en metros (validada, sección~\ref{sec:validacion-distancia}) \\
+    \var{origin_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de origen \\
+    \var{dest_municipio} & categórica & Derivada, sin documentar & Municipio asignado al punto de destino \\
+    \texttt{hour} & entera & Derivada & Hora del día extraída de la marca de tiempo \\
+    \var{day_of_week} & entera & Derivada & Día de la semana (0 = lunes) \\
+    \var{day_of_month} & entera & Derivada & Día del mes \\
+    \texttt{weekend} & binaria & Derivada & Indicador de fin de semana \\
+    \var{year_week_number} & categórica & Derivada (solo lote 2) & Año y semana ISO \\
+    \var{time_of_day} & categórica & Derivada (solo lote 2) & Franja horaria nominal \\
+    \var{source_file} & categórica & Trazabilidad & Archivo original del que proviene la fila \\
+    \var{source_batch} & categórica & Trazabilidad & Lote de exportación de procedencia \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de la auditoría de esquema descrita en la sección~\ref{sec:auditoria-esquema}.}
+\end{table}
+
+Debe señalarse que las variables \var{origin_municipio} y \var{dest_municipio}
+fueron recibidas ya calculadas y que la organización no documentó el procedimiento ni la
+capa de límites administrativos empleada para generarlas. Esta indeterminación se registra
+como limitación (capítulo~\ref{cap:alcance}) y su verificación se incorpora al plan de
+preparación de datos.
+
+\subsection{Calidad de los datos}
+
+El análisis de calidad evaluó valores nulos, duplicados y coordenadas inválidas sobre la
+totalidad del conjunto consolidado.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Resultados del análisis de calidad y decisiones adoptadas}
+  \label{tab:calidad-datos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xrrl@{}}
+    \toprule
+    \textbf{Verificación} & \textbf{Resultado} & \textbf{\%} & \textbf{Decisión} \\
+    \midrule
+    Duplicados exactos (todas las columnas) & 104 & 0,005 & Eliminar \\
+    Duplicados por origen-destino y marca de tiempo & 104 & 0,005 & Coinciden con los anteriores \\
+    Duplicados por userID y marca de tiempo & 137 & 0,007 & Conservar para sesionización \\
+    Nulos en userID & 0 & 0,000 & Sin acción \\
+    Nulos en coordenadas & 0 & 0,000 & Sin acción \\
+    Nulos en campos exclusivos del lote 2 & 1.765.898 & 91,60 & Esperado, no es defecto \\
+    Coordenadas en cero & 3 & 0,000 & Excluir del análisis espacial \\
+    Coordenadas fuera del área metropolitana & 3.514 & 0,180 & Conservar y marcar \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+La calidad del conjunto es alta: los duplicados representan menos de una diezmilésima
+parte de los registros y no existen valores faltantes en las variables críticas
+(identificador de usuario y coordenadas).
+
+Los 137 duplicados por identificador de usuario y marca de tiempo se conservaron
+deliberadamente. De ellos, 33 corresponden a consultas genuinamente distintas: el mismo
+usuario, en el mismo segundo, con destinos diferentes. Eliminarlos destruiría precisamente
+el comportamiento de exploración que interesa estudiar; su tratamiento corresponde a la
+sesionización, en la fase de Preparación, no a un filtro de limpieza. Los nulos masivos del
+91,6~\% corresponden en su totalidad a los dos campos exclusivos del segundo lote de
+exportación y no constituyen un defecto de calidad.
+
+\subsection{Validación de la variable de distancia}
+\label{sec:validacion-distancia}
+
+El conjunto incluye una columna denominada \texttt{distancia}, sin especificación de
+unidad ni de método de cálculo, recibida como variable derivada de procedencia no
+documentada. Se diseñó una verificación empírica: recalcular la distancia entre cada par de
+coordenadas mediante la fórmula del haversine y contrastarla con el valor recibido, bajo
+dos supuestos alternativos de unidad.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Contraste entre la variable \texttt{distancia} y el cálculo independiente}
+  \label{tab:validacion-distancia}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+    \toprule
+    \textbf{Indicador} & \textbf{Resultado} \\
+    \midrule
+    Correlación con la distancia recalculada & 0,999997 \\
+    Error relativo mediano, suponiendo metros & 0,14~\% \\
+    Registros con error inferior al 1~\%, suponiendo metros & 100,00~\% \\
+    Registros con error inferior al 1~\%, suponiendo kilómetros & 0,00~\% \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+La verificación permite tres conclusiones: la unidad es el \textbf{metro}, ya que el
+supuesto de kilómetros queda descartado sin ambigüedad; la distancia es en \textbf{línea
+recta} y no de red vial, pues una distancia de recorrido real sería sistemáticamente mayor
+y con dispersión irregular, incompatible con la correlación observada; y el error residual
+de 0,14~\% es consistente con un cálculo geodésico sobre el elipsoide WGS84 en lugar de una
+aproximación esférica pura, diferencia sin relevancia práctica para los fines del proyecto.
+La consecuencia metodológica es que la variable puede usarse tal como fue recibida, pero
+debe interpretarse siempre como distancia euclidiana entre origen y destino, nunca como
+longitud del trayecto efectivo en transporte público.
+
+\subsection{Naturaleza del identificador de usuario}
+\label{sec:identificador-usuario}
+
+Este es el análisis más determinante de la fase, porque de él depende si el proyecto puede
+formular un componente a nivel de usuario individual o si debe trabajar exclusivamente con
+agregados territoriales. Trufi App no exige registro de cuenta, de modo que el
+identificador no corresponde necesariamente a una persona; la pregunta a resolver era si se
+trata de un identificador efímero, ligado a la sesión, o persistente, ligado a la
+instalación de la aplicación.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Caracterización del comportamiento del identificador de usuario}
+  \label{tab:caracterizacion-usuario}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+    \toprule
+    \textbf{Indicador} & \textbf{Valor} \\
+    \midrule
+    Usuarios únicos & 130.549 \\
+    Mediana de consultas por usuario & 5 \\
+    Usuarios con dos o más consultas & 77,88~\% \\
+    Usuarios con diez o más consultas & 32,90~\% \\
+    Concentración del 1~\% superior de usuarios & 15,90~\% de las consultas \\
+    Usuarios activos en más de un año calendario & 33.039 (25,30~\%) \\
+    Mediana de días entre la primera y la última consulta & 9 días \\
+    Pares de consultas con desplazamiento imposible & 2.156 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+La evidencia es concluyente: el identificador es \textbf{de instalación, no de sesión}. El
+retorno es la norma y no la excepción —casi ocho de cada diez usuarios vuelven a consultar
+al menos una vez— y la persistencia se extiende a lo largo de días o semanas en lugar de
+agotarse en un único uso. Un identificador de sesión habría producido una vida mediana
+inferior a un día y una proporción de retorno cercana a cero.
+
+La decisión que se deriva es que \textbf{el análisis a nivel de usuario individual es
+viable} y no procede replegarse a un enfoque exclusivamente territorial; el proyecto emplea
+además la agregación espacial descrita en la sección~\ref{sec:agregacion-h3} porque aporta
+estabilidad estadística y un entregable directamente utilizable por la organización, no
+porque el nivel de usuario haya resultado inviable.
+
+Esta conclusión se matiza con tres advertencias vigentes: una persona que reinstala la
+aplicación o borra sus datos genera un identificador nuevo (una persona, varios
+identificadores); un dispositivo compartido produce el caso inverso (varias personas, un
+identificador); y los 2.156 pares de consultas con desplazamientos geográficamente
+imposibles —definidos como consultas separadas por menos de dos minutos y más de once
+kilómetros— indican dispositivos compartidos, errores de posicionamiento o fallos de la
+aplicación, y se filtrarán antes de construir cualquier característica secuencial por
+usuario. Adicionalmente, solo el 25,3~\% de los usuarios se observa en más de un año
+calendario, lo que limita el peso que pueden tener las características basadas en
+historial prolongado para la mayoría de la población de usuarios.
+
+\begin{figure}[htbp]
+  \centering
+  \caption{Distribuciones de consultas por usuario, vida útil del identificador y usuarios activos por mes}
+  \label{fig:analisis-usuario}
+  \includegraphics[width=0.75\textwidth]{imagenes/fig_user_analysis.png}
+  \fuente{Elaboración propia --- figura pendiente de regenerar con \var{05_user_analysis.py} sobre el conjunto consolidado.}
+\end{figure}
+
+\subsection{Cobertura temporal y detección de vacíos}
+\label{sec:cobertura-temporal}
+
+El rango observado abarca 91 semanas, de las cuales 84 contienen registros. Las siete
+semanas restantes no presentan ningún dato y son consecutivas: comprenden \textbf{del 11 de
+marzo al 22 de abril de 2024}.
+
+Este vacío no es aleatorio, sino un bloque continuo, e inmediatamente después comienzan los
+seis archivos con esquema y codificación distintos descritos en la
+sección~\ref{sec:auditoria-esquema}. La coincidencia refuerza la interpretación de una
+interrupción del proceso de exportación de la organización durante ese período, seguida de
+su reanudación con una herramienta modificada.
+
+Se decidió \textbf{no imputar} el período faltante. Cualquier imputación introduciría un
+patrón artificial en un análisis cuyo objeto es precisamente la variación temporal y
+espacial de la demanda de información. El vacío se declara como limitación estructural y
+toda serie semanal o mensual del proyecto debe excluir explícitamente ese intervalo.
+
+Un segundo hallazgo temporal es el crecimiento sostenido del volumen de consultas a lo
+largo del período: el conjunto de datos \textbf{no es estacionario}. Esta observación tiene
+una implicación metodológica directa sobre la validación de cualquier modelo posterior, que
+deberá dividirse cronológicamente y no de forma aleatoria
+(sección~\ref{sec:tecnicas-algoritmos}), para evitar que el entrenamiento mezcle regímenes
+de uso que en la realidad no coexistieron.
+
+\subsection{Distribución espacial}
+\label{sec:distribucion-espacial}
+
+Se delimitó un rectángulo envolvente para el área metropolitana de Cochabamba (lat -17,6 a
+-17,2; lon -66,4 a -65,8) y se evaluó qué proporción de consultas queda dentro de él. El
+\textbf{99,82~\%} de los registros (1.924.161 consultas) se sitúa dentro del área; las
+3.514 restantes (0,18~\%) quedan fuera, y su examen resultó revelador: no se trata de
+errores de posicionamiento sino de viajes interurbanos legítimos.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Principales pares origen-destino fuera del área metropolitana}
+  \label{tab:pares-od-externos}
+  \interlineadoSimple
+  \begin{tabular}{lr}
+    \toprule
+    \textbf{Par origen-destino} & \textbf{Consultas} \\
+    \midrule
+    Cochabamba -- Tarata & 652 \\
+    Cochabamba -- Capinota & 259 \\
+    Externo -- Cochabamba & 227 \\
+    Cochabamba -- Vinto (ambos sentidos) & 306 \\
+    Cochabamba -- Arani & 151 \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia.}
+\end{table}
+
+Por tratarse de consultas válidas que expresan necesidades reales de información, se
+decidió conservarlas en el conjunto base marcándolas como externas, y excluirlas
+únicamente de la construcción de características espaciales del área metropolitana.
+Descartarlas por completo eliminaría evidencia de demanda interprovincial potencialmente
+relevante para la organización.
+
+El patrón espacial predominante es de fuerte centralización: las diez celdas hexagonales de
+origen con mayor actividad concentran el \textbf{42,0~\%} de todas las consultas, y las
+diez celdas de destino más frecuentes reúnen el \textbf{35,9~\%}. Los destinos resultan
+algo más dispersos que los orígenes, coherente con un patrón en el que la demanda se genera
+en núcleos residenciales densos y se distribuye hacia una variedad mayor de puntos de
+llegada.
+
+\begin{figure}[htbp]
+  \centering
+  \caption{Densidad espacial de orígenes y destinos de consulta en el área metropolitana de Cochabamba}
+  \label{fig:densidad-espacial}
+  \includegraphics[width=0.75\textwidth]{imagenes/fig_spatial_heatmap.png}
+  \fuente{Elaboración propia --- figura pendiente de regenerar con \var{07_spatial.py} sobre el conjunto consolidado.}
+\end{figure}
+
+\subsection{Agregación espacial preliminar}
+\label{sec:agregacion-h3}
+
+Para obtener una primera lectura territorial de la demanda se agregaron las consultas sobre
+una teselación de hexágonos H3 en resolución 8 (celdas de aproximadamente 460 metros de
+arista). Se optó por una teselación en lugar de zonas circulares de influencia por tres
+razones expuestas en el capítulo~\ref{cap:marco-teorico}: los hexágonos no se solapan ni
+dejan huecos, de modo que los conteos por celda son aditivos; la teselación ofrece una
+clave espacial estable para precalcular atributos una sola vez; y su carácter jerárquico
+permite variar la escala de análisis sin rehacer el procesamiento.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Agregación preliminar de la demanda en celdas H3 (resolución 8)}
+  \label{tab:agregacion-h3}
+  \interlineadoSimple
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Indicador} & \textbf{Origen} & \textbf{Destino} \\
+    \midrule
+    Celdas con al menos una consulta & 1.523 & 1.840 \\
+    Concentración en las diez celdas principales & 42,0~\% & 35,9~\% \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia.}
+\end{table}
+
+La mayor cantidad de celdas de destino frente a celdas de origen indica que los usuarios
+parten de un conjunto de zonas más restringido del que consultan como llegada; esta
+asimetría entre generación y atracción de consultas constituye un primer hallazgo
+sustantivo sobre la estructura de la demanda y será examinada en profundidad durante el
+análisis exploratorio ampliado de la fase de Preparación. Como se señaló en el
+capítulo~\ref{cap:marco-teorico}, esta resolución es preliminar y está sujeta al análisis
+de sensibilidad requerido por el problema de la unidad de área modificable.
+
+\subsection{Síntesis de hallazgos y decisiones para la preparación}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Trazabilidad entre hallazgos de la fase y decisiones adoptadas}
+  \label{tab:trazabilidad-hallazgos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}XX@{}}
+    \toprule
+    \textbf{Hallazgo} & \textbf{Decisión para la preparación de datos} \\
+    \midrule
+    Dos variantes de esquema y de codificación en 6 archivos & Aplicar la normalización de nombres y la decodificación de respaldo al inicio de toda ingesta futura \\
+    104 duplicados exactos y 137 duplicados por usuario y marca de tiempo & Eliminar los primeros; conservar los segundos y resolverlos mediante sesionización \\
+    La variable \texttt{distancia} es euclidiana y está expresada en metros & Utilizarla sin transformación, sin interpretarla como distancia de recorrido \\
+    El identificador de usuario es de instalación y persiste varios días & Formular el análisis a nivel de usuario individual, complementado con agregación espacial \\
+    2.156 pares de consultas con desplazamiento imposible & Filtrarlos antes de construir características secuenciales por usuario \\
+    3 registros con coordenadas nulas y 3.514 fuera del área de estudio & Marcarlos y excluirlos del cálculo espacial, conservándolos en el conjunto base \\
+    Vacío estructural de siete semanas en 2024 & Declararlo como limitación y excluirlo de las series temporales, sin imputación \\
+    Crecimiento sostenido del volumen de consultas & Adoptar validación cronológica en lugar de división aleatoria \\
+    Procedencia no documentada de las variables de municipio & Reconstruir la asignación mediante unión espacial y validar sobre una muestra \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+\subsection{Reproducibilidad y evidencias}
+
+Todos los resultados de esta sección se generan mediante la ejecución secuencial de ocho
+scripts sobre los archivos originales, que permanecen en un directorio de solo lectura.
+Cada cifra reportada es la salida de un script identificable, y cada ejecución regenera los
+informes completos, de modo que la sección puede verificarse íntegramente desde los datos
+crudos.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Correspondencia entre scripts y evidencias generadas}
+  \label{tab:scripts-evidencias}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}lX@{}}
+    \toprule
+    \textbf{Script} & \textbf{Evidencia producida} \\
+    \midrule
+    \var{01_audit_schema.py} & Comparación de esquemas por archivo \\
+    \var{02_consolidate.py} & Conjunto consolidado particionado por año y semana \\
+    \var{03_quality.py} & Informe de nulos y duplicados \\
+    \var{04_validate_haversine.py} & Validación de unidad y naturaleza de la distancia \\
+    \var{05_user_analysis.py} & Caracterización del identificador y figura~\ref{fig:analisis-usuario} \\
+    \var{06_temporal_coverage.py} & Cobertura semanal y detección de vacíos \\
+    \var{07_spatial.py} & Validación del área de estudio y figura~\ref{fig:densidad-espacial} \\
+    \var{08_h3_preview.py} & Agregación preliminar en celdas H3 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+Estructura del repositorio del proyecto de datos (referencia): \texttt{data/raw} (85 CSV
+originales, solo lectura), \texttt{data/interim} (conjunto consolidado y agregados H3 en
+formato Parquet), \texttt{data/processed} (reservado para las tablas de indicadores por
+celda de la fase de Preparación), \texttt{src} (scripts numerados del pipeline),
+\var{reports/01_data_understanding} (informes y figuras de esta fase).

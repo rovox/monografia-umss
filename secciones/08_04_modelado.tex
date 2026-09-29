@@ -1,0 +1,168 @@
+% ============================================================
+%  7.4. MODELADO  -- parte del capítulo 7
+%  ------------------------------------------------------------
+%  Archivo separado para que cada fase de CRISP-DM se pueda
+%  editar y compilar por separado. Solo contenido: el formato,
+%  los rótulos y las referencias los resuelve el preámbulo.
+%  Los \label originales se conservan sin cambios.
+% ============================================================
+\section{Modelado}
+\label{sec:modelado}
+
+Esta sección documenta la cuarta fase de CRISP-DM, ejecutada mediante tres scripts
+(\var{18_model_training.py} a \var{20_feature_importance.py}) sobre la tabla de
+indicadores de la sección~\ref{sec:tabla-indicadores}.
+
+\subsection{Tipo de problema analítico}
+\label{sec:tipo-problema}
+
+\textbf{Decisión: regresión supervisada.} La variable objetivo, \var{n_queries_orig}
+(consultas originadas por celda H3 y semana), es numérica continua; la pregunta de
+investigación --- cómo varía la demanda según las condiciones territoriales --- exige
+estimar una magnitud, no asignar una etiqueta, por lo que un problema de clasificación
+simplificaría innecesariamente la señal disponible.
+
+El panel de modelado se construyó completando la grilla celda$\times$semana: una
+combinación ausente en la tabla de indicadores (sección~\ref{sec:tabla-indicadores})
+significa \textbf{cero consultas esa semana}, no un dato faltante, porque de lo contrario
+las variables de rezago apuntarían a la semana anterior \emph{con datos} en vez de a la
+semana calendario anterior. El panel completo tiene 130.368 filas
+(1.552 celdas $\times$ 84 semanas); se descartan las primeras cuatro semanas por no tener
+historial suficiente para las variables de rezago, resultando en \textbf{124.160
+observaciones finales}.
+
+El objetivo se definió a nivel de celda y semana, y no a nivel de usuario individual, pese a
+que la sección~\ref{sec:identificador-usuario} había establecido que el identificador de
+usuario es de nivel instalación y que, en principio, sostendría un análisis individual. Tres
+razones sustentan el objetivo agregado: alinea directamente con la pregunta de investigación
+sobre el territorio y no sobre el comportamiento de usuarios individuales; la sesionización
+(sección~\ref{sec:sesionizacion}) mostró que el 43,1~\% de las sesiones contiene una sola
+consulta, con poca repetición individual capturable como señal; y un conteo de consultas
+crudas no exige decidir si dos consultas del mismo usuario corresponden al mismo viaje, una
+definición que de retomarse en trabajo futuro (capítulo~\ref{cap:conclusiones}) debería usar
+tolerancia espacial real --por celda H3 de origen y destino-- en vez de igualdad de par de
+municipios, para no incurrir en falsos positivos.
+
+\subsection{Selección de algoritmos}
+\label{sec:seleccion-algoritmos}
+
+Se entrenaron y compararon cuatro modelos de tres familias distintas, además de dos líneas
+base. No se trata de exhaustividad por sí misma: las tres familias --lineal regularizada,
+\textit{bagging} y \textit{boosting}-- permiten diagnosticar si la relación entre demanda y
+condiciones territoriales es lineal o no, un diagnóstico que resultó ser el hallazgo más
+informativo de esta fase.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Modelos entrenados y su rol en el diagnóstico}
+  \label{tab:seleccion-modelos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.20\textwidth}X@{}}
+    \toprule
+    \textbf{Modelo} & \textbf{Familia} & \textbf{Justificación} \\
+    \midrule
+    Ridge / Lasso & Lineal regularizada & Línea interpretable tras estandarizar; Lasso además selecciona variables llevando coeficientes a cero \\
+    Random Forest & \textit{Bagging} & Captura interacciones y relaciones no lineales sin supuestos distribucionales; predicciones acotadas por los valores observados \\
+    XGBoost & \textit{Boosting} & Optimización secuencial de residuos con regularización integrada; referencia de alto desempeño \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py} ---
+  \var{reports/03_modeling/01_model_training.md}.}
+\end{table}
+
+\var{n_queries_orig} está fuertemente sesgada a la derecha (mediana~3, media~45,
+máximo~3.663 consultas/semana). Los cuatro modelos se entrenan sobre
+\var{log1p(n_queries_orig)} y las predicciones se revierten con \texttt{expm1} antes de
+calcular cualquier métrica, de modo que todas las cifras reportadas en esta y la siguiente
+sección están en la escala original de consultas por semana.
+
+Nueve variables se excluyen deliberadamente por \textbf{fuga de información}:
+\var{n_users_orig}, \var{n_sessions_orig}, \var{n_queries_dest},
+\var{n_users_dest}, \var{dist_gtfs_mean_dest_m}, \var{dist_gtfs_min_dest_m},
+\var{pct_uncovered_dest}, \var{n_queries_total} y \var{od_balance}. Todas son
+manifestaciones simultáneas del mismo evento de demanda semanal que se pretende estimar y no
+estarían disponibles de forma independiente al momento de predecir; incluirlas produciría un
+desempeño espectacular y carente de valor, porque el modelo estaría estimando la demanda a
+partir de la propia demanda. La exclusión es un requisito de validez, no una elección de
+rendimiento.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Variables finales del modelo (trece features)}
+  \label{tab:variables-finales}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.30\textwidth}p{0.20\textwidth}X@{}}
+    \toprule
+    \textbf{Grupo} & \textbf{Naturaleza} & \textbf{Variables} \\
+    \midrule
+    Territoriales de cobertura & Territorial & \var{dist_gtfs_mean_orig_m}, \var{pct_uncovered_orig} \\
+    Territoriales de patrón & Territorial & \var{mean_trip_dist_m}, \var{dist_center_km} \\
+    Composición temporal & Temporal & \var{pct_weekend_orig}, \var{pct_morning_rush_orig}, \var{pct_evening_rush_orig} \\
+    Estacionales y de tendencia & Estacional & \var{week_sin}, \var{week_cos}, \var{week_idx} \\
+    Autorregresivas & Autorregresiva & \var{lag1_n_queries_orig}, \var{lag4_n_queries_orig}, \var{roll_mean4_n_queries_orig} \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py}.}
+\end{table}
+
+\subsection{Proceso de entrenamiento}
+\label{sec:proceso-entrenamiento}
+
+Se respeta estrictamente la partición cronológica fijada en la
+sección~\ref{sec:particion-cronologica}: entrenamiento con las semanas 2022-W37 a 2024-W08
+(111.744 filas del panel completo) y prueba con 2024-W09 a 2024-W23 (12.416 filas), nunca
+con validación cruzada de k particiones aleatorias, porque la demanda no es estacionaria y
+un particionamiento aleatorio permitiría al modelo entrenarse con semanas posteriores a las
+que debe predecir.
+
+La validación interna emplea \textbf{cuatro pliegues de ventana deslizante con origen
+expansivo}: en cada pliegue el conjunto de entrenamiento crece y la ventana de validación se
+desplaza hacia adelante, cubriendo siempre 13 semanas consecutivas (aproximadamente un
+trimestre) inmediatamente posteriores al corte de entrenamiento de ese pliegue --- la misma
+granularidad que después se adopta como cadencia de reentrenamiento en producción
+(sección~\ref{sec:despliegue}). La semilla aleatoria se fija en \texttt{RANDOM\_SEED = 42}
+para los cuatro modelos.
+
+Como se advirtió en la sección~\ref{sec:particion-cronologica}, el vacío estructural de siete
+semanas queda comprimido dentro de la ventana de prueba: las últimas ocho semanas observadas
+son 2024-W09, W10, y luego W18 a W23. Como el panel se indexa por semanas observadas y no por
+semanas calendario, \var{lag1_n_queries_orig} en 2024-W18 apunta en realidad a
+2024-W10, ocho semanas calendario antes. Las variables autorregresivas --las más importantes
+del modelo, sección~\ref{sec:importancia-variables}-- llegan debilitadas precisamente dentro
+del conjunto de prueba, lo que explica una parte de la caída de desempeño entre entrenamiento
+y prueba documentada en la sección~\ref{sec:evaluacion-resultados}, y no debe confundirse con
+sobreajuste.
+
+\subsection{Hiperparámetros y criterio de selección}
+\label{sec:hiperparametros}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Grilla de búsqueda, hiperparámetro seleccionado y MAE de validación cruzada}
+  \label{tab:hiperparametros}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}lXlr@{}}
+    \toprule
+    \textbf{Modelo} & \textbf{Grilla de búsqueda} & \textbf{Seleccionado} & \textbf{MAE CV} \\
+    \midrule
+    Ridge & $\alpha \in \{0{,}1;\ 1{,}0;\ 10{,}0\}$ & $\alpha = 0{,}1$ & 45,14 \\
+    Lasso & $\alpha \in \{0{,}001;\ 0{,}01;\ 0{,}1\}$ & $\alpha = 0{,}1$ & 40,06 \\
+    Random Forest & \var{max_depth} $\in \{10, 20, \text{None}\}$ (300 árboles) & \var{max_depth}$=10$ & 3,58 \\
+    XGBoost & \var{max_depth}$\in\{3,6\}\times$ \texttt{lr}$\in\{0{,}05;0{,}1\}$ (300 árboles) & \var{max_depth}$=6$, \texttt{lr}$=0{,}1$ & 4,17 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{18_model_training.py} ---
+  \var{reports/03_modeling/01_model_training.md}. MAE promedio de los cuatro pliegues
+  de validación (consultas/semana).}
+\end{table}
+
+La selección de hiperparámetros usa el MAE promedio de los cuatro pliegues de validación, no
+el desempeño de un único modelo ni el orden en que se ejecutaron los experimentos; el
+conjunto de prueba nunca se utiliza en esta etapa.
+
+\subsection{Advertencia metodológica}
+
+Ningún modelo se presenta como el mejor por haber sido el primero ejecutado: la selección
+final se sustenta en la comparación de desempeño sobre el conjunto de prueba, nunca visto
+durante el entrenamiento ni la validación cruzada, que se desarrolla en la
+sección~\ref{sec:evaluacion-resultados}.

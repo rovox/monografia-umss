@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Lista los marcadores (contorno) de un PDF en orden de lectura.
+
+LuaTeX guarda los objetos del PDF en flujos comprimidos, así que el
+archivo se pasa primero por Ghostscript solo para descomprimirlo
+(ya viene instalado con TeX Live y con casi cualquier distribución) y
+después se lee el árbol /Outlines a mano. Así no hace falta ninguna
+herramienta de PDF aparte (mutool, pdftk, pikepdf...).
+
+Uso:  scripts/marcadores main.pdf [texto-que-debe-aparecer ...]
+Devuelve código 1 si falta alguno de los textos pedidos; cada texto
+buscado se interpreta como expresión regular (se ignora mayúsculas).
+"""
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+
+def descomprimir(origen, destino):
+    subprocess.run(
+        ["gs", "-q", "-o", destino, "-sDEVICE=pdfwrite",
+         "-dCompressPages=false", "-dCompressStreams=false",
+         "-dNOPAUSE", "-dBATCH", origen],
+        check=True, capture_output=True)
+
+
+def objetos(datos):
+    """{número de objeto: cuerpo del objeto, sin la palabra "obj"}."""
+    return {int(m.group(1)): m.group(2)
+            for m in re.finditer(rb"(\d+)\s+0\s+obj\b(.*?)\bendobj", datos, re.S)}
+
+
+def siguiente(cuerpo, clave):
+    m = re.search(re.escape(clave) + rb"\s*(\d+)\s+0\s+R", cuerpo)
+    return int(m.group(1)) if m else None
+
+
+def titulo(cuerpo):
+    """Texto de un título, literal (...) o hexadecimal <...>."""
+    m = re.search(rb"/Title\s*(<[0-9A-Fa-f\s]*>|\((?:\\.|[^)])*\))", cuerpo, re.S)
+    if not m:
+        return None
+    crudo = m.group(1)
+    if crudo.startswith(b"("):
+        return re.sub(rb"\\([()\\])", rb"\1", crudo[1:-1]).decode("latin-1", "replace")
+    hexa = re.sub(rb"\s", b"", crudo[1:-1])
+    if len(hexa) % 2:
+        hexa += b"0"
+    b = bytes.fromhex(hexa.decode("ascii"))
+    if b[:2] == b"\xfe\xff":
+        return b[2:].decode("utf-16-be", "replace")
+    return b.decode("latin-1", "replace")
+
+
+def contorno(datos):
+    """Títulos del contorno, recorriendo la cadena /First ... /Next."""
+    objs = objetos(datos)
+    m = re.search(rb"/Outlines\s+(\d+)\s+0\s+R", datos)
+    if not m:
+        return []
+    lista, actual, vistos = [], int(m.group(1)), set()
+    while actual and actual not in vistos:
+        vistos.add(actual)
+        cuerpo = objs.get(actual, b"")
+        t = titulo(cuerpo)
+        if t:
+            lista.append(t)
+        actual = siguiente(cuerpo, b"/Next")
+    return lista
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    pdf = sys.argv[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        plano = os.path.join(tmp, "plano.pdf")
+        descomprimir(pdf, plano)
+        datos = open(plano, "rb").read()
+    lista = contorno(datos)
+    for t in lista:
+        print(f"    {t}")
+    print(f"\n  {pdf}: {len(lista)} marcadores")
+    faltan = [x for x in sys.argv[2:]
+              if not any(re.search(x, t, re.I) for t in lista)]
+    if faltan:
+        print("  FALTAN: " + ", ".join(faltan))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

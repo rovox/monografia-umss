@@ -1,0 +1,37 @@
+% ============================================================
+%  7.1. COMPRENSIÓN DEL NEGOCIO  -- parte del capítulo 7
+%  ------------------------------------------------------------
+%  Archivo separado para que cada fase de CRISP-DM se pueda
+%  editar y compilar por separado. Solo contenido: el formato,
+%  los rótulos y las referencias los resuelve el preámbulo.
+%  Los \label originales se conservan sin cambios.
+% ============================================================
+\section{Comprensión del negocio}
+\label{sec:comprension-negocio}
+
+El contexto operativo del proyecto es la capacidad de Trufi App para decidir, con evidencia
+y no por intuición, dónde priorizar el trabajo voluntario de mapeo de rutas. El resultado
+esperado no es un modelo abstracto sino un diagnóstico territorial directamente accionable:
+una lista de zonas ordenadas por prioridad, acompañada de la evidencia (demanda, cobertura,
+entorno) que sustenta cada posición del ranking.
+
+El criterio de éxito del proyecto, definido en esta fase, es doble. Por un lado, un
+criterio de rigor analítico: que el diagnóstico se sostenga en indicadores verificables,
+con modelos comparados contra líneas base explícitas y con análisis de sensibilidad ante
+las decisiones de diseño (resolución espacial, ventana temporal). Por otro, un criterio de
+utilidad operativa: que el resultado final sea algo que Trufi App pueda efectivamente usar
+para decidir dónde mapear, no una demostración técnica que se agote en sí misma.
+
+La comprensión del negocio en este proyecto no quedó fija desde el inicio. La primera
+formulación del problema —descrita en la sección~\ref{sec:friccion-a-brecha}— definía como
+objetivo clasificar consultas individuales según un target de ``fricción'' basado en la
+repetición dentro del mismo municipio. Esa formulación se revisó a partir de un hallazgo de
+la fase siguiente: la constatación de que la segmentación municipal no es lo suficientemente
+precisa como unidad territorial para sostener un análisis de este tipo. Este es, en sí
+mismo, un ejemplo del carácter iterativo de CRISP-DM señalado en el
+capítulo~\ref{cap:marco-teorico}: un hallazgo de datos obligó a revisar una decisión de
+negocio ya tomada, y el proyecto se reformuló en consecuencia antes de avanzar a la
+preparación de los datos.
+
+Esta fase se relaciona con el problema, el alcance y los objetivos ya establecidos en los
+capítulos~\ref{cap:problema},~\ref{cap:alcance} y~\ref{cap:objetivos}.

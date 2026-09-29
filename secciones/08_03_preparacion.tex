@@ -1,0 +1,357 @@
+% ============================================================
+%  7.3. PREPARACIÓN DE LOS DATOS  -- parte del capítulo 7
+%  ------------------------------------------------------------
+%  Archivo separado para que cada fase de CRISP-DM se pueda
+%  editar y compilar por separado. Solo contenido: el formato,
+%  los rótulos y las referencias los resuelve el preámbulo.
+%  Los \label originales se conservan sin cambios.
+% ============================================================
+\section{Preparación de los datos}
+\label{sec:preparacion-datos}
+
+Esta sección documenta la tercera fase de CRISP-DM, ejecutada mediante nueve scripts
+reproducibles (\var{09_select_filter.py} a \var{17_train_test_split.py}) que
+consumen el conjunto consolidado de la sección~\ref{sec:comprension-datos} y producen la
+tabla de indicadores territoriales y la partición cronológica que alimentan el Modelado
+(sección~\ref{sec:modelado}). El orden de la exposición sigue el orden real del trabajo y
+retoma explícitamente la tabla~\ref{tab:trazabilidad-hallazgos} de decisiones heredadas de
+la fase anterior.
+
+\subsection{Selección y flujo de filtros}
+\label{sec:seleccion-filtros}
+
+Sobre el conjunto consolidado de 1.927.675 registros se aplicó el criterio transversal de
+\textbf{marcar en lugar de eliminar}: solo se elimina un registro cuando no aporta
+información —duplicado exacto—; todo otro caso problemático se conserva con una marca que
+documenta por qué queda fuera de un análisis determinado. Este criterio preserva la
+trazabilidad completa entre el dato crudo y el dato modelado y permite que registros
+excluidos de un análisis, como los viajes interurbanos, reciban tratamiento propio en otro.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Flujo de filtros aplicados sobre el conjunto consolidado}
+  \label{tab:flujo-filtros}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.26\textwidth}rr>{\raggedright\arraybackslash}p{0.28\textwidth}@{}}
+    \toprule
+    \textbf{Etapa} & \textbf{Filas} & \textbf{Variación} & \textbf{Tratamiento} \\
+    \midrule
+    Conjunto consolidado & 1.927.675 & --- & --- \\
+    Tras eliminar duplicados exactos & 1.927.615 & $-60$ & Eliminar \\
+    Marca \var{zero_coords} & 3 & --- & Excluir del análisis espacial \\
+    Marca \var{out_of_bbox} & 3.511 & --- & Conservar, excluir del análisis metropolitano \\
+    Marca \var{impossible_jump} & 17.741 & --- & Conservar, excluir de variables secuenciales \\
+    \midrule
+    Total excluido (marcado) & 21.255 & $-1{,}10\,\%$ & --- \\
+    \textbf{Incluido en el análisis} & \textbf{1.906.360} & \textbf{98,90\,\%} & --- \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{09_select_filter.py} ---
+  \var{reports/02_data_preparation/01_filter_flow.md}.}
+\end{table}
+
+Los 104 registros que participaban en grupos de duplicación exacta identificados en la
+sección~\ref{sec:comprension-datos} se reducen a 60 registros efectivamente eliminados: al
+conservar una copia de cada grupo duplicado, la resta es de 60 filas y no de 104. Los 3.514
+registros fuera del área de estudio detectados sobre el consolidado original
+(sección~\ref{sec:comprension-datos}) se reducen a 3.511 una vez retirados los duplicados
+exactos que coincidían con esa condición; ambas cifras son correctas en su propio contexto
+y esta sección usa consistentemente la del conjunto ya depurado. La verificación de
+integridad de la tabla~\ref{tab:flujo-filtros} cuadra exactamente: filas incluidas más
+filas excluidas suman las 1.927.615 filas posteriores a la deduplicación.
+
+Los saltos imposibles —pares de consultas del mismo usuario separadas por menos de 120
+segundos y más de 11 kilómetros, criterio fijado en la sección~\ref{sec:identificador-usuario}—
+se marcan en 17.741 filas exclusivamente por este motivo; el filtro completo detecta 18.009
+filas, cifra que incluye un pequeño solapamiento con otras marcas y no debe confundirse con
+el conteo de pares sospechosos (2.156) reportado en la fase anterior, que cuenta pares y no
+filas.
+
+\subsection{Limpieza}
+
+La limpieza no encontró nulos en coordenadas ni valores fuera de rango geográfico: las
+1.906.360 filas incluidas caen todas dentro de los límites de Cochabamba. Se identificaron
+aproximadamente 19.000 valores atípicos de \texttt{distancia} (por encima del percentil 99),
+que se conservan marcados en lugar de recortarse, siguiendo el mismo criterio transversal de
+esta fase; su presencia es consistente con los viajes interurbanos ya caracterizados en la
+sección~\ref{sec:distribucion-espacial}. Los dos campos exclusivos del segundo lote de
+archivos, \var{year_week_number} y \var{time_of_day}, permanecen nulos en el
+91,6~\% de las filas por diseño —son exclusivos de los archivos posteriores a abril de
+2024— y se documentan como tales en lugar de imputarse.
+
+\subsection{Sesionización}
+\label{sec:sesionizacion}
+
+Las consultas de un mismo usuario se agrupan en sesiones cuando la separación entre
+consultas consecutivas no supera un \textbf{umbral de 30 minutos}, criterio estándar de
+definición de sesión y coherente con la duración habitual de un trayecto urbano. El
+resultado son 934.096 sesiones sobre las 1.906.360 consultas incluidas.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Distribución de sesiones de consulta}
+  \label{tab:sesionizacion}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+    \toprule
+    \textbf{Indicador} & \textbf{Valor} \\
+    \midrule
+    Sesiones totales & 934.096 \\
+    Sesiones de una sola consulta & 402.350 (43,1~\%) \\
+    Sesiones de más de una consulta & 531.746 (56,9~\%) \\
+    Mediana de duración (sesiones múltiples) & 1 minuto \\
+    Percentil 95 de duración (sesiones múltiples) & 25 minutos \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{11_sessionize.py} ---
+  \var{reports/02_data_preparation/03_sessionization.md}.}
+\end{table}
+
+La distribución resultante valida el umbral elegido: tanto la mediana (1 minuto) como el
+percentil 95 (25 minutos) de duración de las sesiones múltiples quedan muy por debajo de los
+30 minutos del corte, lo que indica que el umbral no está fragmentando episodios de consulta
+genuinos. Que el 43,1~\% de las sesiones contenga una única consulta, con una mediana de dos
+consultas por sesión, es la evidencia central que más adelante (sección~\ref{sec:tipo-problema})
+justifica no construir un objetivo de predicción a nivel de usuario individual: hay poca
+repetición dentro de una misma sesión sobre la cual apoyar ese tipo de señal.
+
+\subsection{Teselación H3}
+\label{sec:teselacion-h3}
+
+Se adoptó formalmente la teselación de hexágonos H3 en \textbf{resolución 8} (celdas de
+aproximadamente 460 metros de arista y 0,74~km² de superficie) como unidad de análisis
+territorial de todo el resto del proyecto, reemplazando la agregación preliminar de la
+sección~\ref{sec:agregacion-h3}. Tres criterios convergen en esta elección. El primero es de
+granularidad: la resolución 8 produce 1.113 celdas de origen, suficientes para preservar el
+detalle de barrio sin dispersar en exceso la señal. El segundo es de robustez ante el
+problema de la unidad de área modificable (MAUP), verificado en la
+sección~\ref{sec:sensibilidad-h3}. El tercero es de aditividad: al no solaparse ni dejar
+huecos, los hexágonos permiten agregar y comparar celdas entre sí sin ambigüedad.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Celdas de origen por resolución H3 y concentración de la demanda}
+  \label{tab:resoluciones-h3}
+  \interlineadoSimple
+  \begin{tabular}{lrrr}
+    \toprule
+    \textbf{Resolución} & \textbf{Arista} & \textbf{Celdas de origen} & \textbf{Top-10 celdas} \\
+    \midrule
+    7 & \textasciitilde 1,22~km & 320 & 79,6~\% \\
+    \textbf{8 (adoptada)} & \textbf{\textasciitilde 0,46~km} & \textbf{1.113} & \textbf{42,2~\%} \\
+    9 & \textasciitilde 0,17~km & 4.170 & 16,2~\% \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de \var{12_build_h3.py} ---
+  \var{reports/02_data_preparation/04_h3_tessellation.md}.}
+\end{table}
+
+La resolución 7 concentra el 79,6~\% de la demanda en apenas diez celdas, lo que vuelve el
+análisis territorial poco informativo; la resolución 9 dispersa las observaciones en 4.170
+celdas con conteos ruidosos. La resolución 8 concentra el 42,2~\% de la demanda en las diez
+celdas principales y el 78,0~\% en las cincuenta principales --- un patrón de fuerte
+centralización, cuantificado en la sección~\ref{sec:sensibilidad-h3} mediante el coeficiente
+de Gini.
+
+\subsection{Cobertura de rutas GTFS}
+\label{sec:cobertura-gtfs}
+
+Se integró el feed GTFS (\textit{General Transit Feed Specification}) mantenido por Trufi
+Association para Cochabamba, con 141 líneas mapeadas y período de validez declarado del
+1 de enero de 2024 al 31 de diciembre de 2026 --- posterior a buena parte de las consultas
+analizadas, que comienzan en septiembre de 2022; la cobertura se calcula, por tanto, contra
+el estado vigente del mapeo y no contra el estado que tenía en cada momento histórico. Cada
+consulta se cruzó contra el trazado de rutas (\texttt{shapes.txt}, muestreado cada 50 metros
+e indexado en un KD-tree) y no contra las paradas (\texttt{stops.txt}), lo que mide
+accesibilidad a la línea de transporte y no al punto de abordaje efectivo, y por tanto
+sobreestima la cobertura tal como la percibe el usuario. Un punto se considera
+\textbf{cubierto} si queda a 500 metros o menos del trazado más próximo --- una caminata de
+cinco a siete minutos y un estándar habitual en análisis de accesibilidad al transporte
+público, que además absorbe el error típico de posicionamiento GPS urbano.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Cobertura de rutas GTFS sobre las consultas incluidas}
+  \label{tab:cobertura-gtfs}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+    \toprule
+    \textbf{Indicador} & \textbf{Valor} \\
+    \midrule
+    Orígenes cubiertos ($\leq$500~m) & 1.895.861 (99,4~\%) \\
+    Destinos cubiertos ($\leq$500~m) & 1.885.160 (98,9~\%) \\
+    Ambos extremos cubiertos & 1.874.948 (98,4~\%) \\
+    Distancia mediana a la ruta más cercana (orígenes) & 10~m \\
+    Distancia media a la ruta más cercana (orígenes) & 37~m \\
+    Percentil 95 de distancia (orígenes) & 131~m \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{13_gtfs_coverage.py} ---
+  \var{reports/02_data_preparation/05_gtfs_coverage.md}.}
+\end{table}
+
+Esta cifra agregada de 99,4~\% de cobertura --- ponderada por consulta, y por tanto dominada
+por el núcleo urbano donde se concentra la demanda (sección~\ref{sec:teselacion-h3}) --- no
+contradice el hallazgo de brecha centro-periferia que se contrasta formalmente en la
+sección~\ref{sec:evaluacion-resultados} (hipótesis H1): cuando la unidad de observación pasa
+de la consulta a la celda territorial, dando el mismo peso a una celda con tres consultas
+semanales que a una con mil, la brecha de cobertura en la periferia se vuelve visible. Ambas
+cifras son correctas porque ponderan cosas distintas, y el proyecto las reporta juntas
+precisamente porque la brecha de información no aparece en el agregado del sistema, solo
+cuando se examina el territorio celda por celda.
+
+\subsection{Validación de las variables de municipio}
+\label{sec:validacion-municipios}
+
+Las variables \var{origin_municipio} y \var{dest_municipio}, recibidas ya calculadas
+y sin documentación de procedencia (sección~\ref{sec:comprension-datos}), se contrastaron
+contra la lista de municipios metropolitanos conocidos y se revisó la coherencia de
+asignación dentro de cada celda H3. Se identificaron 21 municipios de origen distintos; el
+núcleo metropolitano concentra la enorme mayoría de la demanda: Cercado de Cochabamba
+86,6~\%, Sacaba 4,7~\%, Quillacollo 3,1~\%, Colcapirhua 2,9~\%, Tiquipaya 2,4~\%, Vinto
+0,2~\% y Sipesipe 0,1~\%. El resto --- entre ellos Villa Santiváñez y Villa José Quintín
+Mendoza, cuyos nombres llegaron con codificación defectuosa y se corrigen aquí --- no supera
+individualmente el 0,05~\% y corresponde a los desplazamientos interurbanos ya identificados
+por la marca \var{out_of_bbox} (sección~\ref{sec:seleccion-filtros}). La validación no
+alcanza a reconstruir el procedimiento original de asignación --- esa limitación permanece
+declarada (capítulo~\ref{cap:alcance}) --- pero sí confirma que la distribución observada es
+internamente consistente con la delimitación espacial adoptada.
+
+\subsection{Tabla de indicadores por celda y semana}
+\label{sec:tabla-indicadores}
+
+Las consultas incluidas se agregaron por celda H3 (resolución 8) y semana, combinando
+demanda, cobertura GTFS y patrones temporales en una única tabla de indicadores:
+\textbf{42.676 observaciones celda-semana}, sobre \textbf{1.552 celdas únicas} activas como
+origen o como destino en algún momento del período de 84 semanas con datos.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Estadísticos descriptivos de los indicadores territoriales (celda-semana)}
+  \label{tab:indicadores-estadisticos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}Xrrrrr@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Mediana} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Máximo} & \textbf{Nulos} \\
+    \midrule
+    \var{n_queries_orig} & 3 & 44,67 & 165,79 & 3.663 & 0 \\
+    \var{n_queries_dest} & 4 & 44,67 & 140,57 & 2.307 & 0 \\
+    \var{dist_gtfs_mean_orig_m} & 50,93 & 240,65 & 925,81 & 25.081 & 11.367 \\
+    \var{pct_uncovered_orig} & 0,00 & 0,08 & 0,27 & 1,00 & 11.367 \\
+    \var{mean_trip_dist_m} & 7.434,67 & 8.846,15 & 5.599,97 & 55.517,85 & 11.367 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{15_indicators_table.py} ---
+  \var{reports/02_data_preparation/07_indicators_table.md}. La variable
+  \var{od_balance} se excluye de esta tabla: sus estadísticos calculados presentan un
+  desbordamiento de tipo entero de 32 bits y no son citables; queda fuera del conjunto de
+  modelado por fuga de información (sección~\ref{sec:tipo-problema}), de modo que el defecto
+  no afecta a ningún resultado.}
+\end{table}
+
+Las 11.367 observaciones nulas (26,6~\%) en las variables de cobertura y composición
+temporal corresponden a celdas-semana con actividad únicamente como destino, sin ninguna
+consulta originada esa semana --- no a un defecto de calidad. En el panel de modelado
+(sección~\ref{sec:tipo-problema}) se imputan con la mediana histórica de la propia celda.
+
+\subsection{Sensibilidad de la resolución H3 y el problema de la unidad de área modificable}
+\label{sec:sensibilidad-h3}
+
+El problema de la unidad de área modificable (MAUP) advierte que los resultados de un
+análisis espacial pueden depender de la forma y el tamaño de las unidades territoriales
+elegidas, y no solo del fenómeno estudiado. Se abordó mediante un análisis de sensibilidad
+explícito entre las tres resoluciones H3 evaluadas (capítulo~\ref{cap:marco-teorico}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Sensibilidad del patrón de concentración a la resolución H3}
+  \label{tab:sensibilidad-h3}
+  \interlineadoSimple
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Resolución} & \textbf{Coeficiente de Gini} & \textbf{Correlación cruzada (Spearman $\rho$)} \\
+    \midrule
+    7 & 0,954 & $\rho_{7\leftrightarrow8}=0,9854$ \\
+    \textbf{8 (referencia)} & \textbf{0,934} & $\rho_{7\leftrightarrow9}=0,9856$ \\
+    9 & 0,903 & $\rho_{8\leftrightarrow9}=0,9913$ \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de \var{16_sensitivity_h3.py} ---
+  \var{reports/02_data_preparation/08_h3_sensitivity.md}.}
+\end{table}
+
+El coeficiente de Gini de la demanda de origen en resolución 8 es \textbf{0,934}, una
+concentración sustancial y estable entre resoluciones adyacentes (0,954 en r7, 0,903 en r9).
+Las correlaciones de rangos entre resoluciones adyacentes superan 0,98 en los tres pares, lo
+que establece que el patrón de concentración territorial es una propiedad del fenómeno
+--- la demanda de información de transporte está genuinamente concentrada en un núcleo
+urbano reducido --- y no un artefacto de la escala de agregación elegida. Esta verificación
+sostiene la resolución 8 como unidad de análisis para el resto del proyecto.
+
+\subsection{Partición cronológica de entrenamiento y prueba}
+\label{sec:particion-cronologica}
+
+La cobertura temporal (sección~\ref{sec:cobertura-temporal}) estableció que el volumen de
+consultas \textbf{no es estacionario}: crece de forma sostenida a lo largo del período. Esta
+propiedad exige una partición \textbf{cronológica}, nunca aleatoria: un particionamiento
+aleatorio permitiría que el modelo se entrene con semanas posteriores a las que debe
+predecir, lo que constituye fuga de información temporal y produce una estimación optimista
+del desempeño real.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Partición cronológica de la tabla de indicadores}
+  \label{tab:particion-indicadores}
+  \interlineadoSimple
+  \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Conjunto} & \textbf{Observaciones} & \textbf{\%} & \textbf{Semanas} & \textbf{Rango calendario} \\
+    \midrule
+    Entrenamiento & 38.638 & 90,5~\% & 76 & 2022-W37 -- 2024-W08 \\
+    Prueba & 4.038 & 9,5~\% & 8 & 2024-W09 -- 2024-W23 \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de \var{17_train_test_split.py} ---
+  \var{reports/02_data_preparation/09_train_test_split.md}. Estas cifras describen la
+  tabla de indicadores dispersa, previa a la construcción del panel completo celda$\times$semana
+  de la sección~\ref{sec:tipo-problema}; sobre ese panel completo la misma frontera cronológica
+  produce 111.744 filas de entrenamiento y 12.416 de prueba.}
+\end{table}
+
+El corte de 8 semanas de prueba busca un equilibrio: suficiente para una evaluación
+confiable (aproximadamente dos meses) sin sacrificar una proporción excesiva de los datos de
+entrenamiento (90,5~\% de las observaciones). La consecuencia más importante de este corte
+se advierte aquí y se retoma en las secciones~\ref{sec:proceso-entrenamiento}
+y~\ref{sec:evaluacion-resultados}: como la partición toma las últimas \emph{ocho semanas
+observadas} y no ocho semanas calendario contiguas, el vacío estructural de siete semanas
+(sección~\ref{sec:cobertura-temporal}) queda comprimido \textbf{dentro} de la ventana de
+prueba. Las últimas semanas observadas son 2024-W09, W10, y después --tras el vacío-- W18 a
+W23: la ventana de prueba no son ocho semanas contiguas, sino dos semanas, un hueco de siete,
+y seis semanas más. Esto debilita las variables autorregresivas justamente donde se mide el
+desempeño del modelo, y explica parte de la caída de precisión entre entrenamiento y prueba
+que se documenta más adelante --- no se trata de sobreajuste.
+
+\subsection{Síntesis de la fase de preparación}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Decisiones de la fase de preparación y su justificación}
+  \label{tab:decisiones-preparacion}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}p{0.30\textwidth}X@{}}
+    \toprule
+    \textbf{Decisión} & \textbf{Justificación} \\
+    \midrule
+    Eliminar solo duplicados exactos; marcar el resto & Preserva trazabilidad completa entre dato crudo y dato modelado \\
+    Timeout de sesión de 30 minutos & Estándar de sesión de aplicación; validado por la distribución resultante \\
+    Teselación H3, resolución 8 & Balance de granularidad, robustez ante el MAUP (correlaciones $>0,98$) y aditividad \\
+    Umbral de cobertura GTFS de 500 metros & Estándar de accesibilidad peatonal; absorbe el error de posicionamiento GPS \\
+    Partición cronológica (76/8 semanas) & La demanda no es estacionaria; evita fuga de información temporal \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia.}
+\end{table}
+
+Estructura de evidencia de esta fase (referencia): \texttt{data/processed} (tabla de
+indicadores y partición train/test en formato Parquet), \texttt{src} (scripts \texttt{09} a
+\texttt{17}), \var{reports/02_data_preparation} (informes de esta sección).
