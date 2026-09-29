@@ -1,0 +1,371 @@
+% ============================================================
+%  6.2 Fundamentos de Ciencia de Datos   (capítulo 6, Marco teórico)
+%  Se incluye desde secciones/07_marco_teorico.tex con \input.
+% ============================================================
+\section{Fundamentos de Ciencia de Datos}
+\label{sec:fundamentos-cd}
+
+\subsection{Ciencia de Datos y ciencia de datos geoespacial}
+\label{subsec:ciencia-datos}
+
+La Ciencia de Datos puede definirse como el campo que se ocupa de extraer conocimiento útil
+de los datos mediante la integración de la estadística, la computación y el conocimiento del
+dominio. \textcite{donoho2017}, en su revisión de cincuenta años de la disciplina, la
+caracteriza como una ampliación de la estadística que abarca la recolección, preparación y
+exploración de datos, su representación y transformación, la computación, el modelado, la
+visualización y la reflexión sobre la propia práctica científica con datos.
+\textcite{provost2013} subrayan, por su parte, que la Ciencia de Datos se orienta a la toma
+de decisiones basada en datos, y que su valor no reside en los algoritmos en sí, sino en su
+capacidad de responder preguntas bien formuladas con evidencia empírica.
+
+Cuando los datos tienen una referencia espacial explícita, el análisis debe incorporar los
+principios de la ciencia de la información geográfica (GIScience), término que
+\textcite{goodchild1992} propuso para designar el estudio de las cuestiones fundamentales que
+plantea el uso de la información geográfica, como la representación, la escala, la
+incertidumbre y la dependencia espacial. \textcite{singleton2021} han denominado ciencia de
+datos geográfica a la convergencia entre ambas tradiciones, que combina las herramientas
+computacionales de la Ciencia de Datos con la atención a la estructura espacial propia de la
+geografía cuantitativa. En el presente proyecto, la unidad de análisis es un lugar, la
+variable de interés presenta dependencia espacial y las decisiones de escala condicionan los
+resultados; por ello, el proyecto se sitúa explícitamente en el ámbito de la ciencia de
+datos geoespacial y adopta sus cautelas específicas.
+
+\subsection{Tipología del problema analítico: descriptivo, diagnóstico, predictivo y estimación transversal}
+\label{subsec:tipologia-problema}
+
+Los problemas analíticos suelen clasificarse según la pregunta que responden: el análisis
+descriptivo resume lo ocurrido; el diagnóstico indaga por qué ocurrió; el predictivo estima
+valores desconocidos a partir de información disponible; y el prescriptivo recomienda
+acciones. Dentro del análisis predictivo conviene distinguir tres tareas que se confunden con
+frecuencia. La primera es la estimación de un valor esperado condicional,
+$\mu_i = E[Y_i \mid P_i, X_i]$, para unidades observadas en un mismo período, de carácter
+transversal. La segunda es la proyección por escenarios, que consiste en recalcular ese valor
+esperado bajo supuestos alternativos sobre las variables explicativas (por ejemplo, una nueva
+distribución de la población). La tercera es el pronóstico de series temporales, que
+extrapola la evolución de una variable hacia períodos futuros a partir de su dinámica pasada
+\parencite{hyndman2021}.
+
+El proyecto corresponde a la primera tarea: se estima, para cada zona, el número esperado de
+consultas del período de observación dado su población y su contexto territorial, y ese
+valor se contrasta con lo observado. No se pretende pronosticar cuántas consultas ocurrirán
+en semanas futuras; la proyección se plantea únicamente como escenario, mediante la
+actualización de la población y de los datos de consultas y la reestimación del modelo. Esta
+distinción tiene una consecuencia metodológica directa: si la pregunta es cuántas consultas
+cabe esperar en una zona dada su población y su contexto, la capacidad del modelo debe
+evaluarse en lugares no vistos durante el entrenamiento, y no en períodos futuros. De ahí
+que la validación se diseñe con particiones espaciales (véase \ref{subsec:validacion-espacial})
+y no con particiones temporales.
+
+\subsection{Datos de conteo: Poisson, exposición, sobredispersión y exceso de ceros}
+\label{subsec:datos-conteo}
+
+La variable dependiente del proyecto es un conteo, es decir, un número entero no negativo de
+eventos ocurridos en una unidad espacial durante un período. El modelo de referencia para
+conteos es la distribución de Poisson, cuya función de probabilidad es
+\[
+  P(Y = y) = \frac{e^{-\mu}\,\mu^{y}}{y!}, \qquad y = 0, 1, 2, \ldots,
+\]
+y cuya propiedad característica es la igualdad entre media y varianza,
+$E(Y) = \operatorname{Var}(Y) = \mu$ \parencite{cameron2013}. La distribución surge
+naturalmente cuando los eventos ocurren de manera independiente a una tasa constante, y
+constituye el punto de partida de los modelos lineales generalizados para conteos
+\parencite{mccullagh1989,agresti2015}.
+
+Cuando las unidades difieren en tamaño, el conteo esperado es proporcional a una medida de
+exposición. Si $P_i$ es la población de la zona~$i$ y $\lambda_i$ la tasa de consultas por
+habitante, entonces $\mu_i = P_i \cdot \lambda_i$ y, tomando logaritmos,
+$\log \mu_i = \log P_i + \log \lambda_i$. El término $\log P_i$, que entra en el modelo con
+coeficiente fijo igual a uno, se denomina \textit{offset}; su inclusión garantiza que el
+modelo describa tasas por habitante y que las demás variables expliquen desviaciones
+respecto de la proporcionalidad con la población \parencite{cameron2013,hilbe2011}. Las
+tasas suelen expresarse por cada mil habitantes, $\lambda_i \times 1000$, para facilitar su
+lectura. Esta formulación es la que justifica tratar la población como exposición y no como
+una variable explicativa más.
+
+En la práctica, los conteos presentan con frecuencia una varianza superior a la media,
+fenómeno denominado sobredispersión, que puede deberse a heterogeneidad no observada entre
+unidades, a dependencia entre eventos o a la agregación de procesos distintos. Un
+diagnóstico habitual es el estadístico de dispersión
+\[
+  \hat{\varphi} = \frac{1}{n - p} \sum_i \frac{(y_i - \hat{\mu}_i)^2}{\hat{\mu}_i},
+\]
+que en un modelo de Poisson correctamente especificado debería ser cercano a uno; valores
+claramente superiores indican sobredispersión \parencite{hilbe2011}. Ignorarla no sesga
+necesariamente las estimaciones puntuales, pero subestima sus errores estándar y conduce a
+inferencias excesivamente confiadas \parencite{cameron2013}.
+
+Un caso particular es el exceso de ceros, que se presenta cuando se observan más unidades
+con conteo nulo de las que el modelo predice. Bajo un modelo de Poisson, el número esperado
+de ceros es $\sum_i e^{-\hat{\mu}_i}$, cantidad que puede compararse con el número observado.
+En el proyecto cabe esperar zonas pobladas con cero consultas, y conviene distinguir
+conceptualmente entre ceros muestrales, compatibles con un valor esperado pequeño, y ceros
+estructurales, que se producen porque en la zona no existe la posibilidad del evento (por
+ejemplo, porque ninguna ruta mapeada la sirve y la aplicación no se usa allí). Esta
+distinción motiva la consideración de modelos para sobredispersión y ceros descrita en
+\ref{subsec:binomial-negativa}.
+
+\subsection{Autocorrelación espacial: Tobler, I de Moran y LISA}
+\label{subsec:autocorrelacion}
+
+La primera ley de la geografía, formulada por \textcite{tobler1970}, establece que todo está
+relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las
+distantes. En términos estadísticos, esta regularidad se denomina autocorrelación espacial:
+los valores de una variable en lugares próximos tienden a parecerse más (autocorrelación
+positiva) o a diferir más (autocorrelación negativa) de lo que se esperaría si se
+distribuyeran al azar. Su presencia viola el supuesto de independencia de las observaciones
+en el que se basan muchos procedimientos estadísticos y de validación.
+
+La medida global clásica es el índice $I$ de Moran \parencite{moran1950}, definido como
+\[
+  I = \frac{n}{S_0} \cdot
+      \frac{\sum_i \sum_j w_{ij}\,(x_i - \bar{x})(x_j - \bar{x})}{\sum_i (x_i - \bar{x})^2},
+\]
+donde $n$ es el número de unidades, $x_i$ el valor en la unidad~$i$, $\bar{x}$ la media,
+$w_{ij}$ el peso espacial entre las unidades $i$ y $j$, y $S_0 = \sum_i \sum_j w_{ij}$. Los
+pesos se recogen en una matriz $W$ que define la vecindad. En una grilla hexagonal, la
+vecindad de contigüidad resulta especialmente natural: cada zona tiene seis vecinas que
+comparten con ella una arista completa (el primer anillo, obtenido en H3 con la operación
+\var{grid_disk} de radio $k = 1$), de modo que $w_{ij} = 1$ si $j$ pertenece al primer
+anillo de $i$ y $0$ en otro caso; habitualmente la matriz se estandariza por filas para que
+cada fila sume uno. El valor esperado de $I$ bajo ausencia de autocorrelación es
+$-1/(n - 1)$, y su significación se evalúa comúnmente mediante permutaciones aleatorias de
+los valores entre las unidades.
+
+Para localizar dónde se concentra la dependencia se emplean los indicadores locales de
+asociación espacial (LISA) propuestos por \textcite{anselin1995}, cuya versión local del
+índice de Moran es $I_i = (z_i / m_2) \sum_j w_{ij} z_j$, con $z_i = x_i - \bar{x}$ y
+$m_2 = \sum_i z_i^2 / n$. La suma de los $I_i$ es proporcional al $I$ global, y cada
+indicador permite clasificar las unidades en agrupamientos alto-alto y bajo-bajo, o en
+atípicos alto-bajo y bajo-alto, con la debida corrección por comparaciones múltiples.
+Finalmente, el correlograma espacial, que representa el valor de $I$ para vecindades de
+orden creciente (anillos $k = 1, 2, 3, \ldots$), describe cómo decae la dependencia con la
+distancia. En el proyecto, la autocorrelación se examina en las consultas, en las tasas y en
+los residuos: el correlograma orienta la elección del tamaño de los bloques de validación
+(\ref{subsec:validacion-espacial}) y el análisis de los residuos permite diagnosticar si los
+modelos dejan estructura espacial sin explicar (\ref{subsec:residuos}).
+
+\subsection{Sistemas de grillas discretas globales y H3}
+\label{subsec:h3}
+
+Un sistema de grillas discretas globales (DGGS) es una partición jerárquica de la superficie
+terrestre en celdas de forma y tamaño aproximadamente regulares, a múltiples resoluciones.
+\textcite{sahr2003} sistematizaron la construcción de estos sistemas geodésicos a partir de
+un poliedro base, una orientación, una forma de celda, una apertura (razón de refinamiento
+entre resoluciones) y una proyección entre las caras del poliedro y la esfera, y mostraron
+que las grillas hexagonales basadas en el icosaedro ofrecen propiedades geométricas
+favorables. H3, desarrollado originalmente por Uber y hoy mantenido como proyecto de código
+abierto, es un DGGS hexagonal jerárquico construido sobre las caras de un icosaedro,
+proyectadas a la esfera mediante una proyección gnomónica centrada en cada cara y orientado
+de modo que sus doce vértices caen en el océano. Su resolución~0 consta de 122 celdas base
+(110 hexágonos y 12 pentágonos), y cada resolución siguiente se obtiene con una apertura~7,
+de modo que cada hexágono tiene siete hijos en la resolución inmediatamente más fina; en
+todas las resoluciones existen exactamente 12 pentágonos, centrados en los vértices del
+icosaedro \parencite{h3-overview,h3-restable}.
+
+El hexágono presenta ventajas analíticas frente a otras teselaciones y frente a los
+\textit{buffers}. A diferencia de la grilla cuadrada, en la que cada celda tiene cuatro
+vecinas por arista y cuatro por vértice a distancias distintas, en la grilla hexagonal las
+seis vecinas comparten una arista completa y sus centroides son equidistantes del centroide
+de la celda, lo que define una vecindad uniforme y sin ambigüedad. A diferencia de los
+\textit{buffers} circulares alrededor de puntos, las celdas no se solapan y cubren el
+territorio de manera exhaustiva, de modo que cada evento se asigna a una sola unidad. Deben
+reconocerse también sus limitaciones: la jerarquía de apertura~7 es solo aproximadamente
+anidada, porque los siete hijos de un hexágono no reproducen exactamente su contorno; el
+área de las celdas varía con su posición respecto de los vértices del icosaedro, con una
+razón entre el hexágono de mayor y el de menor área cercana a 1,99 en la resolución~8; y los
+pentágonos tienen aproximadamente la mitad del área de un hexágono de la misma resolución,
+aunque, al situarse en el océano, carecen de relevancia práctica para Cochabamba
+\parencite{h3-restable}.
+
+La tabla~\ref{tab:resoluciones-h3-marco} recoge las características de las resoluciones
+pertinentes para el proyecto según la tabla oficial de estadísticas de celdas de la
+versión~4.x de H3. Las áreas se calculan con un modelo esférico de la Tierra basado en el
+radio autálico de WGS84, y las longitudes medias de arista se calcularon exactamente para
+las resoluciones 0 a 6 y se extrapolaron para las resoluciones más finas.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Resoluciones H3 relevantes para el proyecto}
+  \label{tab:resoluciones-h3-marco}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}>{\centering\arraybackslash}p{0.15\textwidth}
+      >{\raggedleft\arraybackslash}p{0.14\textwidth}
+      >{\raggedleft\arraybackslash}p{0.14\textwidth}
+      >{\raggedleft\arraybackslash}p{0.16\textwidth}
+      >{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \textbf{Resolución} & \textbf{Área media del hexágono (km²)} &
+    \textbf{Longitud media de arista (km)} & \textbf{Número total de celdas en el globo} &
+    \textbf{Uso en el proyecto} \\
+    \midrule
+    6 & 36,1291 & 3,7245 & 14\,117\,882 & Macrozona (bloques de validación) \\
+    7 & 5,1613 & 1,4065 & 98\,825\,162 & Análisis de sensibilidad (escala más gruesa) \\
+    8 & 0,7373 & 0,5314 & 691\,776\,122 & Zona (unidad de análisis) \\
+    9 & 0,1053 & 0,2008 & 4\,842\,432\,842 & Análisis de sensibilidad (escala más fina) \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia a partir de \textcite{h3-restable}, versión 4.x.}
+\end{table}
+
+A partir de esta tabla se definen las dos unidades espaciales del proyecto. Se denomina zona
+(o zona hexagonal) a la celda H3 de resolución~8, con un área media de aproximadamente
+0,737~km² y una arista media de aproximadamente 0,531~km, lo que corresponde a un hexágono
+de algo menos de un kilómetro entre lados opuestos, una escala asimilable a la de un barrio
+urbano y coincidente con la resolución nativa de Kontur Population. Se denomina macrozona a
+la celda H3 de resolución~6, con un área media de aproximadamente 36,13~km² y una arista
+media de aproximadamente 3,72~km, esto es, un hexágono de unos 6,5~km entre lados opuestos,
+cuya escala es asimilable a la de un distrito urbano. Dado que la apertura es~7, cada
+macrozona agrupa aproximadamente $7^2 = 49$ zonas; la relación es aproximada porque la
+jerarquía de H3 no está perfectamente anidada. Debe aclararse que, en este documento, el
+término \enquote{zona} no corresponde a las zonas, distritos u organizaciones territoriales
+de base (OTB) de la división administrativa municipal, sino exclusivamente a la celda H3 así
+definida.
+
+\subsection{Problema de la unidad de área modificable (MAUP)}
+\label{subsec:maup}
+
+El problema de la unidad de área modificable (MAUP, por sus siglas en inglés) designa la
+dependencia de los resultados de un análisis espacial respecto de la forma en que se definen
+las unidades de agregación \parencite{openshaw1984}. Se descompone en dos efectos: el efecto
+de escala, por el cual los resultados cambian al variar el tamaño de las unidades (por
+ejemplo, al agregar zonas en unidades mayores), y el efecto de zonificación, por el cual
+cambian al variar la forma o la delimitación de unidades de tamaño similar.
+\textcite{fotheringham1991} demostraron que los coeficientes de modelos de regresión
+multivariante estimados con datos agregados pueden variar considerablemente, e incluso
+cambiar de signo, según la escala y la zonificación empleadas, lo que los llevó a advertir
+sobre la fiabilidad de los análisis multivariados basados en datos por área.
+
+En el proyecto, la adopción de una grilla H3 regular y fijada de antemano reduce el
+componente arbitrario de la zonificación, porque las celdas no se trazan en función de los
+datos, pero no elimina el efecto de escala. Por ello, se prevé un análisis de sensibilidad a
+la resolución que repite el procedimiento con celdas de resolución~7 (más gruesas) y~9 (más
+finas), y que examina si la ordenación de zonas prioritarias y las conclusiones sustantivas
+se mantienen al cambiar de escala. Este tratamiento no resuelve el MAUP, que carece de
+solución general, pero permite informar con transparencia en qué medida las conclusiones
+dependen de la resolución elegida.
+
+\subsection{Datos faltantes y discontinuidades temporales}
+\label{subsec:datos-faltantes}
+
+\textcite{rubin1976} estableció el marco de referencia para el análisis de datos faltantes,
+que distingue tres mecanismos. Los datos faltan completamente al azar (MCAR) cuando la
+probabilidad de ausencia no depende ni de los valores observados ni de los no observados;
+faltan al azar (MAR) cuando la probabilidad de ausencia depende solo de valores observados;
+y no faltan al azar (MNAR) cuando depende de los propios valores no observados. La validez
+de los métodos de tratamiento depende del mecanismo: el análisis de casos completos es
+insesgado bajo MCAR, la imputación múltiple es válida bajo MAR, y bajo MNAR ningún método
+resulta válido sin supuestos adicionales no verificables
+\parencite{little2019,vanbuuren2018}.
+
+Los datos de consultas del proyecto presentan un período de siete semanas consecutivas sin
+registros, atribuido a un cambio en el proceso de exportación. Un mecanismo de ausencia de
+origen técnico, ajeno al comportamiento de los usuarios, es plausiblemente independiente de
+la zona, lo que lo aproxima a MCAR en la dimensión espacial; sin embargo, no puede
+descartarse que las semanas perdidas difieran sistemáticamente de las observadas en su
+dimensión temporal (por ejemplo, por estacionalidad académica o festividades). La imputación
+podría, en principio, rellenar esas semanas, pero sus límites son claros: la imputación
+múltiple recupera la incertidumbre solo si el modelo de imputación es adecuado
+\parencite{vanbuuren2018}, y aquí no existe información auxiliar específica de esas semanas
+que no esté ya contenida en las semanas observadas.
+
+Por estas razones, en el proyecto no se generan datos sintéticos para entrenar los modelos.
+Hacerlo introduciría circularidad, porque los valores imputados reproducirían el patrón del
+propio modelo de imputación y el modelo posterior aprendería en parte de sí mismo; crearía
+falsa precisión, porque el tamaño aparente de la muestra aumentaría sin información nueva; y
+podría inducir fuga de datos, si el procedimiento de imputación empleara información de
+zonas destinadas a validación o prueba. En su lugar, se normaliza el conteo por el período
+efectivamente observado, expresando las consultas como tasa por semana observada
+($Y_i / W_{\mathrm{obs}}$, donde $W_{\mathrm{obs}}$ es el número de semanas con registros),
+y se realiza un análisis de sensibilidad que compara los resultados obtenidos con los datos
+anteriores y posteriores al período sin registros. Dado que el estimando es transversal, la
+ausencia de semanas afecta sobre todo al nivel global de las consultas, que la normalización
+corrige, y en menor medida a su distribución espacial, que el análisis de sensibilidad
+permite examinar.
+
+\subsection{Fuga de datos}
+\label{subsec:fuga-datos}
+
+\textcite{kaufman2012} definieron la fuga de datos (\textit{data leakage}) como la
+introducción, en el proceso de entrenamiento, de información sobre la variable objetivo que
+no estaría legítimamente disponible en el momento de usar el modelo, lo que produce
+estimaciones de desempeño optimistas que no se sostienen en la aplicación real. La fuga
+puede producirse por la inclusión de variables que son consecuencia del objetivo o que lo
+contienen parcialmente; por la contaminación entre los conjuntos de entrenamiento y
+evaluación, por ejemplo al realizar el preprocesamiento (escalado, selección de variables,
+imputación) sobre todos los datos antes de particionarlos; y por la dependencia entre
+observaciones de entrenamiento y evaluación que no se respeta en la partición.
+\textcite{kapoor2023}, a partir de una revisión de la literatura en campos que han adoptado
+el aprendizaje automático, identificaron 17 disciplinas en las que se ha detectado fuga, que
+afecta colectivamente a 294 artículos y que en algunos casos condujo a conclusiones
+extremadamente optimistas; los autores propusieron una taxonomía de tipos de fuga y fichas
+de información del modelo para prevenirla.
+
+En problemas espaciales existe una forma específica de fuga que resulta crítica para este
+proyecto: la que se produce en predictores construidos con información de vecinos. Una
+variable como la tasa de consultas de las zonas vecinas es legítima cuando se calcula con
+información disponible, pero si, al evaluar el modelo en una zona de validación, la tasa
+vecinal incluye los conteos de otras zonas de validación, o de la propia zona, el modelo
+accede indirectamente a la variable que debe estimar. Para evitarlo, en el proyecto las
+variables basadas en la vecindad se calculan excluyendo siempre la propia zona y, dentro de
+cada iteración de validación, empleando únicamente los conteos de las zonas del conjunto de
+entrenamiento, de modo que ninguna información del bloque evaluado intervenga en la
+construcción de sus predictores.
+
+\subsection{Sobreajuste, compromiso sesgo-varianza y validación con estructura espacial}
+\label{subsec:validacion-espacial}
+
+Se denomina sobreajuste a la situación en la que un modelo se adapta a las particularidades
+aleatorias de los datos de entrenamiento en lugar de a la estructura general del fenómeno,
+de modo que su desempeño en datos nuevos es inferior al observado en entrenamiento.
+\textcite{hastie2009} formalizan este fenómeno mediante la descomposición del error esperado
+de predicción en un punto $x_0$,
+\[
+  E\bigl[(Y - \hat{f}(x_0))^2\bigr] = \sigma^2 + \bigl[\mathrm{Sesgo}(\hat{f}(x_0))\bigr]^2
+    + \operatorname{Var}(\hat{f}(x_0)),
+\]
+donde $\sigma^2$ es el error irreducible, el sesgo refleja la incapacidad del modelo para
+representar la relación verdadera y la varianza su sensibilidad a la muestra de
+entrenamiento. Los modelos más flexibles reducen el sesgo a costa de aumentar la varianza, y
+el objetivo de la selección de modelos es encontrar el equilibrio que minimice el error en
+datos no vistos, lo que exige estimar ese error de manera honesta.
+
+La validación cruzada aleatoria, que reparte las observaciones entre particiones al azar,
+presupone que las observaciones son independientes. Cuando existe autocorrelación espacial,
+las observaciones de validación tienen casi siempre vecinas muy similares en el conjunto de
+entrenamiento, y el error estimado refleja la capacidad del modelo para interpolar entre
+vecinos más que para generalizar a lugares nuevos. \textcite{roberts2017} mostraron que, con
+datos que presentan estructura temporal, espacial, jerárquica o filogenética, la validación
+aleatoria produce estimaciones de error optimistas, y recomendaron la validación por
+bloques, en la que las particiones se forman con grupos de observaciones contiguas, de
+tamaño acorde con el alcance de la dependencia. \textcite{valavi2019} desarrollaron el
+paquete blockCV para generar particiones espacial o ambientalmente separadas, y
+\textcite{ploton2020} encontraron que, al validar con puntos espacialmente independientes de
+los de calibración, modelos de cartografía ecológica de gran escala que parecían muy
+precisos mostraban un poder predictivo muy pobre.
+
+Este enfoque no está exento de debate. \textcite{wadoux2021} sostienen que la validación
+cruzada espacial carece de fundamento teórico como método para estimar la exactitud de un
+mapa y que puede resultar pesimista, porque las particiones por bloques obligan al modelo a
+extrapolar a distancias mayores que las que separan los puntos a predecir de los datos
+disponibles en la aplicación real; los autores defienden el muestreo probabilístico y la
+inferencia basada en el diseño como vía para obtener estimaciones insesgadas.
+\textcite{meyer2022} sitúan esta controversia en el contexto más amplio de la evaluación de
+mapas producidos con aprendizaje automático y subrayan que la estrategia de validación debe
+corresponder a la tarea de predicción: la validación aleatoria es adecuada cuando se predice
+en lugares cercanos a los datos de entrenamiento, y la validación espacial, cuando se
+predice en áreas alejadas de ellos.
+
+En el proyecto, la pregunta de interés, es decir, cuántas consultas cabe esperar en una zona
+dada su población y su contexto, se aplica a zonas cuya información de consultas no debería
+intervenir en su propia estimación, incluidas las zonas pobladas sin consultas. Por ello, se
+adopta la validación cruzada espacial por bloques con macrozonas H3 de resolución~6 como
+bloques, de modo que todas las zonas de una macrozona se asignan conjuntamente a la misma
+partición, y se reconoce explícitamente que esta elección puede resultar algo pesimista. El
+diseño se completa con dos salvaguardas: un conjunto de prueba reservado, formado por
+macrozonas completas apartadas desde el inicio, que se utiliza una sola vez al final para
+evaluar el modelo elegido; y una regla de selección declarada de antemano, basada en la
+devianza de Poisson media en validación cruzada y en un criterio de parsimonia, como la
+regla de un error estándar descrita por \textcite{hastie2009}, que prefiere el modelo más
+simple cuyo error no difiere del mínimo en más de un error estándar. Ambas salvaguardas
+impiden que la elección del modelo se ajuste, consciente o inconscientemente, al conjunto de
+prueba.

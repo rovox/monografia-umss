@@ -1,0 +1,236 @@
+% ============================================================
+%  6.3 Técnicas y algoritmos relacionados   (capítulo 6, Marco teórico)
+%  Se incluye desde secciones/07_marco_teorico.tex con \input.
+% ============================================================
+\section{Técnicas y algoritmos relacionados}
+\label{sec:tecnicas-algoritmos}
+
+Las técnicas que integran la comparación se organizan como una escalera de complejidad
+creciente, que va desde líneas base de tasas, sin parámetros aprendidos más allá de
+promedios, hasta modelos de aprendizaje automático no lineales. Esta estrategia se
+fundamenta en el teorema de \enquote{no hay almuerzo gratis} (\textit{no free lunch}) de
+\textcite{wolpert1996}, según el cual, promediado sobre todos los problemas posibles, ningún
+algoritmo de aprendizaje supera a otro, de modo que la superioridad de una técnica solo
+puede establecerse empíricamente para una clase de problemas concreta. En consecuencia, la
+práctica recomendada consiste en comparar los modelos complejos con líneas base simples e
+interpretables: si un modelo sofisticado no mejora de manera sustantiva a una tasa
+proporcional a la población, su complejidad adicional no está justificada. Cada peldaño de
+la escalera responde a una hipótesis distinta sobre qué información explica las consultas
+esperadas, y su inclusión se justifica en esos términos.
+
+\subsection{Líneas base de tasas: tasa global y tasas estratificadas}
+\label{subsec:lineas-base}
+
+La línea base más simple supone que las consultas son proporcionales a la población, con
+una tasa común a todo el territorio. La tasa global se estima como
+$\hat{\lambda} = \sum_i Y_i / \sum_i P_i$, y las consultas esperadas de cada zona como
+$\hat{\mu}_i = \hat{\lambda} \cdot P_i$. Este modelo encarna la hipótesis nula sustantiva
+del proyecto, según la cual la población basta para explicar las consultas, y constituye por
+ello el modelo de referencia contra el que se miden todos los demás (véase
+\ref{subsec:modelo-referencia}).
+
+Un primer refinamiento consiste en estratificar la tasa. Si $g(i)$ denota el estrato al que
+pertenece la zona~$i$, la tasa del estrato se estima como
+$\hat{\lambda}_g = \sum_{i \in g} Y_i / \sum_{i \in g} P_i$, y las consultas esperadas como
+$\hat{\mu}_i = \hat{\lambda}_{g(i)} \cdot P_i$. Este procedimiento es análogo a la
+estandarización de tasas por estratos empleada en demografía y epidemiología, y permite
+incorporar heterogeneidad sin estimar modelos. En el proyecto se consideran dos
+estratificaciones: por municipio, que captura diferencias institucionales, de adopción o de
+cobertura cartográfica entre los municipios del eje metropolitano, y por anillos de
+distancia al centro, que captura el gradiente centro-periferia.
+
+La estratificación por anillos se fundamenta en la economía urbana, cuyos modelos clásicos
+de localización, como el de \textcite{alonso1964}, predicen que la intensidad de uso del
+suelo y la densidad disminuyen con la distancia al centro de negocios, y cuyos estudios
+empíricos, desde \textcite{clark1951}, han descrito la densidad de población urbana como una
+función aproximadamente exponencial negativa de esa distancia. Por analogía, cabe esperar
+que la tasa de consultas por habitante también varíe con la distancia al centro, ya sea por
+la concentración de actividades y destinos, por diferencias socioeconómicas en la adopción
+de la aplicación o por la desigual densidad de rutas mapeadas. Las líneas base
+estratificadas permiten examinar si esta estructura simple explica una parte sustancial de
+la variación antes de recurrir a modelos más complejos.
+
+\subsection{Suavizado espacial por vecindad}
+\label{subsec:suavizado-vecindad}
+
+El segundo peldaño aprovecha la autocorrelación espacial mediante un estimador de suavizado
+local. Para cada zona~$i$, con primer anillo de vecinas $N(i)$, que excluye a la propia
+zona, las consultas esperadas se estiman como
+\[
+  \hat{\mu}_i = P_i \cdot \frac{\sum_{j \in N(i)} Y_j}{\sum_{j \in N(i)} P_j},
+\]
+es decir, la población de la zona multiplicada por la tasa conjunta de sus vecinas. El
+estimador encarna la hipótesis de que zonas próximas comparten las condiciones que
+determinan la tasa de consultas, como la adopción, la cobertura cartográfica o el perfil
+socioeconómico, en coherencia con la primera ley de Tobler.
+
+Este estimador se relaciona con dos familias de métodos. Por una parte, con los estimadores
+empírico-bayesianos de tasas: \textcite{clayton1987} y \textcite{marshall1991} propusieron
+contraer la tasa bruta de cada área hacia una tasa de referencia, global o local, con un
+peso que aumenta cuando la población del área es pequeña, y el suavizado local por vecindad
+puede interpretarse como el caso límite en el que la tasa propia recibe peso nulo y la tasa
+vecinal peso total; programas de análisis espacial como GeoDa han difundido estos suavizados
+de tasas en la práctica aplicada \parencite{anselin2006}. Por otra parte, se relaciona con
+la regresión por vecinos más cercanos, en la que la predicción de una unidad se obtiene como
+promedio de las respuestas de las unidades más próximas; aquí la proximidad se define por
+contigüidad hexagonal y el promedio se pondera por la población.
+
+La aplicación de este estimador requiere cuidados específicos para evitar la fuga descrita
+en \ref{subsec:fuga-datos}. La tasa vecinal debe calcularse sin incluir la propia zona y, en
+cada iteración de validación, solo con las zonas del conjunto de entrenamiento; las zonas
+cuyo primer anillo queda íntegramente fuera del entrenamiento, situación frecuente en el
+interior de los bloques de validación, requieren una regla de respaldo declarada de
+antemano, como recurrir al segundo anillo o a la tasa global. Estas precauciones garantizan
+que el suavizado se evalúe en las mismas condiciones en las que se aplicaría a una zona cuyas
+consultas no se conocen.
+
+\subsection{Modelos lineales generalizados: regresión de Poisson con offset}
+\label{subsec:glm-poisson}
+
+Los modelos lineales generalizados (GLM), introducidos por \textcite{nelder1972} y
+desarrollados sistemáticamente por \textcite{mccullagh1989}, extienden la regresión lineal a
+variables respuesta de la familia exponencial mediante tres componentes: una distribución
+para la respuesta, un predictor lineal $\eta_i = x_i^{\top}\beta$ y una función de enlace $g$
+que relaciona la media con el predictor, $g(\mu_i) = \eta_i$. La regresión de Poisson
+corresponde a la distribución de Poisson con enlace logarítmico. Incorporando la población
+como exposición, el modelo se escribe $\log \mu_i = \log P_i + \beta_0 + x_i^{\top}\beta$, o
+de manera equivalente $\mu_i = P_i \cdot \exp(\beta_0 + x_i^{\top}\beta)$, lo que en notación
+compacta se expresa como $\log \mu = \log P + X\beta$. Los parámetros se estiman por máxima
+verosimilitud mediante mínimos cuadrados reponderados iterativamente
+\parencite{nelder1972}.
+
+La principal ventaja de este peldaño es su interpretabilidad: cada coeficiente representa el
+cambio en el logaritmo de la tasa de consultas por habitante asociado a una unidad de la
+variable correspondiente, de modo que $\exp(\beta_k)$ es una razón de tasas. Por ejemplo, un
+coeficiente asociado a la cobertura se interpretaría como el factor multiplicativo de la tasa
+en las zonas cubiertas respecto de las no cubiertas, manteniendo constantes las demás
+variables. En términos de implementación, la biblioteca statsmodels admite directamente un
+\textit{offset} en sus modelos GLM, mientras que en scikit-learn, cuyo
+\var{PoissonRegressor} no admite \textit{offset}, puede obtenerse un ajuste equivalente
+modelando la tasa $y_i / P_i$ con pesos muestrales iguales a $P_i$. Este modelo encarna la
+hipótesis de que las variables de contexto actúan de forma multiplicativa y aditiva en la
+escala logarítmica, sin interacciones no especificadas.
+
+\subsection{Regresión binomial negativa y modelos con exceso de ceros}
+\label{subsec:binomial-negativa}
+
+Cuando existe sobredispersión, la regresión binomial negativa ofrece una generalización
+natural de la de Poisson. En su parametrización más común, denominada NB2, la media conserva
+la misma estructura, $\log \mu_i = \log P_i + x_i^{\top}\beta$, pero la varianza pasa a ser
+$\operatorname{Var}(Y_i) = \mu_i + \alpha \mu_i^2$, donde $\alpha \ge 0$ es el parámetro de
+dispersión; cuando $\alpha$ tiende a cero, el modelo se reduce al de Poisson
+\parencite{hilbe2011,cameron2013}. La binomial negativa puede derivarse como una mezcla de
+Poisson con heterogeneidad no observada de distribución gamma, lo que le confiere una
+interpretación sustantiva: zonas con las mismas características observadas pueden diferir en
+factores no medidos, como la intensidad de difusión local de la aplicación. Su inclusión en
+la comparación se justifica porque, ante sobredispersión, ofrece errores estándar más
+realistas y pondera de forma distinta las zonas de conteos altos.
+
+Cuando el exceso de ceros persiste incluso tras considerar la sobredispersión, pueden
+emplearse modelos inflados de ceros, que combinan un proceso binario que genera ceros
+estructurales con probabilidad~$\pi$ y un proceso de conteo, de modo que
+$P(Y = 0) = \pi + (1 - \pi) \cdot f(0; \mu)$ \parencite{lambert1992}, o modelos de valla
+(\textit{hurdle}), que separan la decisión de si hay o no eventos de la cantidad de eventos
+cuando los hay. La decisión entre estas alternativas no debe basarse en un único contraste
+mecánico, sino en la combinación de varios criterios: la comparación entre el número de
+ceros observados y el esperado bajo el modelo binomial negativo, los criterios de
+información y el desempeño en validación, y la plausibilidad sustantiva de un proceso
+generador de ceros estructurales. Conviene recordar que la binomial negativa, por su mayor
+varianza, predice más ceros que la Poisson con la misma media, por lo que con frecuencia
+absorbe buena parte del aparente exceso de ceros.
+
+\subsection{Gradient boosting con pérdida de Poisson}
+\label{subsec:gradient-boosting}
+
+El \textit{gradient boosting}, formalizado por \textcite{friedman2001}, construye un modelo
+aditivo $F(x) = \sum_m \nu \cdot h_m(x)$ mediante la incorporación secuencial de aprendices
+débiles, normalmente árboles de decisión poco profundos, cada uno ajustado al gradiente
+negativo de la función de pérdida respecto de las predicciones del modelo acumulado, con una
+tasa de aprendizaje~$\nu$ que controla la contribución de cada árbol. Su atractivo para el
+proyecto reside en que captura relaciones no lineales e interacciones entre variables sin
+necesidad de especificarlas de antemano, algo que un GLM solo logra si el analista las
+introduce explícitamente. Cuando la pérdida es la devianza de Poisson y el enlace es
+logarítmico, el modelo estima directamente el logaritmo del conteo esperado, conservando la
+coherencia con la naturaleza de los datos.
+
+Existen varias implementaciones eficientes. XGBoost \parencite{chen2016} introdujo un
+objetivo regularizado, un algoritmo de búsqueda de cortes consciente de la dispersión de los
+datos y optimizaciones de sistema que lo convirtieron en referencia en la práctica; ofrece
+el objetivo \var{count:poisson} y permite incorporar la exposición como margen base
+(\var{base_margin}) igual a $\log P_i$. LightGBM \parencite{ke2017} acelera el entrenamiento
+mediante el muestreo de observaciones basado en gradientes y la agrupación de variables
+mutuamente excluyentes, ofrece un objetivo de Poisson y admite la exposición como puntuación
+inicial (\var{init_score}). En scikit-learn, \var{HistGradientBoostingRegressor}, basado en
+histogramas, admite \var{loss="poisson"} desde la versión 0.23; según la documentación
+oficial, esta pérdida implementa internamente la mitad de la devianza de Poisson con enlace
+logarítmico y requiere $y \ge 0$ \parencite{sklearn-hgb}. Como este estimador no admite
+\textit{offset}, la exposición puede incorporarse modelando la tasa $y_i / P_i$ con pesos
+muestrales $P_i$, formulación equivalente en esperanza a la del \textit{offset}.
+
+La flexibilidad del \textit{gradient boosting} implica un mayor riesgo de sobreajuste, por
+lo que su uso requiere controlar hiperparámetros como el número de iteraciones, la
+profundidad o el número de hojas de los árboles, la tasa de aprendizaje y la
+regularización, idealmente mediante parada temprana y búsqueda de hiperparámetros dentro de
+la propia validación cruzada espacial, sin tocar el conjunto de prueba. Su menor
+interpretabilidad puede compensarse parcialmente con gráficos de dependencia parcial. Este
+peldaño encarna la hipótesis de que la relación entre contexto y tasa de consultas es no
+lineal o presenta interacciones relevantes, y su inclusión permite verificar empíricamente
+si esa complejidad adicional se traduce en una mejora sobre modelos más simples.
+
+\subsection{Preparación de variables geoespaciales}
+\label{subsec:preparacion-geoespacial}
+
+La construcción del conjunto de datos analítico requiere varias operaciones geoespaciales.
+La primera es la asignación de cada consulta a una zona, que se realiza convirtiendo las
+coordenadas de origen (latitud y longitud en WGS84) al identificador de la celda H3 de
+resolución~8 que las contiene, mediante la función \var{latlng_to_cell} de la biblioteca H3
+en su versión~4.x; la misma operación, aplicada a otras resoluciones, genera las variantes de
+sensibilidad, y la función que devuelve la celda padre de resolución~6 asigna cada zona a su
+macrozona. Previamente, las consultas se depuran de registros con coordenadas inválidas o
+situadas fuera del área de estudio y de posibles repeticiones de la misma consulta por un
+mismo identificador de instalación en intervalos muy breves, y se agregan los conteos por
+zona.
+
+La segunda operación es la integración con la población y con la oferta. Dado que Kontur
+Population se publica sobre la misma grilla H3 de resolución~8, la unión con las zonas se
+realiza por identificador de celda, sin pérdida por reproyección; para otras resoluciones,
+la población se agrega sumando las celdas hijas o se reparte según corresponda. La cobertura
+se calcula como la distancia mínima entre la geometría de la zona (o su centroide) y los
+trazados del feed GTFS reconstruidos como líneas a partir de \var{shapes.txt}. Estas
+distancias deben calcularse en un sistema de coordenadas proyectado métrico, como la
+proyección UTM zona 19~Sur (EPSG:32719) que corresponde a Cochabamba, y no en grados
+geográficos. Las uniones espaciales (\textit{spatial joins}) de GeoPandas permiten además
+asignar a cada zona el municipio en el que se sitúa la mayor parte de su superficie.
+
+La tercera operación es la construcción de las variables de contexto: la distancia del
+centroide de la zona al centro de la ciudad y su discretización en anillos; el municipio; el
+indicador de cobertura según el umbral de 500~m y la distancia continua al trazado; y las
+variables de vecindad, como la población del primer anillo o la tasa vecinal calculada con
+las precauciones contra la fuga descritas en \ref{subsec:fuga-datos}. Todas estas
+transformaciones se implementan como funciones reproducibles que se ajustan, cuando tienen
+parámetros dependientes de los datos, solo con las zonas de entrenamiento de cada
+iteración.
+
+\subsection{Entorno tecnológico}
+\label{subsec:entorno-tecnologico}
+
+El proyecto se desarrolla en Python, lenguaje que concentra el ecosistema de bibliotecas
+abiertas más amplio para la Ciencia de Datos y el análisis geoespacial. La manipulación de
+datos tabulares se realiza con pandas \parencite{mckinney2010}, y la de datos geoespaciales
+vectoriales con GeoPandas \parencite{jordahl2020}, que extiende pandas con geometrías y
+operaciones espaciales como las uniones y los cálculos de distancia. La indexación en la
+grilla hexagonal se efectúa con h3-py, el enlace oficial para Python de la biblioteca H3
+\parencite{h3-overview}. El análisis de autocorrelación espacial, incluidos el $I$ de Moran,
+los indicadores LISA y la construcción de matrices de pesos, se realiza con PySAL y su
+módulo esda \parencite{rey2007}.
+
+Para el modelado se emplean scikit-learn \parencite{pedregosa2011}, que proporciona los
+estimadores de \textit{gradient boosting} basados en histogramas, las utilidades de
+validación cruzada por grupos y las métricas de devianza; statsmodels
+\parencite{seabold2010}, que ofrece los modelos lineales generalizados de Poisson y binomial
+negativa con \textit{offset} e inferencia estadística completa; y, de forma complementaria,
+XGBoost \parencite{chen2016} y LightGBM \parencite{ke2017}. Los mapas interactivos de
+estimaciones y brechas se generan con Folium, biblioteca que produce mapas web basados en
+Leaflet \parencite{folium}. La reproducibilidad se asegura fijando las versiones de las
+bibliotecas y las semillas aleatorias, y organizando el código como una secuencia de guiones
+que puede reejecutarse de principio a fin.

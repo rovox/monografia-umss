@@ -1,0 +1,186 @@
+% ============================================================
+%  6.4 Métricas de evaluación   (capítulo 6, Marco teórico)
+%  Se incluye desde secciones/07_marco_teorico.tex con \input.
+% ============================================================
+\section{Métricas de evaluación}
+\label{sec:metricas}
+
+\subsection{Modelo de referencia}
+\label{subsec:modelo-referencia}
+
+Toda evaluación de modelos requiere un punto de comparación, porque ninguna métrica de error
+tiene sentido en términos absolutos: una devianza o un error medio solo son grandes o
+pequeños en relación con lo que lograría una alternativa razonable, y dependen de la escala
+de los conteos, del número de zonas y de la dispersión intrínseca de los datos. En el
+proyecto, el modelo de referencia es la tasa global proporcional a la población descrita en
+\ref{subsec:lineas-base}, $\hat{\mu}_i = \hat{\lambda} \cdot P_i$. Su elección no es
+arbitraria, sino que materializa la pregunta del proyecto: si un modelo no mejora esta
+referencia, el contexto territorial no aporta información sobre las consultas esperadas más
+allá de la población, y la brecha observado-esperado se reduce a una comparación de tasas
+brutas. Todas las métricas se reportan, por tanto, junto con su valor para el modelo de
+referencia y, cuando procede, como mejora relativa respecto de él.
+
+\subsection{Devianza de Poisson}
+\label{subsec:devianza-poisson}
+
+La devianza de Poisson mide la discrepancia entre los conteos observados y los esperados en
+la escala natural de los datos de conteo. Se define como
+\[
+  D = 2 \sum_i \left[ y_i \ln\!\left(\frac{y_i}{\hat{\mu}_i}\right) - (y_i - \hat{\mu}_i) \right],
+\]
+con la convención de que $y_i \ln(y_i / \hat{\mu}_i) = 0$ cuando $y_i = 0$, y la devianza
+media como $D / n$. Equivale al doble de la diferencia entre la log-verosimilitud del modelo
+saturado y la del modelo evaluado, por lo que constituye la medida de ajuste natural de los
+modelos de Poisson \parencite{mccullagh1989}. En scikit-learn, la función
+\var{mean_poisson_deviance} calcula la devianza media y equivale a la devianza de Tweedie
+con parámetro de potencia igual a uno; requiere $y \ge 0$ y predicciones estrictamente
+positivas \parencite{sklearn-mpd}.
+
+La preferencia por la devianza de Poisson frente al error absoluto medio (MAE) o a la raíz
+del error cuadrático medio (RMSE) obedece a la heterogeneidad de escala de los conteos. En un
+conjunto de zonas con conteos que van desde cero hasta valores elevados, el RMSE queda
+dominado por los errores de las pocas zonas con muchas consultas, mientras que la devianza
+de Poisson pondera cada error en relación con la magnitud esperada, en coherencia con la
+propiedad de que la varianza de un conteo crece con su media. Además, la devianza de Poisson
+es una función de pérdida estrictamente consistente para la media, en el sentido de
+\textcite{gneiting2011}: su valor esperado se minimiza cuando la predicción coincide con el
+verdadero valor esperado, que es precisamente el estimando del proyecto. El MAE, en cambio,
+es consistente para la mediana, que en conteos pequeños y asimétricos puede diferir
+notablemente de la media.
+
+\subsection{Fracción de devianza explicada (\texorpdfstring{$D^2$}{D²})}
+\label{subsec:d2}
+
+La fracción de devianza explicada, o $D^2$, es el análogo del coeficiente de determinación
+$R^2$ para modelos de conteo, y se define como
+$D^2 = 1 - D_{\mathrm{modelo}} / D_{\mathrm{nulo}}$, donde $D_{\mathrm{nulo}}$ es la devianza
+de un modelo nulo de comparación. Un valor de uno indica ajuste perfecto, un valor de cero
+indica que el modelo no mejora al nulo, y un valor negativo indica que es peor. En
+scikit-learn, la función \var{d2_tweedie_score} con parámetro de potencia igual a uno calcula
+esta fracción tomando como modelo nulo la media constante de los valores observados; como en
+el caso del $R^2$, la puntuación puede ser negativa \parencite{sklearn-d2}.
+
+La interpretación del $D^2$ exige declarar contra qué modelo nulo se compara, porque su valor
+cambia radicalmente según la elección. Frente a una media constante, que asigna el mismo
+número de consultas a todas las zonas con independencia de su población, cualquier modelo
+que incorpore la población obtendrá un $D^2$ elevado, sin que ello revele valor alguno del
+contexto territorial. Frente al modelo de referencia con población, el $D^2$ mide la mejora
+atribuible al contexto. Por ello, en el proyecto se reportan ambos valores de forma
+explícita y se añade la mejora relativa frente al modelo de referencia,
+$\mathrm{MR} = 1 - D_{\mathrm{modelo}} / D_{\mathrm{referencia}}$, que expresa qué fracción
+de la devianza no explicada por la tasa global logra reducir cada técnica.
+
+\subsection{Calibración}
+\label{subsec:calibracion}
+
+Un modelo puede ordenar bien las zonas y, sin embargo, sobrestimar o subestimar
+sistemáticamente el nivel de las consultas. La calibración global se evalúa mediante el
+cociente $C = \sum_i \hat{\mu}_i / \sum_i y_i$, que debe ser cercano a uno; los modelos de
+Poisson con intercepto ajustados por máxima verosimilitud satisfacen esta igualdad en los
+datos de entrenamiento, pero no necesariamente en datos no vistos. La calibración por
+deciles complementa esta medida: se ordenan las zonas según su valor predicho, se agrupan en
+diez grupos de igual tamaño y se compara, en cada grupo, la media de las consultas predichas
+con la media de las observadas. La representación gráfica de estos pares frente a la
+diagonal permite detectar si el modelo sobrestima las zonas de baja demanda esperada o
+subestima las de alta demanda, patrones que afectarían directamente a la ordenación de las
+brechas.
+
+\subsection{Residuos para conteos}
+\label{subsec:residuos}
+
+El análisis de residuos permite diagnosticar dónde y cómo falla un modelo. El residuo de
+Pearson se define como $r_{P,i} = (y_i - \hat{\mu}_i) / \sqrt{V(\hat{\mu}_i)}$, donde
+$V(\mu)$ es la función de varianza del modelo, igual a $\mu$ en la Poisson y a
+$\mu + \alpha\mu^2$ en la binomial negativa; la suma de sus cuadrados, dividida por los
+grados de libertad residuales, proporciona el estadístico de dispersión de
+\ref{subsec:datos-conteo}. El residuo de devianza se define como
+$r_{D,i} = \operatorname{signo}(y_i - \hat{\mu}_i) \cdot \sqrt{d_i}$, con
+$d_i = 2\left[y_i \ln(y_i / \hat{\mu}_i) - (y_i - \hat{\mu}_i)\right]$, de modo que la suma
+de sus cuadrados es la devianza total \parencite{mccullagh1989}. Los residuos de devianza
+tienen, en general, una distribución más próxima a la simétrica que los de Pearson, lo que
+facilita su inspección visual.
+
+En un contexto espacial, los residuos deben examinarse también en el mapa. La
+representación cartográfica de los residuos de las zonas de validación permite identificar
+áreas en las que el modelo sobrestima o subestima de forma sistemática, y el cálculo del $I$
+de Moran y de los indicadores LISA sobre los residuos permite diagnosticar si persiste
+autocorrelación espacial no explicada \parencite{anselin1995}. Una autocorrelación residual
+significativa indica que falta en el modelo alguna variable con estructura espacial y, en el
+contexto del proyecto, puede señalar agrupamientos de zonas con déficit de consultas
+compatibles con áreas enteras de cartografía incompleta, información sustantiva para la
+priorización.
+
+\subsection{Estabilidad de la priorización}
+\label{subsec:estabilidad-priorizacion}
+
+Dado que el producto final del proyecto es una ordenación de zonas para su revisión, importa
+tanto la exactitud de las estimaciones como la estabilidad de esa ordenación frente a
+decisiones metodológicas razonables. La correlación de rangos de Spearman
+\parencite{spearman1904} mide la concordancia entre dos ordenaciones, y en ausencia de
+empates se calcula como
+\[
+  \rho = 1 - \frac{6 \sum_i d_i^2}{n(n^2 - 1)},
+\]
+donde $d_i$ es la diferencia entre los rangos de la zona~$i$ en ambas ordenaciones y $n$ el
+número de zonas. Un valor cercano a uno indica que las dos variantes ordenan las zonas de
+forma casi idéntica.
+
+Como la priorización se concentra en el extremo superior de la lista, la correlación de
+rangos, que pondera por igual todo el ordenamiento, se complementa con una medida de
+solapamiento del conjunto de zonas priorizadas. Si $A$ y $B$ son los conjuntos de las $k$
+zonas con mayor prioridad bajo dos variantes, el índice de Jaccard
+$J = \lvert A \cap B \rvert / \lvert A \cup B \rvert$ mide la proporción de zonas
+compartidas. En el proyecto, estas medidas se calculan entre las variantes que surgen de las
+decisiones metodológicas documentadas: las dos ediciones de Kontur Population (2022-06-30 y
+2023-11-01), las resoluciones H3 7, 8 y 9 (comparadas tras agregar las prioridades a una
+escala común) y los períodos anterior y posterior al hueco de siete semanas.
+
+\subsection{Comparación de grupos con y sin cobertura}
+\label{subsec:comparacion-cobertura}
+
+Para describir si las zonas cubiertas por el trazado de las rutas difieren de las no
+cubiertas en su tasa de consultas o en su brecha, se emplea la prueba de Mann-Whitney
+\parencite{mann1947}, una prueba no paramétrica que no supone normalidad y que contrasta si
+los valores de un grupo tienden a ser mayores que los del otro. Su estadístico $U$ cuenta el
+número de pares, formados por una observación de cada grupo, en los que la del primer grupo
+supera a la del segundo, y resulta adecuado para distribuciones asimétricas con abundancia de
+ceros como las de este proyecto.
+
+La significación estadística se complementa con un tamaño de efecto. El $\delta$ de Cliff
+\parencite{cliff1993} se define como
+\[
+  \delta = \frac{\#(x_i > y_j) - \#(x_i < y_j)}{n_1 \cdot n_2},
+\]
+es decir, la diferencia entre la proporción de pares en los que el primer grupo supera al
+segundo y la proporción en que ocurre lo contrario; toma valores entre $-1$ y $1$ y se
+relaciona con el estadístico de Mann-Whitney mediante $\delta = 2U / (n_1 n_2) - 1$. Para su
+interpretación se emplean los umbrales de \textcite{romano2006}: efecto despreciable si
+$\lvert\delta\rvert < 0{,}147$, pequeño si $\lvert\delta\rvert < 0{,}33$, mediano si
+$\lvert\delta\rvert < 0{,}474$ y grande en caso contrario. Debe advertirse que, con
+autocorrelación espacial, las observaciones no son independientes y el tamaño efectivo de la
+muestra es menor que el nominal, de modo que los $p$-valores de la prueba de Mann-Whitney
+resultan optimistas; por ello, en el proyecto se privilegia la magnitud del efecto frente a
+la significación, y la comparación se interpreta como descriptiva, no como prueba causal del
+efecto de la cobertura.
+
+\subsection{Evaluación desagregada y análisis de sensibilidad}
+\label{subsec:evaluacion-desagregada}
+
+Una métrica global puede ocultar desempeños muy desiguales entre subconjuntos del
+territorio. Por ello, las métricas de \ref{subsec:devianza-poisson} a
+\ref{subsec:calibracion} se calculan también de forma desagregada: por anillos de distancia
+al centro, para verificar si el modelo funciona igual en el centro que en la periferia; por
+municipio, para detectar si alguno queda sistemáticamente mal representado; y por niveles de
+población (por ejemplo, terciles), para examinar el comportamiento en las zonas menos
+pobladas, donde el problema de los números pequeños es más agudo. Un modelo cuya ventaja
+global se concentre en un solo estrato, o que empeore en las zonas periféricas donde la
+priorización es más necesaria, debe interpretarse con cautela.
+
+El análisis de sensibilidad completa la evaluación examinando la robustez de las
+conclusiones frente a las decisiones metodológicas que no pueden fijarse con certeza: la
+edición de la población, la resolución de la grilla, el umbral de cobertura, el período de
+datos respecto del hueco de siete semanas y, en su caso, el tamaño de los bloques de
+validación. Su propósito no es elegir la variante más favorable, sino documentar qué
+conclusiones se mantienen bajo todas las variantes razonables y cuáles dependen de supuestos
+particulares, información indispensable para que los voluntarios interpreten la lista de
+zonas prioritarias con el grado de confianza adecuado.

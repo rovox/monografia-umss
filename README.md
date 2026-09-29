@@ -133,6 +133,7 @@ secciones/
   05_alcance.tex          4. Alcance
   06_objetivos.tex        5. Objetivos
   07_marco_teorico.tex    6. Marco Teórico
+    07_01..07_05_*.tex    Sus cinco secciones (6.1 a 6.5), una por archivo
   08_desarrollo.tex       7. Desarrollo (seis fases de CRISP-DM)
   09_conclusiones.tex     8. Conclusiones y Recomendaciones
   10_bibliografia.tex     9. Bibliografía y Anexos
