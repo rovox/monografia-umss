@@ -10,28 +10,35 @@
 \section{Objetivo general}
 \label{sec:objetivo-general}
 
-Estimar el número esperado de consultas de ruta de Trufi App por celda H3 en el eje
-metropolitano de Cochabamba, entre septiembre de 2022 y junio de 2024, a partir de la
-población, la ubicación y el contexto territorial de cada celda, con el fin de proporcionar
-a Trufi Association una referencia cuantitativa que oriente la priorización del mapeo de sus voluntarios.
+Estimar el número esperado de consultas de ruta de Trufi App por zona hexagonal H3 en el
+eje metropolitano de Cochabamba, entre septiembre de 2022 y junio de 2024, a partir de la
+población residente, la localización y la cobertura de la red de rutas mapeada de cada
+zona, con el fin de proporcionar a Trufi Association una referencia cuantitativa que
+oriente la priorización del mapeo de sus voluntarios.
 
 \section{Objetivos específicos}
 \label{sec:objetivos-especificos}
 
 \begin{itemize}
-  \item Caracterizar la calidad, la cobertura temporal y la distribución
-        espacial de las consultas y de las fuentes de población y de oferta de
-        transporte, para fundamentar las reglas de limpieza y el diseño de la evaluación.
-  \item Construir un conjunto de datos por celda H3 que incorpore las celdas
-        pobladas sin consultas y que reserve un conjunto de prueba independiente, definido
-        por bloques espaciales, antes de cualquier modelado.
-  \item Comparar técnicas de estimación de distinta complejidad mediante
-        validación cruzada espacial, seleccionando la técnica final con una regla definida
-        antes de conocer los resultados.
-  \item Evaluar la técnica seleccionada sobre el conjunto de prueba y analizar
-        la diferencia entre las consultas observadas y esperadas, su estabilidad y su
-        relación con la cobertura de la red de transporte mapeada.
-  \item Elaborar una propuesta de uso del resultado para Trufi Association,
-        con productos reproducibles y un procedimiento de actualización, sin que ello
-        implique un despliegue operativo dentro de los sistemas de la organización.
+    \item \textbf{OE1.} Consolidar y caracterizar un conjunto de datos por zona hexagonal
+    H3 que integre las consultas registradas, la población residente y la cobertura de la
+    red mapeada, incorpore las zonas pobladas sin consultas y documente la calidad, la
+    cobertura temporal y la distribución espacial de las fuentes, como base para el diseño
+    de la evaluación.
+
+    \item \textbf{OE2.} Seleccionar una técnica de estimación del número esperado de
+    consultas por zona, tras comparar alternativas de distinta complejidad mediante
+    validación cruzada espacial, aplicando una regla de selección definida antes de conocer
+    los resultados y reservando un conjunto de prueba independiente definido por bloques
+    espaciales.
+
+    \item \textbf{OE3.} Evaluar la técnica seleccionada sobre el conjunto de prueba y
+    analizar la diferencia entre las consultas observadas y esperadas, su estabilidad ante
+    variaciones metodológicas razonables y su relación con la cobertura de la red de
+    transporte mapeada.
+
+    \item \textbf{OE4.} Elaborar una propuesta de uso del resultado para Trufi Association
+    que documente los productos reproducibles, los datos requeridos, la infraestructura
+    necesaria y el procedimiento para una eventual implementación, sin que ello implique un
+    despliegue operativo dentro de los sistemas de la organización.
 \end{itemize}

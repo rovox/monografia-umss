@@ -8,39 +8,50 @@
 \label{cap:alcance}
 
 El presente trabajo comprende la estimación del número esperado de consultas de ruta de
-Trufi App por unidad territorial en el eje metropolitano de Cochabamba, desde la comprensión
-y preparación de los datos hasta la selección, evaluación e interpretación de la técnica de
-estimación y la formulación de una propuesta de uso para Trufi Association.
+Trufi App por zona hexagonal en el eje metropolitano de Cochabamba, desde la comprensión y
+preparación de los datos hasta la selección, evaluación e interpretación de la técnica de
+estimación, junto con la formulación de una propuesta de uso para Trufi Association. El
+estudio se limita a los datos de consultas registrados por la aplicación, a las
+estimaciones de población de Kontur Population y a la red de transporte mapeada en formato
+GTFS. No se emplean datos de viajes realizados, encuestas de movilidad ni información
+socioeconómica, y el período analizado abarca desde el 12 de septiembre de 2022 hasta el 9
+de junio de 2024. El dominio territorial corresponde al eje metropolitano de Cochabamba,
+conformado por los municipios de Cercado, Sacaba, Quillacollo, Colcapirhua, Tiquipaya,
+Vinto y Sipe Sipe, junto con su entorno inmediato; la delimitación operativa precisa de
+ese entorno se establecerá durante la fase de comprensión de los datos, a partir de los
+registros válidos que se incorporen al análisis. La unidad de análisis es la zona
+hexagonal de la grilla geoespacial H3, resolución 8, con un área aproximada de
+0,74~km\textsuperscript{2}. La variable a estimar es el número esperado de consultas
+originadas en cada zona a lo largo del período analizado, en relación con su población
+residente, y la brecha entre lo observado y lo esperado para ese mismo período. La
+comparación se realiza sobre el total acumulado, que es la unidad en la que se decide la
+priorización del mapeo; la variación temporal de las consultas se agrega y no se estima
+por separado.
 
-El estudio se delimita bajo las siguientes condiciones:
+El alcance incluye el análisis exploratorio, la construcción de la tabla de análisis por
+zona, la comparación de técnicas de estimación con evaluación espacial, el análisis de la
+brecha entre lo observado y lo esperado, el contraste descriptivo con la red mapeada y el
+análisis de sensibilidad. Quedan excluidos la predicción de la evolución temporal de la
+demanda, la segmentación de usuarios, la inferencia de relaciones causales y la
+implementación operativa del resultado dentro de los sistemas de Trufi Association.
+Tampoco se contempla la generación de datos sintéticos ni la imputación de períodos sin
+registro para completar el conjunto de datos: el análisis se realiza exclusivamente sobre
+los registros efectivamente disponibles, y las discontinuidades temporales se documentan y
+se tratan como parte de las limitaciones del estudio. No se incorporan fuentes de datos
+externas distintas de las declaradas, ni se construyen variables derivadas de información
+no verificable. El proyecto no contempla un despliegue en producción ni el mantenimiento
+continuo del modelo; se limita a un prototipo verificable localmente, un archivo de
+predicciones por zona y una lista priorizada de veinte zonas para revisión en terreno.
+Estas actividades están dimensionadas para ejecutarse dentro del tiempo y los recursos
+disponibles en la materia, y corresponden a las seis fases de CRISP-DM, sin que se prevean
+tareas que excedan ese marco, como la recolección de datos primarios o la puesta en
+operación del servicio.
 
-\begin{itemize}
-  \item \textbf{Datos considerados.} Registro de consultas de Trufi App, estimaciones de
-        población de Kontur Population y red de transporte mapeada en formato GTFS. No se
-        emplean datos de viajes realizados, encuestas de movilidad ni información
-        socioeconómica.
-  \item \textbf{Período analizado.} Consultas registradas entre el 12 de septiembre de 2022
-        y el 9 de junio de 2024.
-  \item \textbf{Dominio territorial.} El eje metropolitano de Cochabamba y su entorno
-        inmediato.
-  \item \textbf{Unidad de análisis.} La celda hexagonal H3 de resolución 8, de
-        aproximadamente 0,74~km\textsuperscript{2}.
-  \item \textbf{Variable a estimar.} El número de consultas originadas en cada celda durante
-        el período, en relación con su población residente, y la brecha entre lo observado
-        y lo esperado.
-  \item \textbf{Análisis incluidos.} Análisis exploratorio, construcción de la tabla de
-        análisis por celda, comparación de técnicas de estimación con evaluación espacial,
-        análisis de la brecha observado-esperado, contraste descriptivo con la red mapeada y
-        análisis de sensibilidad.
-  \item \textbf{Análisis excluidos.} La predicción de la evolución temporal de la demanda,
-        la segmentación de usuarios, la inferencia de relaciones causales y la
-        implementación operativa del resultado dentro de los sistemas de Trufi Association.
-\end{itemize}
-
-Los resultados están condicionados por limitaciones conocidas: las consultas reflejan el
+Los resultados están condicionados por limitaciones conocidas. Las consultas reflejan el
 comportamiento de quienes usan la aplicación y no el de toda la población; el registro no
 permite saber si una consulta derivó en un viaje; Kontur Population es una estimación
-modelada y no un censo; y la versión disponible del GTFS declara una vigencia posterior a
-buena parte del período de las consultas. Por consiguiente, la solución constituye un
-instrumento de apoyo a la priorización y no sustituye el criterio ni el conocimiento
-territorial de los voluntarios.
+modelada y no un censo; la versión disponible del GTFS declara una vigencia posterior a
+buena parte del período de las consultas; y la cobertura se mide contra el trazado de las
+rutas y no contra las paradas, lo que sobreestima la accesibilidad percibida por el
+usuario. Por consiguiente, la solución constituye un instrumento de apoyo a la
+priorización y no sustituye el criterio ni el conocimiento territorial de los voluntarios.

@@ -1,5 +1,5 @@
 % ============================================================
-%  2. IDENTIFICACIÓN DEL PROBLEMA   (guía, 2.2)
+%  2. IDENTIFICACIÓN DEL PROBLEMA
 %  Propósito: identificar y delimitar con precisión la situación
 %  problemática que da origen al proyecto.
 %  CUIDADO (regla explícita de la guía): no confundir el problema
@@ -14,30 +14,69 @@
 \label{sec:friccion-a-brecha}% alias temporal: lo cita 08_01 hasta transcribir el 7.1
 
 Trufi Association coordina el relevamiento colaborativo de las rutas de transporte público
-del eje metropolitano de Cochabamba. Su labor exige desplazamientos físicos, tiempo de
-procesamiento técnico y coordinación entre voluntarios. La capacidad humana disponible
-limita las zonas que pueden mapearse o actualizarse en un período determinado.
+del eje metropolitano de Cochabamba. Su labor consiste en recorrer las líneas de micros y
+trufis, registrar sus trayectos y paradas, verificarlos con los operadores y convertirlos
+al formato GTFS que alimenta el planificador de Trufi App. Esta tarea exige
+desplazamientos físicos, tiempo de procesamiento técnico y coordinación entre personas que
+participan de forma voluntaria. Por consiguiente, la capacidad humana disponible limita la
+cantidad de zonas que pueden mapearse o actualizarse en un período determinado, y cada
+jornada de trabajo debe dirigirse a alguna zona en particular. La unidad de análisis
+adoptada es la zona hexagonal de la grilla geoespacial H3 (resolución 8), con un área
+aproximada de 0,74 km². En el resto del documento se la denomina indistintamente ``zona
+hexagonal'' o ``zona''.
 
-La organización dispone de un registro detallado de 1.927.675 consultas realizadas en la
-aplicación entre el 12 de septiembre de 2022 y el 9 de junio de 2024. Sin embargo, este
-registro no se aprovecha de manera sistemática para orientar la asignación del trabajo
-voluntario.
+En la situación actual, la elección de las zonas a relevar se apoya principalmente en el
+conocimiento acumulado del equipo y en observaciones informales del territorio. La
+organización dispone de un registro detallado de las consultas realizadas en la aplicación
+a lo largo de casi dos años, pero dicho registro no se aprovecha de manera sistemática para
+orientar la asignación del trabajo voluntario.
 
 La dificultad no radica en la ausencia de datos, sino en su interpretación. El número de
-consultas que genera una zona depende de la población residente, de su cercanía a los
-centros de actividad y de la utilidad que la aplicación ofrece a sus habitantes, la cual
-depende a su vez de que las rutas de esa zona estén mapeadas. Mientras estos factores no se
-separen, un conteo bajo resulta ambiguo: puede reflejar tanto una demanda naturalmente
-reducida como una necesidad no atendida. Desde la perspectiva de la Ciencia de Datos, se
-trata de estimar una variable de conteo ---el número esperado de consultas por celda--- a
-partir de las características territoriales, por lo que el problema se aborda como una
-tarea predictiva de regresión.
+consultas que genera una zona depende simultáneamente de varios factores: la población
+residente, su localización (distancia a los centros de actividad y municipio de
+pertenencia) y la cobertura de la red mapeada, es decir, la utilidad que la aplicación
+ofrece a sus habitantes. Mientras estos factores no se separen, un conteo bajo resulta
+ambiguo, puesto que puede reflejar tanto una demanda naturalmente reducida como una
+necesidad no atendida.
+
+Las consecuencias de esta ambigüedad recaen, en última instancia, sobre los usuarios del
+transporte. Una zona con rutas no mapeadas no aparece en los itinerarios que ofrece la
+aplicación, de modo que sus habitantes no pueden planificar viajes que quizá sí son
+posibles, o deben recurrir a alternativas más costosas o más lentas. La brecha de
+información se traduce así en viajes no cubiertos o mal planificados, y en una percepción
+de que la aplicación no resulta útil precisamente donde el transporte informal es la
+principal opción de movilidad. En el plano operativo, la ambigüedad también tiene un costo:
+ante la imposibilidad de distinguir una demanda baja de una necesidad no atendida, el
+esfuerzo de mapeo se distribuye sin un criterio cuantitativo que permita concentrarlo
+donde el impacto potencial es mayor.
+
+La evidencia disponible sugiere que esta ambigüedad es relevante. El antecedente directo de
+este trabajo, desarrollado con registros de la misma aplicación, encontró que la mayor
+parte de las zonas analizadas debía excluirse de la predicción por no contar con datos
+suficientes, y que la demanda se concentraba en unas pocas zonas del territorio (Angulo
+Andrade, 2024). En consecuencia, las zonas con menor actividad, que podrían ser
+precisamente aquellas donde la aplicación resulta menos útil, son también las que los
+enfoques orientados a pronosticar el volumen de consultas dejan fuera del análisis.
+
+El problema se delimita a la variación de la demanda de información entre zonas del eje
+metropolitano, y no a su evolución en el tiempo. Desde la perspectiva de la Ciencia de
+Datos, lo que se busca apoyar es una estimación: el número de consultas que cabría esperar
+en cada zona según sus características territoriales —población residente, distancia al
+centro, municipio de pertenencia y cobertura de la red mapeada—, junto con una medida de la
+confiabilidad de dicha estimación en zonas no observadas. La estimación corresponde al
+total de consultas acumulado en cada zona a lo largo del período analizado, de modo que
+el conteo esperado de una zona hexagonal pueda compararse con el total de consultas
+efectivamente registradas en ella entre septiembre de 2022 y junio de 2024. Con esta
+referencia, la diferencia entre lo observado y lo esperado podría emplearse como criterio
+cuantitativo para priorizar la revisión del mapeo.
 
 \section{Formulación del problema}
 \label{sec:formulacion-problema}
 
 \begin{quote}
-  \textbf{¿Cómo estimar el número esperado de consultas de ruta de Trufi App por celda H3 a
-  partir de la población, la ubicación y el contexto territorial de cada celda, mediante la
-  aplicación de técnicas geoespaciales de Ciencia de Datos?}
+  \textbf{¿Cómo estimar el número esperado de consultas de ruta de Trufi App por zona
+  hexagonal en el eje metropolitano de Cochabamba, entre septiembre de 2022 y junio de
+  2024, a partir de la población residente, la localización y la cobertura de la red
+  mapeada de cada zona, utilizando los registros de uso de la aplicación, las estimaciones
+  de población y las capas territoriales disponibles?}
 \end{quote}

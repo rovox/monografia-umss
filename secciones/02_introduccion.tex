@@ -12,25 +12,59 @@
 \label{cap:introduccion}
 
 El transporte público del eje metropolitano de Cochabamba opera principalmente bajo la
-modalidad de paratránsito. Trufi App constituye una de las pocas fuentes públicas de
-información sobre sus rutas, mantenida mediante el trabajo voluntario de Trufi Association.
-La aplicación registra cuántas consultas de ruta se originan en cada zona, pero no cuántas
-cabría esperar según sus características territoriales; en consecuencia, un conteo bajo no
-permite distinguir entre una zona poco poblada y una zona donde la aplicación no resulta
-útil.
+modalidad de paratránsito, es decir, un servicio de transporte de pasajeros prestado por
+sindicatos, cooperativas o asociaciones, con rutas flexibles y sin horarios fijos, que no
+se rige plenamente por la regulación del transporte formal. En este contexto, Trufi App
+—aplicación móvil de planificación de rutas— constituye una de las pocas fuentes públicas
+de información sobre las rutas del sistema, mantenida mediante el trabajo voluntario de
+Trufi Association. La aplicación registra cuántas consultas de ruta —búsquedas de
+itinerarios realizadas por los usuarios— se originan en cada zona, pero no cuántas cabría
+esperar según las características territoriales de esa zona. Por ello, un conteo bajo es
+ambiguo: puede reflejar una zona poco poblada o una zona donde la aplicación no ofrece
+información útil. Esta ambigüedad es el problema que motiva la monografía.
 
-La presente monografía aborda ese problema desde la Ciencia de Datos geoespacial. Su
-objetivo es estimar el número esperado de consultas de ruta por celda H3 y compararlo con
-las consultas efectivamente registradas, a fin de identificar zonas con demanda de
-información no resuelta. El proyecto se desarrolla bajo la metodología CRISP-DM, con
-validación espacial por bloques y una regla de selección de modelo declarada antes de
-conocer los resultados.
+La magnitud del problema no es menor. El registro disponible abarca un volumen cercano a
+los dos millones de consultas de ruta realizadas entre septiembre de 2022 y junio de 2024,
+distribuidas sobre algo más de mil trescientas celdas pobladas del eje metropolitano.
+Alrededor de un tercio de esas celdas no registra ninguna consulta en todo el período. Es
+decir, una proporción considerable de las celdas con población residente carece de señal
+alguna de uso de la aplicación, y no es posible saber, con los datos disponibles, si ello
+se debe a una demanda naturalmente baja o a una brecha de información no resuelta.
+Cuantificar y descomponer esa brecha es el propósito de este trabajo.
 
-El documento se estructura de forma secuencial. Los capítulos~\ref{cap:problema}
-a~\ref{cap:objetivos} identifican el problema, justifican su estudio, delimitan el alcance y
-establecen los objetivos. El capítulo~\ref{cap:marco-teorico} presenta los fundamentos
-teóricos. El capítulo~\ref{cap:desarrollo} documenta la aplicación de las seis fases de
-CRISP-DM. El capítulo~\ref{cap:conclusiones} expone las conclusiones y recomendaciones. El
-proyecto no contempla despliegue operativo: se limita a un prototipo verificable localmente,
-un archivo de predicciones por celda y una lista priorizada de veinte celdas para revisión
-en terreno.
+La presente monografía aborda ese problema desde la Ciencia de Datos geoespacial, campo
+que integra estadística, computación y análisis geográfico para extraer conocimiento de
+datos con referencia espacial. Frente a alternativas puramente descriptivas —como un mapa
+de conteos brutos o un ranking basado solo en el número de consultas—, la Ciencia de Datos
+geoespacial permite modelar el número esperado de consultas como un conteo condicionado
+por la población y el contexto territorial, incorporar la dependencia espacial entre zonas
+y validar los modelos separando bloques contiguos del territorio. Su objetivo es estimar
+el número esperado de consultas de ruta por celda H3 —unidad hexagonal de la grilla
+geoespacial jerárquica H3, resolución 8, de aproximadamente 0,74 km²— para el conjunto
+del período analizado, y compararlo con las consultas efectivamente registradas, a fin de
+identificar zonas con demanda de información no resuelta, es decir, zonas donde lo
+observado es inferior a lo esperado según su población y contexto. El proyecto se
+desarrolla bajo la metodología CRISP-DM (\textit{Cross-Industry Standard Process for Data
+Mining}), un proceso de seis fases para proyectos de ciencia de datos, con validación
+espacial por bloques y una regla de selección de modelo declarada antes de conocer los
+resultados, esto es, un criterio fijado de antemano para elegir la técnica final sin
+ajustarlo después de ver el desempeño. Los destinatarios previstos son Trufi
+Association, que puede usar el resultado para priorizar el mapeo voluntario, y los equipos
+de planificación municipal y metropolitana, que pueden emplearlo como insumo complementario
+para identificar zonas donde la información de transporte resulta insuficiente.
+
+El aporte central de esta monografía es un procedimiento reproducible para estimar la
+demanda esperada de información de transporte por celda y una regla de priorización
+territorial que combina esa demanda con la cobertura de la red mapeada. El lector
+encontrará, a lo largo del documento, la comparación de distintas técnicas de estimación
+bajo validación espacial, el análisis de la brecha entre lo observado y lo esperado, y un
+conjunto de productos concretos: un mapa interactivo, un archivo de predicciones por celda
+y una lista priorizada de veinte celdas para revisión en terreno. El documento se
+estructura de forma secuencial. Los capítulos~\ref{cap:problema} a~\ref{cap:objetivos}
+identifican el problema, justifican su estudio, delimitan el alcance y establecen los
+objetivos. El capítulo~\ref{cap:marco-teorico} presenta los fundamentos teóricos. El
+capítulo~\ref{cap:desarrollo} documenta la aplicación de las seis fases de CRISP-DM. El
+capítulo~\ref{cap:conclusiones} expone las conclusiones y recomendaciones. El proyecto no
+contempla un despliegue operativo dentro de los sistemas de Trufi Association: se limita a
+un prototipo verificable localmente, un archivo de predicciones por celda y una lista
+priorizada de veinte celdas para revisión en terreno.
