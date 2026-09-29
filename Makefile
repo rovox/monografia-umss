@@ -1,5 +1,5 @@
 # Envoltorio fino sobre latexmk (ver .latexmkrc). Alterna con ./compilar.sh.
-.PHONY: all watch clean figuras
+.PHONY: all watch clean figuras pendientes
 
 all:
 	latexmk
@@ -15,3 +15,7 @@ clean:
 # (origen configurable con TRUFI_REPO; ver docs/figuras_cap7.md).
 figuras:
 	scripts/sincronizar_figuras
+
+# Genera docs/PENDIENTES.md con contenido faltante y advertencias LaTeX.
+pendientes:
+	scripts/pendientes

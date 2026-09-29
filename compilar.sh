@@ -38,6 +38,11 @@ if [ -f main.pdf ]; then
   grep -i "undefined" build/main.log > /dev/null 2>&1 \
     && echo "AVISO: hay referencias sin resolver, revisa build/main.log." \
     || echo "Sin referencias indefinidas."
+
+  # Generar informe de pendientes (nuevo)
+  echo ""
+  echo "Analizando pendientes..."
+  scripts/pendientes
 else
   echo "ERROR: no se generó main.pdf. Revisa build/main.log."
   exit 1

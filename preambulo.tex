@@ -255,10 +255,10 @@
 \renewcommand{\cftchapterpagefont}{\arialfont\normalsize}
 \cftsetindents{chapter}{0em}{1.5em}   % secciones principales SIN sangría
 \renewcommand{\cftchapterleader}{\normalfont\cftdotfill{\cftdotsep}} % puntos, sin negrilla
-\renewcommand{\cftchapterafterpnum}{\par\addvspace{6pt}}  % doble espacio entre entradas ppales.
+\renewcommand{\cftchapterafterpnum}{}  % sin espacio tras el folio
 \renewcommand{\cftchapterpresnum}{}
 \renewcommand{\cftchapteraftersnum}{.}  % "1. Introducción" en el índice
-\setlength{\cftbeforechapterskip}{0pt}
+\setlength{\cftbeforechapterskip}{14pt}  % doble espacio ANTES de cada capítulo (≈1 línea sencilla)
 
 % Niveles "section"/"subsection"/"figure"/"table": memoir NO
 % define ganchos "cft*font" para estos (solo para chapter/part/
@@ -294,16 +294,26 @@
 
 % Encabezado "Página" alineado a la derecha, sobre la columna
 % de folios, tal como exige 3.4. Se invoca antes de cada índice.
+% Las entradas del índice van a interlineado sencillo (guía 3.4),
+% restaurando el doble al terminar.
 \newcommand{\encabezadoIndice}{%
-  \noindent\hfill{\arialfont\normalsize\bfseries Página}\par\vspace{2pt}
+  \noindent\hfill{\arialfont\normalsize\bfseries Página}\par\vspace{2pt}%
+  \interlineadoSimple%
 }
-% memoir ofrece un gancho que se ejecuta justo DESPUÉS del título
-% del índice y ANTES de la primera entrada: es el punto exacto
-% donde debe aparecer la palabra "Página". Así se aplica solo, en
-% los tres índices, sin escribir nada en main.tex.
+\newcommand{\cierreFuenterIndice}{%
+  \par\vspace{0pt}%  cierre silencioso del grupo de sencillo
+  \setSpacing{1.9034}%  restaura doble
+}
+% memoir ofrece ganchos que se ejecutan justo DESPUÉS del título
+% del índice y ANTES/DESPUÉS de las entradas: es el punto exacto
+% donde debe aparecer la palabra "Página" y donde restauramos el doble.
+% Así se aplica solo, en los tres índices, sin escribir nada en main.tex.
 \renewcommand{\cfttocbeforelisthook}{\encabezadoIndice}
+\renewcommand{\cfttocafterlisthook}{\cierreFuenterIndice}
 \renewcommand{\cftlofbeforelisthook}{\encabezadoIndice}
+\renewcommand{\cftlofafterlisthook}{\cierreFuenterIndice}
 \renewcommand{\cftlotbeforelisthook}{\encabezadoIndice}
+\renewcommand{\cftlotafterlisthook}{\cierreFuenterIndice}
 
 % ---------- 9. TABLAS Y FIGURAS (3.2) ------------------------
 % Regla visual exigida: "Tabla N" en negrita centrado, debajo el
@@ -314,12 +324,30 @@
 % entorno determina si el título queda arriba o abajo, basta con
 % escribir \caption{} ANTES del contenido (ver plantillas de
 % ejemplo en cada sección).
+% Flotantes anclados a su sección (guía 2.5): \FloatBarrier antes de
+% cada \section para que las figuras no escapen a secciones posteriores.
+\usepackage{placeins}
+\usepackage{etoolbox}
+\AtBeginEnvironment{section}{\FloatBarrier}
+% Espacio vertical y parámetros de flotación ajustados para evitar
+% páginas parcialmente vacías (aumenta \textfraction, reduce flotantes sueltos).
+\setlength{\intextsep}{18pt plus 4pt minus 4pt}
+\setlength{\textfloatsep}{20pt plus 4pt minus 4pt}
+\setlength{\floatsep}{16pt plus 4pt minus 2pt}
+\renewcommand\topfraction{.85}
+\renewcommand\bottomfraction{.7}
+\renewcommand\textfraction{.15}
+\renewcommand\floatpagefraction{.7}
+% Nota: memoir no usa \fps@figure/\fps@table; el especificador [htbp]
+% se controla en el entorno directamente. La \FloatBarrier de placeins
+% es suficiente para anclar flotantes a su sección.
 \usepackage{booktabs}       % líneas horizontales limpias, sin verticales
 \usepackage{graphicx}
 \usepackage{caption}
 % Rótulo "Tabla N"/"Figura N" en negrita + título en cursiva, EN UNA
 % SOLA LÍNEA (2.5: "rótulo arriba, en una línea, centrado"), separados
 % por un espacio (antes iban en líneas distintas con labelsep=newline).
+% Espaciado ajustado: figura+caption+nota juntos, sin salto de página.
 \captionsetup{
   font=normalfont,
   labelfont=bf,
@@ -327,7 +355,11 @@
   justification=centering,
   singlelinecheck=false,
   labelsep=space,
-  skip=4pt
+  skip=4pt,
+  aboveskip=4pt
+}
+\captionsetup[figure]{
+  aboveskip=4pt
 }
 % La guía numera de forma CONSECUTIVA en todo el documento
 % ("Tabla 1", "Tabla 2", ... "Figura 1", "Figura 2"), no por
@@ -365,7 +397,9 @@
 % con "Nota." en cursiva y el resto en texto normal -- reemplaza al
 % antiguo rótulo "Fuente:" conservando el mismo nombre de comando
 % (\fuente) para no tocar ningún archivo de secciones/.
+% \nopagebreak mantiene figura+caption+nota juntos.
 \newcommand{\fuente}[1]{%
+  \nopagebreak
   \par\vspace{2pt}
   {\interlineadoSimple\fontsize{10}{10}\selectfont\textit{Nota.} #1\par}
 }
@@ -420,16 +454,33 @@
 % ---------- 12. UTILIDADES VARIAS ----------------------------
 \usepackage{xcolor}
 \usepackage{graphicx}
-% TEMPORAL -- retirar cuando el capítulo 7 esté transcrito del .md nuevo.
-% Las figuras antiguas (imagenes/fig_*.png) se borraron, pero los
-% secciones/08_0N_*.tex antiguos aún las piden: una imagen ausente no
-% imprime nada (el PDF queda limpio) y deja un aviso en el log en vez
-% de detener la compilación. Ver docs/figuras_cap7.md.
+% Manejo inteligente de imágenes pendientes: si existe, se incluye;
+% si falta, genera un recuadro visible (modo borrador) o aviso silencioso.
+% Ver docs/figuras_cap7.md y configuracion.tex.
+% Guardamos el original y reemplazamos solo para chequear existencia.
 \NewCommandCopy{\includegraphicsOriginal}{\includegraphics}
 \renewcommand{\includegraphics}[2][]{%
-  \IfFileExists{#2}%
-    {\includegraphicsOriginal[#1]{#2}}%
-    {\PackageWarning{monografia}{Imagen ausente: #2}}}
+  \IfFileExists{#2}{%
+    \includegraphicsOriginal[#1]{#2}%
+  }{%
+    % Imagen ausente: recuadro (modo borrador) o aviso silencioso
+    \ifborrador
+      \fbox{\parbox[c][6cm]{.9\textwidth}{\centering%
+        \textcolor{gray!50}{\small Figura pendiente:\\#2}}}%
+    \fi
+    \PackageWarning{monografia}{Imagen ausente: #2}%
+  }%
+}
+% Comandos semánticos para reservar espacio en secciones nuevas sin
+% escribir formato (reutilizable cuando se transcriba desde Markdown).
+\newcommand{\figuraPendiente}[2][\textwidth]{%
+  \fbox{\parbox[c][6cm]{#1}{\centering%
+    \textcolor{gray!50}{\small Figura pendiente:\\#2}}}%
+}
+\newcommand{\tablaPendiente}[1]{%
+  \fbox{\parbox[c][4cm]{\textwidth}{\centering%
+    \textcolor{gray!50}{\small Tabla pendiente:\\#1}}}%
+}
 \usepackage{enumitem}
 \setlist{topsep=4pt,itemsep=2pt}
 \frenchspacing

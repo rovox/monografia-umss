@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""Genera informe de contenido pendiente, figuras faltantes y advertencias LaTeX.
+
+Leerá:
+  - build/main.log: advertencias de imagen ausente, referencias indefinidas, Overfull/Underfull
+  - secciones/*.tex: marcadores de contenido ("Pendiente:", "[…]", "TODO", "Nombre del docente")
+  - docs/figuras_cap7.md: mapeo de figuras nuevas esperadas
+  - imagenes/07_desarrollo/: figuras presentes sin citar
+
+Produce: docs/PENDIENTES.md con tablas categorizadas y resumen.
+
+Uso: scripts/pendientes [main.pdf] [build/main.log]
+"""
+
+import os
+import re
+import sys
+import subprocess
+from pathlib import Path
+from collections import defaultdict
+from datetime import datetime
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_PATH = os.path.join(RAIZ, "build", "main.log")
+AUX_PATH = os.path.join(RAIZ, "build", "main.aux")
+SECCIONES_PATH = os.path.join(RAIZ, "secciones")
+DOCS_PATH = os.path.join(RAIZ, "docs")
+IMAGENES_PATH = os.path.join(RAIZ, "imagenes")
+
+def leer_log_advertencias():
+    """Extrae advertencias/errores del log LaTeX."""
+    if not os.path.exists(LOG_PATH):
+        return {}
+    with open(LOG_PATH, encoding='utf8', errors='replace') as f:
+        log = f.read()
+
+    warns = defaultdict(int)
+    warns["imagen_ausente"] = log.count("Imagen ausente:")
+    warns["underfull_hbox"] = len(re.findall(r"Underfull \\hbox", log))
+    warns["overfull_hbox"] = len(re.findall(r"Overfull \\hbox", log))
+    warns["microtype"] = len(re.findall(r"microtype Warning:", log))
+    warns["referencia_indefinida"] = log.count("undefined")
+    warns["cita_indefinida"] = log.count("Citation")
+    warns["garamond_no_encontrado"] = 1 if "Font \"Garamond\" not found" in log else 0
+    warns["fancyhdr_memoir"] = 1 if "fancyhdr package is not recommended" in log else 0
+
+    return warns
+
+def buscar_pendientes_en_tex():
+    """Busca marcadores de contenido pendiente en .tex."""
+    pendientes = []
+    if not os.path.isdir(SECCIONES_PATH):
+        return pendientes
+
+    for tex_file in sorted(Path(SECCIONES_PATH).glob("*.tex")):
+        try:
+            with open(tex_file, encoding='utf8', errors='replace') as f:
+                for i, linea in enumerate(f, 1):
+                    # Buscar marcadores
+                    if re.search(r"Pendiente:|TODO|FIXME", linea, re.IGNORECASE):
+                        pendientes.append({
+                            "archivo": str(tex_file.relative_to(RAIZ)),
+                            "linea": i,
+                            "tipo": "marcador",
+                            "texto": linea.strip()[:80]
+                        })
+                    # Buscar placeholders de contenido
+                    if re.search(r"\[\.{3,}\]|\[Incluya", linea, re.IGNORECASE):
+                        pendientes.append({
+                            "archivo": str(tex_file.relative_to(RAIZ)),
+                            "linea": i,
+                            "tipo": "placeholder",
+                            "texto": linea.strip()[:80]
+                        })
+                    # Buscar "Nombre del docente" sin reemplazar
+                    if "Nombre del docente" in linea and tex_file.name != "configuracion.tex":
+                        pendientes.append({
+                            "archivo": str(tex_file.relative_to(RAIZ)),
+                            "linea": i,
+                            "tipo": "dato_faltante",
+                            "texto": "Nombre del docente sin reemplazar"
+                        })
+        except Exception as e:
+            pass
+
+    return pendientes
+
+def buscar_imagenes_ausentes():
+    """Extrae imágenes ausentes del log."""
+    if not os.path.exists(LOG_PATH):
+        return []
+
+    ausentes = []
+    with open(LOG_PATH, encoding='utf8', errors='replace') as f:
+        for linea in f:
+            if "Imagen ausente:" in linea:
+                # Parsear: "Package monografia Warning: Imagen ausente: imagenes/fig_*.png on input line 123"
+                match = re.search(r"Imagen ausente: ([^\s]+)", linea)
+                if match:
+                    ausentes.append(match.group(1))
+
+    return list(set(ausentes))
+
+def buscar_figuras_nuevas():
+    """Lista figuras en imagenes/07_desarrollo/ no referenciadas en .tex."""
+    no_referenciadas = []
+
+    if not os.path.isdir(os.path.join(IMAGENES_PATH, "07_desarrollo")):
+        return no_referenciadas
+
+    # Recopilar todas las figuras presentes
+    fig_presentes = []
+    for root, dirs, files in os.walk(os.path.join(IMAGENES_PATH, "07_desarrollo")):
+        for f in files:
+            if f.endswith((".png", ".jpg", ".pdf")):
+                fig_presentes.append(os.path.join(root, f).replace(RAIZ + "/", ""))
+
+    # Recopilar referencias en .tex
+    fig_referencias = set()
+    for tex_file in Path(SECCIONES_PATH).glob("*.tex"):
+        try:
+            with open(tex_file, encoding='utf8', errors='replace') as f:
+                contenido = f.read()
+                # Buscar paths en \includegraphics
+                for match in re.finditer(r"\\includegraphics\[.*?\]\{([^}]+)\}", contenido):
+                    fig_referencias.add(match.group(1))
+        except:
+            pass
+
+    # Figuras presentes no referenciadas
+    for fig in fig_presentes:
+        if fig not in fig_referencias:
+            no_referenciadas.append(fig)
+
+    return sorted(no_referenciadas)
+
+def leer_observaciones():
+    """Lee observaciones de docs/notas_internas.md y observaciones_fase1.md."""
+    obs = []
+    for doc_file in ["notas_internas.md", "observaciones_fase1.md"]:
+        path = os.path.join(DOCS_PATH, doc_file)
+        if os.path.exists(path):
+            with open(path, encoding='utf8', errors='replace') as f:
+                obs.append(f"De **{doc_file}**:\n" + f.read()[:500] + "\n")
+    return obs
+
+def generar_informe():
+    """Genera docs/PENDIENTES.md con todas las categorías."""
+    warns = leer_log_advertencias()
+    pendientes_tex = buscar_pendientes_en_tex()
+    imagenes_ausentes = buscar_imagenes_ausentes()
+    figuras_sin_citar = buscar_figuras_nuevas()
+    observaciones = leer_observaciones()
+
+    # Encabezado
+    md = f"""# Informe de Pendientes y Advertencias
+
+**Generado:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Resumen
+- **Imágenes ausentes:** {len(imagenes_ausentes)}
+- **Figuras sin citar:** {len(figuras_sin_citar)}
+- **Marcadores de contenido:** {sum(1 for p in pendientes_tex if p['tipo'] == 'marcador')}
+- **Placeholders:** {sum(1 for p in pendientes_tex if p['tipo'] == 'placeholder')}
+- **Datos faltantes:** {sum(1 for p in pendientes_tex if p['tipo'] == 'dato_faltante')}
+- **Underfull \\\\hbox:** {warns.get("underfull_hbox", 0)}
+- **Overfull \\\\hbox:** {warns.get("overfull_hbox", 0)}
+
+---
+
+## 1. Imágenes Ausentes
+
+Las siguientes imágenes se referencian pero no existen en el filesystem:
+
+"""
+
+    if imagenes_ausentes:
+        md += "| Archivo | Nota |\n|---|---|\n"
+        for img in imagenes_ausentes:
+            md += f"| `{img}` | Revisar docs/figuras_cap7.md |\n"
+    else:
+        md += "*Ninguna.*\n"
+
+    md += f"""
+
+---
+
+## 2. Figuras sin Citar
+
+Estas figuras existen en `imagenes/07_desarrollo/` pero ningún `.tex` las referencia:
+
+"""
+
+    if figuras_sin_citar:
+        for fig in figuras_sin_citar:
+            md += f"- `{fig}`\n"
+    else:
+        md += "*Ninguna.*\n"
+
+    md += f"""
+
+---
+
+## 3. Marcadores de Contenido Pendiente
+
+| Archivo | Línea | Tipo | Texto |
+|---|---|---|---|
+"""
+
+    for p in sorted(pendientes_tex, key=lambda x: (x['archivo'], x['linea'])):
+        md += f"| `{p['archivo']}` | {p['linea']} | {p['tipo']} | {p['texto']} |\n"
+
+    if not pendientes_tex:
+        md += "| --- | --- | --- | *Ninguno* |\n"
+
+    md += f"""
+
+---
+
+## 4. Observaciones de Fondo
+
+"""
+
+    for obs in observaciones:
+        md += f"\n{obs}\n"
+
+    md += f"""
+
+---
+
+## 5. Advertencias de LaTeX
+
+### Imágenes ausentes
+- **Conteo:** {warns.get("imagen_ausente", 0)}
+- **Acción:** Ejecutar `make figuras` para sincronizar desde `trufi-data-science`, o reemplazar con archivos locales.
+
+### Underfull / Overfull \\\\hbox
+- **Underfull \\\\hbox:** {warns.get("underfull_hbox", 0)} (espaciado flojo, menor prioridad)
+- **Overfull \\\\hbox:** {warns.get("overfull_hbox", 0)} (texto desbordado, revisar tablas largas)
+- **Acción:** Revisar `build/main.log` con `grep Underfull` / `grep Overfull`.
+
+### microtype
+- **Conteo:** {warns.get("microtype", 0)} (caracteres sin protrusión en EB Garamond)
+- **Severidad:** Inocua, solo aviso tipográfico.
+
+### Fuentes no encontradas
+- **Garamond:** {warns.get("garamond_no_encontrado", 1)} fallback a EB Garamond (Linux: instalar `fonts-ebgaramond-pro`)
+- **fancyhdr + memoir:** aviso de incompatibilidad menor (sin efecto en compilación)
+
+### Referencias/citas indefinidas
+- **Referencias indefinidas:** {warns.get("referencia_indefinida", 0)} (buscar `??` en PDF)
+- **Citas indefinidas:** {warns.get("cita_indefinida", 0)} (clave no en `referencias.bib`)
+- **Acción:** Ejecutar `scripts/verificar` para lista completa.
+
+---
+
+## Siguiente Paso
+
+1. Copiar imágenes a `imagenes/07_desarrollo/7_N_*` desde `trufi-data-science/reports/`
+2. Reemplazar placeholders de contenido en secciones
+3. Ejecutar `./compilar.sh` y `scripts/pendientes` nuevamente
+4. Cuando todo esté completo, cambiar `\\borradorfalse` en `configuracion.tex`
+
+"""
+
+    # Guardar informe
+    out_path = os.path.join(DOCS_PATH, "PENDIENTES.md")
+    os.makedirs(DOCS_PATH, exist_ok=True)
+    with open(out_path, 'w', encoding='utf8') as f:
+        f.write(md)
+
+    print(f"Informe generado: {out_path}")
+
+    # Resumen en consola
+    total_problemas = len(imagenes_ausentes) + sum(1 for p in pendientes_tex)
+    if total_problemas > 0:
+        print(f"⚠️  {len(imagenes_ausentes)} imágenes ausentes, {sum(1 for p in pendientes_tex)} marcadores de contenido — ver docs/PENDIENTES.md")
+    else:
+        print("✓ Sin problemas detectados. Ver docs/PENDIENTES.md para advertencias de LaTeX.")
+
+if __name__ == "__main__":
+    generar_informe()
