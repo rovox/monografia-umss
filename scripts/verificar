@@ -116,7 +116,12 @@ def medir_margenes(cajas):
     if not izq:
         return {}
     inf.sort()
-    llenas = inf[: max(1, len(inf) // 3)]  # páginas llenas: el tercio más bajo
+    # Páginas "llenas": un grupo pequeño y estable (10 páginas, o el 10%
+    # si el documento es más largo) en vez de un tercio del total. Un
+    # tercio es sensible a la paginación exacta -- cambiar de fase mueve
+    # qué páginas completan ese tercio y desplaza la mediana sin que el
+    # margen real (fijo, ver \\setulmarginsandblock) haya cambiado.
+    llenas = inf[: max(1, min(10, len(inf) // 10 or 1))]
     return {
         "izquierdo": statistics.median(izq),
         "derecho": statistics.median(der),

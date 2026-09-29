@@ -317,13 +317,16 @@
 \usepackage{booktabs}       % líneas horizontales limpias, sin verticales
 \usepackage{graphicx}
 \usepackage{caption}
+% Rótulo "Tabla N"/"Figura N" en negrita + título en cursiva, EN UNA
+% SOLA LÍNEA (2.5: "rótulo arriba, en una línea, centrado"), separados
+% por un espacio (antes iban en líneas distintas con labelsep=newline).
 \captionsetup{
   font=normalfont,
   labelfont=bf,
   textfont=it,
   justification=centering,
   singlelinecheck=false,
-  labelsep=newline,
+  labelsep=space,
   skip=4pt
 }
 % La guía numera de forma CONSECUTIVA en todo el documento
@@ -358,52 +361,40 @@
 % imprime el corchete de forma segura.
 \newcommand{\ph}[1]{[#1]}
 
-% Línea de fuente bajo tabla/figura (cursiva, tal como pide 3.2/Anexo)
+% "Nota." bajo tabla/figura (2.5): una sola línea, sencillo, 10 pt,
+% con "Nota." en cursiva y el resto en texto normal -- reemplaza al
+% antiguo rótulo "Fuente:" conservando el mismo nombre de comando
+% (\fuente) para no tocar ningún archivo de secciones/.
 \newcommand{\fuente}[1]{%
   \par\vspace{2pt}
-  {\footnotesize\itshape Fuente: #1\par}
+  {\interlineadoSimple\fontsize{10}{10}\selectfont\textit{Nota.} #1\par}
 }
 
 % ---------- 10. CITAS Y REFERENCIAS (3.5 / 3.6) --------------
-% La guía usa un formato de citación propio, tipo "americano"
-% simple: (Apellido, año) -- ver ejemplo con "(Fardel, 1984)" --
-% y una lista de bibliografía con reglas de formato MUY
-% específicas e institucionales (número + autor en negrilla,
-% título en cursiva, abreviaturas particulares) que NO
-% corresponden a ningún estilo estándar de BibTeX/biblatex
-% (APA, IEEE, etc.). Además este contenedor no tiene "biber"
-% instalado (offline), así que en vez de forzar un .bst
-% personalizado no verificable, se define un sistema simple,
-% 100% controlado y sin dependencias externas:
-%   \cita{Apellido}{año}            -> (Apellido, año)
-%   \citap{Apellido}{año}{página}   -> (Apellido, año, p. página)
-%   entorno bibliografiaUMSS + \registrobiblio{...}  -> lista
-%     numerada automáticamente, con el formato exacto de 3.6.
-\newcommand{\cita}[2]{(#1, #2)}
-\newcommand{\citap}[3]{(#1, #2, p.~#3)}
-
-\newcounter{numregistro}
-\newenvironment{bibliografiaUMSS}{%
-  \setcounter{numregistro}{0}%
-  \interlineadoSimple
-  \begin{list}{}{%
-      \setlength{\leftmargin}{0pt}%
-      \setlength{\itemindent}{0pt}%
-      \setlength{\listparindent}{0pt}%
-      \setlength{\itemsep}{12pt} % doble espacio ENTRE registros
-      \setlength{\parsep}{0pt}}
-}{%
-  \end{list}
-}
-% \registrobiblio{Autor(es)}{Año}{Título}{Detalle editorial/fuente}
-% Reproduce las reglas (a)-(l) de 3.6 de forma consolidada:
-% número + autor en negrilla, año entre paréntesis, título en
-% cursiva, y el resto de datos editoriales en texto normal.
-\newcommand{\registrobiblio}[4]{%
-  \stepcounter{numregistro}%
-  \item[]\noindent
-  \textbf{\thenumregistro. #1} (#2) \textit{#3}. #4.\par
-}
+% biblatex + biber, con un único referencias.bib (Fase 4). La guía
+% pide formato "americano" (Autor, año) en el texto -- lo que da
+% \parencite de biblatex sin más -- y una lista final alfabética,
+% sin numerar, con sangría francesa, apellido e iniciales y título
+% en cursiva: es, en sustancia, el estilo APA, así que se usa
+% biblatex-apa directamente en vez de un .bbx propio.
+% El interruptor \ifbibNumerada (configuracion.tex, P3 opcional de
+% 3.6 "número y autor en negrilla, apellido en MAYÚSCULAS") NO tiene
+% un .bbx institucional propio todavía: alternar a "numeric" da una
+% lista numerada correcta pero sin ese detalle tipográfico exacto;
+% se deja así documentado como pendiente (ver informe final).
+\makeatletter
+\ifbibNumerada
+  \PassOptionsToPackage{backend=biber,style=numeric,sorting=none}{biblatex}
+\else
+  \PassOptionsToPackage{backend=biber,style=apa,sorting=nyt}{biblatex}
+\fi
+\makeatother
+\usepackage{csquotes}   % biblatex lo recomienda para comillas sensibles al idioma
+\usepackage{biblatex}
+\addbibresource{referencias.bib}
+% Los \cita{Autor}{Año} artesanales se sustituyeron uno a uno por
+% \parencite{clave} en los archivos de secciones/ (mismo resultado
+% visual: cita parentética "(Autor, año)").
 
 % ---------- 11. HYPERREF (siempre al final del preámbulo) ----
 \usepackage[
@@ -439,3 +430,34 @@
 % de estiramiento de emergencia acotado, que solo actúa en los
 % párrafos que de otro modo desbordarían.
 \setlength{\emergencystretch}{1.5em}
+
+% ---------- 13. ENTORNO "RECUADRO" (2.7, definido no usado) ----
+% Barra lateral fina + fondo casi blanco, sobrio (estilo "MIT").
+% Tres variantes semánticas: hallazgo, decision, advertencia. Se
+% define y se documenta aquí, tal como pide la instrucción, pero
+% NO se inserta en ningún archivo de secciones/ (eso alteraría el
+% texto del autor). El acento de color azul marino del logo
+% (Fase 5) todavía no está definido; por ahora la barra usa gris
+% neutro, coherente con "el texto siempre negro".
+\usepackage{mdframed}
+\definecolor{recuadroBarra}{gray}{0.45}
+\definecolor{recuadroFondo}{gray}{0.97}
+\newmdenv[
+  linecolor=recuadroBarra,
+  linewidth=2.5pt,
+  topline=false, bottomline=false, rightline=false,
+  backgroundcolor=recuadroFondo,
+  innertopmargin=6pt, innerbottommargin=6pt,
+  innerleftmargin=8pt, innerrightmargin=8pt,
+  skipabove=8pt, skipbelow=8pt,
+]{recuadrobase}
+% Uso previsto (no aplicado todavía):
+%   \begin{recuadro}{Hallazgo}      ... \end{recuadro}
+%   \begin{recuadro}{Decisión}      ... \end{recuadro}
+%   \begin{recuadro}{Advertencia}   ... \end{recuadro}
+\newenvironment{recuadro}[1]{%
+  \begin{recuadrobase}
+  \textbf{#1.}\space\ignorespaces
+}{%
+  \end{recuadrobase}
+}

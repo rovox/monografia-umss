@@ -31,7 +31,7 @@ en el momento en que la persona no sabe cómo desplazarse y pide información al
 Ambas fuentes son valiosas para el estudio de la movilidad urbana, pero exigen
 interpretaciones distintas: los datos de consulta capturan mejor los puntos de fricción
 informativa del sistema, mientras que los datos de viaje capturan mejor los patrones
-efectivos de desplazamiento \cita{Wang y Hess}{2021}. Este proyecto trabaja exclusivamente
+efectivos de desplazamiento \parencite{wang2021}. Este proyecto trabaja exclusivamente
 con datos de consulta, y esa elección metodológica se sostiene a lo largo de todo el
 documento.
 
@@ -39,7 +39,7 @@ documento.
 
 El concepto de fricción aplicado a sistemas de información describe los obstáculos que
 impiden o dificultan el flujo de información entre un sistema y quien la necesita
-\cita{Bates}{2018}, aplicado originalmente al intercambio de datos entre organizaciones.
+\parencite{bates2018}, aplicado originalmente al intercambio de datos entre organizaciones.
 Este proyecto adapta esa idea —sin pretender una equivalencia estricta— a un contexto
 distinto: la dificultad de una persona para obtener, de una aplicación de rutas, la
 información de transporte que necesita en un punto determinado del territorio. Dado que esa
@@ -48,12 +48,12 @@ la repetición direccional de consultas y la distancia a la cobertura de rutas m
 
 \subsection{Legibilidad urbana y entorno construido}
 
-La noción de legibilidad urbana \cita{Lynch}{1960} sostiene que la facilidad con la que una
+La noción de legibilidad urbana \parencite{lynch1960} sostiene que la facilidad con la que una
 persona puede orientarse y describir un lugar depende de la presencia de referencias
 reconocibles en el entorno construido. La investigación sobre los llamados ``3D'' del
 entorno urbano —densidad, diversidad y diseño— y su relación con el comportamiento de
-desplazamiento \cita{Cervero y Kockelman}{1997}, con meta-análisis posterior en
-\cita{Ewing y Cervero}{2010}, da sustento empírico a la idea de que zonas con mayor
+desplazamiento \parencite{cervero1997}, con meta-análisis posterior en
+\parencite{ewing2010}, da sustento empírico a la idea de que zonas con mayor
 densidad y diversidad de puntos de interés son, en términos generales, más legibles y más
 fáciles de describir que zonas dispersas. Este proyecto traslada esa idea al contexto de
 consultas digitales de ruta, con la prevención ya señalada sobre la calidad desigual de los
@@ -112,7 +112,7 @@ problema se plantea como una regresión: estimar el número de consultas que rec
 celda territorial en un período futuro. Se contempla comparar una línea base ingenua
 (repetir el valor del período anterior) y una línea base estacional, contra modelos de
 regresión regularizada y modelos de ensamble basados en árboles --- Random Forest
-\cita{Breiman}{2001} y XGBoost \cita{Chen y Guestrin}{2016} ---, evaluados mediante error
+\parencite{breiman2001} y XGBoost \parencite{chen2016} ---, evaluados mediante error
 absoluto medio y raíz del error cuadrático medio. Dado que el volumen de consultas no es
 estacionario en el período observado (sección~\ref{sec:comprension-datos}), la validación se
 realiza mediante ventanas temporales deslizantes y nunca mediante partición aleatoria, para
@@ -142,7 +142,7 @@ sección~\ref{sec:evaluacion-resultados} una vez completada la fase de Modelado.
     XGBoost & Ensamble de árboles por potenciación de gradiente & Máximo desempeño predictivo bajo validación cronológica \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia con base en \cita{Breiman}{2001} y \cita{Chen y Guestrin}{2016}.}
+  \fuente{Elaboración propia con base en \parencite{breiman2001} y \parencite{chen2016}.}
 \end{table}
 
 \section{Métricas de evaluación}
@@ -152,7 +152,7 @@ Para los componentes de clasificación que puedan derivarse del proyecto (por ej
 ``celda con cobertura suficiente'' frente a ``celda con brecha''), se privilegian métricas
 robustas al desbalance de clases, en particular el área bajo la curva de precisión-recall
 (PR-AUC), preferible al área bajo la curva ROC cuando la clase de interés es minoritaria
-\cita{Saito y Rehmsmeier}{2015}. Para los componentes de regresión, se emplean el error
+\parencite{saito2015}. Para los componentes de regresión, se emplean el error
 absoluto medio y la raíz del error cuadrático medio, siempre contrastados contra una línea
 base explícita (sección~\ref{sec:tecnicas-algoritmos}) y nunca reportados de forma aislada.
 Estas métricas se reportan efectivamente en la sección~\ref{sec:evaluacion-resultados}, una
@@ -164,7 +164,7 @@ vez completadas las fases de Modelado y Evaluación.
 CRISP-DM (\textit{Cross-Industry Standard Process for Data Mining}) organiza un proyecto de
 ciencia de datos en seis fases interconectadas e iterativas: comprensión del negocio,
 comprensión de los datos, preparación de los datos, modelado, evaluación y despliegue
-\cita{Chapman et al.}{2000}. Su carácter iterativo es especialmente relevante en este
+\parencite{chapman2000}. Su carácter iterativo es especialmente relevante en este
 proyecto: la reformulación del problema descrita en la
 sección~\ref{sec:descripcion-problema} es en sí misma un ejemplo de cómo un hallazgo de la
 fase de comprensión de datos —la imprecisión de la segmentación municipal— obligó a revisar
@@ -182,5 +182,5 @@ sección corresponde a una fase.
   \caption{Fases de la metodología CRISP-DM}
   \label{fig:crisp-dm}
   \includegraphics[width=0.55\textwidth]{imagenes/logo_posgrado.png}
-  \fuente{Adaptado de \cita{Chapman et al.}{2000}.}
+  \fuente{Adaptado de \parencite{chapman2000}.}
 \end{figure}

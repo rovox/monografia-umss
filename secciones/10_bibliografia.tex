@@ -1,15 +1,13 @@
 % ============================================================
 %  9. BIBLIOGRAFÍA Y ANEXOS   (guía, 2.9 y 3.6)
-%  Formato de registro exigido por la guía (norma norteamericana
-%  institucional):
-%   - Número de registro y autor(es) en NEGRILLA.
-%   - Apellido seguido de iniciales; "et al" para más de dos autores.
-%   - Año entre paréntesis.
-%   - Título de la obra.
-%   - Datos editoriales, lugar y páginas.
-%   - Interlineado SIMPLE dentro de un registro, DOBLE entre
-%     registros (ambos automáticos en el entorno bibliografiaUMSS).
-%  Uso: \registrobiblio{Autor(es)}{Año}{Título}{Datos editoriales}
+%  Bibliografía con biblatex + biber (Fase 4): estilo APA (2.6),
+%  alfabética, sin numerar, sangría francesa, todo generado por
+%  \printbibliography a partir de referencias.bib. Solo aparecen
+%  las obras efectivamente citadas en el texto (\parencite en
+%  secciones/03_problema.tex y 07_marco_teorico.tex); las demás
+%  entradas de referencias.bib no citadas en el cuerpo quedan
+%  fuera de la lista impresa, tal como exige "solo obras realmente
+%  citadas" -- comportamiento nativo de biblatex, sin \nocite.
 % ============================================================
 \chapter{Bibliografía y Anexos}
 \label{cap:bibliografia}
@@ -17,67 +15,7 @@
 \section{Bibliografía}
 \label{sec:bibliografia}
 
-\begin{bibliografiaUMSS}
-
-  \registrobiblio{BATES, J.}{2018}
-    {The politics of data friction}
-    {Journal of Documentation, 74(2), 412--429}
-
-  \registrobiblio{BREIMAN, L.}{2001}
-    {Random forests}
-    {Machine Learning, 45(1), 5--32}
-
-  \registrobiblio{BRIER, G. W.}{1950}
-    {Verification of forecasts expressed in terms of probability}
-    {Monthly Weather Review, 78(1), 1--3}
-
-  \registrobiblio{CERVERO, R. \& K. KOCKELMAN}{1997}
-    {Travel demand and the 3Ds: Density, diversity, and design}
-    {Transportation Research Part D: Transport and Environment, 2(3), 199--219}
-
-  \registrobiblio{CHAPMAN, P. et al.}{2000}
-    {CRISP-DM 1.0: Step-by-step data mining guide}
-    {SPSS Inc.}
-
-  \registrobiblio{CHEN, T. \& C. GUESTRIN}{2016}
-    {XGBoost: A scalable tree boosting system}
-    {En Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery
-     and Data Mining, pp. 785--794}
-
-  \registrobiblio{EDWARDS, P. N.}{2010}
-    {A vast machine: Computer models, climate data, and the politics of global warming}
-    {MIT Press}
-
-  \registrobiblio{EWING, R. \& R. CERVERO}{2010}
-    {Travel and the built environment: A meta-analysis}
-    {Journal of the American Planning Association, 76(3), 265--294}
-
-  \registrobiblio{LYNCH, K.}{1960}
-    {The image of the city}
-    {MIT Press}
-
-  \registrobiblio{SAITO, T. \& M. REHMSMEIER}{2015}
-    {The precision-recall plot is more informative than the ROC plot when evaluating binary
-     classifiers on imbalanced datasets}
-    {PLOS ONE, 10(3), e0118432}
-
-  \registrobiblio{SHANNON, C. E.}{1948}
-    {A mathematical theory of communication}
-    {Bell System Technical Journal, 27(3), 379--423}
-
-  \registrobiblio{WANG, C. \& D. B. HESS}{2021}
-    {Role of urban big data in travel behavior research}
-    {Journal of the Indian Institute of Science, 101(3), 351--369}
-
-  \registrobiblio{UBER TECHNOLOGIES}{s.f.}
-    {H3: Uber's hexagonal hierarchical spatial index}
-    {Consultado en 2026, \url{https://h3geo.org}}
-
-  \registrobiblio{MOBILITY DATA}{s.f.}
-    {General Transit Feed Specification (GTFS) reference}
-    {Consultado en 2026, \url{https://gtfs.org}}
-
-\end{bibliografiaUMSS}
+\printbibliography[heading=none]
 % Nota interna sobre verificación de referencias y checklist de cierre:
 % movidas a docs/notas_internas.md (defecto #9 — no van dentro del PDF).
 
