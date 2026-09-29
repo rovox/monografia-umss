@@ -78,31 +78,25 @@
     {Consultado en 2026, \url{https://gtfs.org}}
 
 \end{bibliografiaUMSS}
+% Nota interna sobre verificación de referencias y checklist de cierre:
+% movidas a docs/notas_internas.md (defecto #9 — no van dentro del PDF).
 
-\vspace{6pt}
-\noindent{\footnotesize\itshape Nota sobre la bibliografía: las 14 referencias anteriores
-fueron verificadas por título, autoría y año antes de incorporarse a este documento. Las
-referencias específicas al contexto boliviano (movilidad urbana en Cochabamba, transporte
-informal en ciudades bolivianas) no pudieron verificarse en las bases consultadas y se
-retiraron en lugar de mantenerse sin confirmar; se recomienda buscar fuentes reales para ese
-punto en el repositorio institucional de la UMSS, SciELO Bolivia o Redalyc antes de la
-entrega final, dado que el argumento sobre transporte informal en Cochabamba
-(sección~\ref{sec:descripcion-problema}) se sostiene actualmente sin cita académica de
-respaldo.\par}
-
+\clearpage
 \section{Anexos}
 \label{sec:anexos}
 
 Los anexos incorporan la evidencia técnica que respalda la monografía sin recargar el
 cuerpo principal del documento.
 
-\subsection*{Anexo A. Diccionario de datos completo}
+\subsection{Anexo A. Diccionario de datos completo}
+\label{anexo:diccionario-datos}
 
 Ver tabla~\ref{tab:diccionario-datos} (sección~\ref{sec:comprension-datos}) para el
 diccionario completo del conjunto consolidado, incluyendo los campos de trazabilidad
 (\var{source_file}, \var{source_batch}) añadidos durante la consolidación.
 
-\subsection*{Anexo B. Trazabilidad de scripts y evidencias}
+\subsection{Anexo B. Trazabilidad de scripts y evidencias}
+\label{anexo:trazabilidad-scripts}
 
 Ver tabla~\ref{tab:scripts-evidencias} (sección~\ref{sec:comprension-datos}) para la
 correspondencia entre los ocho scripts ejecutados y la evidencia que produce cada uno.
@@ -113,44 +107,24 @@ fase de Preparación), \texttt{src} (scripts numerados del pipeline),
 \var{reports/01_data_understanding} (informes y figuras de la fase de Comprensión de
 los Datos).
 
-\subsection*{Anexo C. Fragmentos relevantes de código}
+\subsection{Anexo C. Fragmentos relevantes de código}
+\label{anexo:fragmentos-codigo}
 [Incluya únicamente los fragmentos que resulten necesarios para comprender decisiones
 técnicas clave. El código extenso debe permanecer en el repositorio del proyecto. Pendiente:
 se incorporará junto con las fases de Preparación y Modelado.]
 
-\subsection*{Anexo D. Resultados adicionales}
+\subsection{Anexo D. Resultados adicionales}
+\label{anexo:resultados-adicionales}
 [Incluya tablas y gráficos complementarios que no forman parte del cuerpo principal.
 Pendiente: se incorporará junto con la fase de Evaluación.]
 
-\subsection*{Anexo E. Capturas del prototipo}
+\subsection{Anexo E. Capturas del prototipo}
+\label{anexo:capturas-prototipo}
 [Incluya las capturas de la aplicación, tablero o servicio desarrollado. Pendiente: se
 incorporará junto con la fase de Despliegue.]
 
-\subsection*{Anexo F. README y reproducibilidad}
+\subsection{Anexo F. README y reproducibilidad}
+\label{anexo:readme-reproducibilidad}
 [Incluya las instrucciones mínimas para ejecutar el proyecto: requisitos, estructura de
 carpetas, orden de ejecución de los notebooks o scripts y origen del conjunto de datos.
 Pendiente de consolidar en un README único del repositorio de datos.]
-
-\subsection*{Apéndice C. Control de coherencia}
-
-Verificaciones pendientes antes de considerar cerrado cada capítulo, a completar conforme
-avance el proyecto:
-
-\begin{enumerate}
-  \item Confirmar con Trufi App la hipótesis planteada en las secciones~\ref{sec:auditoria-esquema}
-        y~\ref{sec:cobertura-temporal} sobre el cambio de proceso de exportación en abril de
-        2024; actualizar la redacción si se obtiene confirmación o desmentido.
-  \item Sustituir las referencias bibliográficas señaladas como pendientes de verificación
-        en la nota final de la sección~\ref{sec:bibliografia} antes de la entrega
-        definitiva.
-  \item Una vez definida la resolución H3 final (capítulo~\ref{cap:marco-teorico} y
-        sección~\ref{sec:agregacion-h3}), actualizar de forma consistente todas las
-        menciones a ``resolución 8'' y a los conteos de celdas en los
-        capítulos~\ref{cap:alcance} y~\ref{cap:desarrollo}.
-  \item Verificar que cada cifra cuantitativa de los capítulos~\ref{cap:introduccion} a
-        \ref{cap:marco-teorico} tenga respaldo directo en una tabla, figura o script del
-        capítulo~\ref{cap:desarrollo} y sus apéndices.
-  \item Actualizar el índice general, el índice de tablas y el índice de figuras conforme
-        se incorporen las secciones de Preparación en adelante.
-  \item Eliminar esta nota de control una vez cerrada la versión final de entrega.
-\end{enumerate}

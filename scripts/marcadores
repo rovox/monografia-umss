@@ -55,19 +55,35 @@ def titulo(cuerpo):
 
 
 def contorno(datos):
-    """Títulos del contorno, recorriendo la cadena /First ... /Next."""
+    """Títulos del contorno, en orden de lectura.
+
+    /Outlines en el catálogo apunta al diccionario RAÍZ del árbol
+    (\\Type /Outlines, con /First y /Last pero sin /Title ni /Next
+    propios): hay que bajar un nivel por /First para llegar al
+    primer ITEM real, y desde ahí recorrer /Next para los hermanos
+    y volver a bajar por /First para los hijos anidados (recursivo,
+    en preorden, como se lee un índice).
+    """
     objs = objetos(datos)
     m = re.search(rb"/Outlines\s+(\d+)\s+0\s+R", datos)
     if not m:
         return []
-    lista, actual, vistos = [], int(m.group(1)), set()
-    while actual and actual not in vistos:
-        vistos.add(actual)
-        cuerpo = objs.get(actual, b"")
-        t = titulo(cuerpo)
-        if t:
-            lista.append(t)
-        actual = siguiente(cuerpo, b"/Next")
+    raiz = objs.get(int(m.group(1)), b"")
+    lista, vistos = [], set()
+
+    def recorrer(actual):
+        while actual and actual not in vistos:
+            vistos.add(actual)
+            cuerpo = objs.get(actual, b"")
+            t = titulo(cuerpo)
+            if t:
+                lista.append(t)
+            hijo = siguiente(cuerpo, b"/First")
+            if hijo:
+                recorrer(hijo)
+            actual = siguiente(cuerpo, b"/Next")
+
+    recorrer(siguiente(raiz, b"/First"))
     return lista
 
 

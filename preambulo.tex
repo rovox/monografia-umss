@@ -235,12 +235,23 @@
   \renewcommand{\figurename}{Figura}%
 }
 
+% Profundidad de TRES niveles en la numeración y en el índice
+% (capítulo · sección · subsección, ej. 7 · 7.2 · 7.2.1), tal
+% como exige 2.4. \settocdepth también controla hasta qué nivel
+% llegan los marcadores del PDF vía bookmarksdepth (más abajo).
 \maxsecnumdepth{subsection}
-\settocdepth{section}
+\settocdepth{subsection}
 
 % Nivel "chapter" (secciones principales 1..9): memoir ya trae
 % ganchos "cft" propios para este nivel -> se renuevan directo.
-\renewcommand{\cftchapterfont}{\arialfont\normalsize}      % SIN negrilla (regla explícita)
+% "Mismo formato de títulos que el texto" (2.4): los capítulos van en
+% mayúsculas en el cuerpo (vía \printchaptertitle) y TAMBIÉN en el
+% índice. Memoir invoca \cftchapterfont así: {\cftchapterfont {#1}} —
+% por eso basta con que \cftchapterfont termine en \MakeUppercase (sin
+% argumento propio): TeX toma el grupo {#1} que le sigue como su
+% argumento. #1 incluye el numberline, pero \MakeUppercase no afecta a
+% los dígitos, así que "7." no se ve alterado.
+\renewcommand{\cftchapterfont}{\arialfont\normalsize\MakeUppercase} % SIN negrilla (regla explícita)
 \renewcommand{\cftchapterpagefont}{\arialfont\normalsize}
 \cftsetindents{chapter}{0em}{1.5em}   % secciones principales SIN sangría
 \renewcommand{\cftchapterleader}{\normalfont\cftdotfill{\cftdotsep}} % puntos, sin negrilla
@@ -265,10 +276,20 @@
   {\arialfont\normalsize\@dottedtocline{1}{1.5em}{2.3em}{#1}{#2}}}
 \renewcommand*{\l@subsection}[2]{%
   {\arialfont\normalsize\@dottedtocline{2}{3em}{3em}{#1}{#2}}}
+% Las entradas de \listoffigures/\listoftables solo traen el
+% NÚMERO (\numberline{N}), no la palabra "Figura"/"Tabla": la
+% guía (2.4) exige el prefijo también en el índice, no solo en el
+% rótulo de la figura/tabla misma. Se redefine \numberline
+% LOCALMENTE (dentro del grupo que abre cada \l@figure/\l@table)
+% para anteponerlo; como el argumento #1 solo se expande cuando
+% \@dottedtocline lo compone, la redefinición local sí surte
+% efecto pese a estar "después" en el código.
 \renewcommand*{\l@figure}[2]{%
-  {\arialfont\normalsize\@dottedtocline{1}{0em}{2.3em}{#1}{#2}}}
+  {\arialfont\normalsize\def\numberline##1{\figurename~##1\hspace{0.4em}}%
+   \@dottedtocline{1}{0em}{4.2em}{#1}{#2}}}
 \renewcommand*{\l@table}[2]{%
-  {\arialfont\normalsize\@dottedtocline{1}{0em}{2.3em}{#1}{#2}}}
+  {\arialfont\normalsize\def\numberline##1{\tablename~##1\hspace{0.4em}}%
+   \@dottedtocline{1}{0em}{4.2em}{#1}{#2}}}
 \makeatother
 
 % Encabezado "Página" alineado a la derecha, sobre la columna
@@ -392,7 +413,8 @@
   citecolor=black,
   urlcolor=black,
   bookmarksopen=true,
-  bookmarksnumbered=true
+  bookmarksnumbered=true,
+  bookmarksdepth=subsection   % marcadores hasta subsección: incluye anexos A-F
 ]{hyperref}
 \usepackage{bookmark}
 \urlstyle{same}   % \url y \nolinkurl heredan la fuente del cuerpo, no monoespaciada distinta
