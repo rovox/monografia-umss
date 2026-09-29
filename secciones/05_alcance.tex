@@ -15,57 +15,32 @@ estimación y la formulación de una propuesta de uso para Trufi Association.
 El estudio se delimita bajo las siguientes condiciones:
 
 \begin{itemize}
-  \item \textbf{Datos considerados.} Se utilizan tres fuentes: el registro de consultas de
-        ruta de Trufi App, las estimaciones de población de Kontur Population y la red de
-        transporte mapeada publicada por Trufi en formato GTFS. No se emplean datos de
-        viajes realizados, encuestas de movilidad ni información socioeconómica.
+  \item \textbf{Datos considerados.} Registro de consultas de Trufi App, estimaciones de
+        población de Kontur Population y red de transporte mapeada en formato GTFS. No se
+        emplean datos de viajes realizados, encuestas de movilidad ni información
+        socioeconómica.
   \item \textbf{Período analizado.} Consultas registradas entre el 12 de septiembre de 2022
         y el 9 de junio de 2024.
   \item \textbf{Dominio territorial.} El eje metropolitano de Cochabamba y su entorno
-        inmediato. El área de estudio se delimita a partir de los orígenes de las
-        consultas, según el procedimiento descrito en el apartado 7.3.3.
+        inmediato.
   \item \textbf{Unidad de análisis.} La celda hexagonal H3 de resolución 8, de
         aproximadamente 0,74~km\textsuperscript{2}.
-  \item \textbf{Variable a estimar.} El número total de consultas originadas en cada celda
-        durante el período, en relación con su población residente.
+  \item \textbf{Variable a estimar.} El número de consultas originadas en cada celda durante
+        el período, en relación con su población residente, y la brecha entre lo observado
+        y lo esperado.
   \item \textbf{Análisis incluidos.} Análisis exploratorio, construcción de la tabla de
         análisis por celda, comparación de técnicas de estimación con evaluación espacial,
-        análisis de la diferencia entre consultas observadas y esperadas, contraste
-        descriptivo con la red mapeada y análisis de sensibilidad.
+        análisis de la brecha observado-esperado, contraste descriptivo con la red mapeada y
+        análisis de sensibilidad.
   \item \textbf{Análisis excluidos.} La predicción de la evolución temporal de la demanda,
         la segmentación de usuarios, la inferencia de relaciones causales y la
         implementación operativa del resultado dentro de los sistemas de Trufi Association.
 \end{itemize}
 
-\begin{table}[htbp]
-  \centering
-  \caption{Perfil inicial de los datos disponibles}
-  \label{tab:perfil-datos}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.34\textwidth}X@{}}
-    \toprule
-    \textbf{Atributo} & \textbf{Detalle} \\
-    \midrule
-    Registro de consultas & 85 archivos CSV semanales exportados por Trufi Association \\
-    Volumen inicial & 1.927.675 consultas de ruta \\
-    Ventana temporal & 12 de septiembre de 2022 al 9 de junio de 2024 \\
-    Fuente de población & Kontur Population, ediciones 2022 y 2023 (licencia CC BY) \\
-    Fuente de oferta de transporte & GTFS de Trufi App publicado en Mobility Database \\
-    Unidad de análisis & Celda H3 de resolución 8 \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia a partir de los archivos entregados por Trufi Association y de
-  las fuentes públicas citadas.}
-\end{table}
-
-Los resultados están condicionados por limitaciones conocidas de antemano. En primer lugar,
-las consultas reflejan el comportamiento de quienes utilizan la aplicación y no el de toda
-la población, de modo que cualquier diferencia entre lo observado y lo esperado podría
-combinar falta de rutas mapeadas, baja adopción digital y otros factores que no pueden
-separarse con los datos disponibles. En segundo lugar, el registro no permite saber si una
-consulta derivó en un viaje ni si el origen registrado corresponde a la ubicación del
-dispositivo o a un punto elegido en el mapa. En tercer lugar, Kontur Population constituye
-una estimación modelada y no un censo. En cuarto lugar, la versión disponible del GTFS
-declara una vigencia posterior a buena parte del período de las consultas. Por consiguiente,
-la solución desarrollada constituye un instrumento de apoyo a la priorización y no sustituye
-el criterio ni el conocimiento territorial de los voluntarios de Trufi Association.
+Los resultados están condicionados por limitaciones conocidas: las consultas reflejan el
+comportamiento de quienes usan la aplicación y no el de toda la población; el registro no
+permite saber si una consulta derivó en un viaje; Kontur Population es una estimación
+modelada y no un censo; y la versión disponible del GTFS declara una vigencia posterior a
+buena parte del período de las consultas. Por consiguiente, la solución constituye un
+instrumento de apoyo a la priorización y no sustituye el criterio ni el conocimiento
+territorial de los voluntarios.

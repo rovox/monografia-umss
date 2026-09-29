@@ -11,47 +11,26 @@
 \chapter{Introducción}
 \label{cap:introduccion}
 
-El crecimiento sostenido de las áreas urbanas y la transformación de los patrones de
-movilidad plantean desafíos significativos para garantizar un transporte público accesible y
-comprensible para la población. En el eje metropolitano de Cochabamba, el servicio de
-transporte público funciona principalmente bajo la modalidad de paratránsito: cientos de
-sindicatos y cooperativas operan micros, trufis y taxitrufis con recorridos que no siempre se
-encuentran documentados ni cuentan con horarios fijos \parencite{cabrera2022}. En este
-contexto, conocer qué línea conecta dos puntos de la ciudad constituye, para muchos usuarios,
-una dificultad cotidiana.
+El transporte público del eje metropolitano de Cochabamba opera principalmente bajo la
+modalidad de paratránsito. Trufi App constituye una de las pocas fuentes públicas de
+información sobre sus rutas, mantenida mediante el trabajo voluntario de Trufi Association.
+La aplicación registra cuántas consultas de ruta se originan en cada zona, pero no cuántas
+cabría esperar según sus características territoriales; en consecuencia, un conteo bajo no
+permite distinguir entre una zona poco poblada y una zona donde la aplicación no resulta
+útil.
 
-Trufi App surge como una respuesta a esta carencia. Se trata de un planificador de rutas de
-código abierto, mantenido por Trufi Association, cuya información sobre recorridos y paradas
-es relevada y actualizada por voluntarios y publicada en el formato estándar GTFS. Cada vez
-que una persona consulta cómo llegar a un destino, la aplicación registra una consulta de ruta
-con su punto de origen, su punto de destino y el momento en que se produjo. Entre septiembre
-de 2022 y junio de 2024 se acumularon cerca de dos millones de estos registros, lo que
-representa una fuente de información de alcance metropolitano sobre la demanda de
-información de transporte.
+La presente monografía aborda ese problema desde la Ciencia de Datos geoespacial. Su
+objetivo es estimar el número esperado de consultas de ruta por celda H3 y compararlo con
+las consultas efectivamente registradas, a fin de identificar zonas con demanda de
+información no resuelta. El proyecto se desarrolla bajo la metodología CRISP-DM, con
+validación espacial por bloques y una regla de selección de modelo declarada antes de
+conocer los resultados.
 
-No obstante, estos registros indican cuántas consultas se originaron en cada zona, pero no
-cuántas cabría esperar en ella. Una zona con pocas consultas puede tener poca población
-residente, puede encontrarse lejos de los centros de actividad o puede no estar
-adecuadamente atendida por la aplicación. Solo la última situación representa una
-oportunidad de intervención para los voluntarios, cuyo tiempo constituye el recurso más
-escaso de la organización. En este sentido, el presente trabajo se propone estimar el número
-esperado de consultas de ruta de cada zona a partir de su población y de su contexto
-territorial, y comparar dicha estimación con las consultas efectivamente registradas.
-
-Desde la perspectiva de la Ciencia de Datos, el problema resulta de interés porque reúne dos
-características propias de los datos espaciales de conteo. Por un lado, el número de
-consultas depende de la cantidad de personas expuestas en cada zona, lo que exige modelar
-tasas por habitante y no conteos aislados. Por otro lado, las zonas cercanas tienden a
-comportarse de forma similar, lo que obliga a evaluar cualquier estimación en zonas no
-utilizadas durante su construcción. Para abordar el problema se emplean técnicas
-geoespaciales y de aprendizaje automático, organizadas según la metodología CRISP-DM
-\parencite{chapman2000}.
-
-El documento se estructura de forma secuencial. En los capítulos~\ref{cap:problema}
-a~\ref{cap:objetivos} se identifica el problema, se justifica su estudio, se delimita su
-alcance y se establecen los objetivos. En el capítulo~\ref{cap:marco-teorico} se presentan
-los fundamentos teóricos necesarios para comprender las decisiones técnicas. El
-capítulo~\ref{cap:desarrollo} documenta la aplicación de las seis fases de CRISP-DM, desde la
-comprensión del negocio hasta el despliegue del resultado. Finalmente, el
-capítulo~\ref{cap:conclusiones} expone las conclusiones y recomendaciones derivadas del
-trabajo.
+El documento se estructura de forma secuencial. Los capítulos~\ref{cap:problema}
+a~\ref{cap:objetivos} identifican el problema, justifican su estudio, delimitan el alcance y
+establecen los objetivos. El capítulo~\ref{cap:marco-teorico} presenta los fundamentos
+teóricos. El capítulo~\ref{cap:desarrollo} documenta la aplicación de las seis fases de
+CRISP-DM. El capítulo~\ref{cap:conclusiones} expone las conclusiones y recomendaciones. El
+proyecto no contempla despliegue operativo: se limita a un prototipo verificable localmente,
+un archivo de predicciones por celda y una lista priorizada de veinte celdas para revisión
+en terreno.

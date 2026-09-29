@@ -6,42 +6,22 @@
 \chapter{Justificación}
 \label{cap:justificacion}
 
-La elaboración del presente trabajo se justifica por la necesidad de contar con una
-referencia cuantitativa que indique cuánta demanda de información de transporte debería
-registrarse en cada zona del eje metropolitano de Cochabamba según su perfil territorial. Sin
-dicha referencia, el registro de consultas de Trufi App, aun siendo extenso, no permite
-distinguir las zonas donde la aplicación atiende adecuadamente a su población de aquellas
-donde podría existir una necesidad no cubierta.
+El desarrollo de una estimación de la demanda esperada se justifica por la necesidad de
+contar con una referencia cuantitativa que indique cuánta demanda de información de
+transporte debería registrarse en cada zona del eje metropolitano según su perfil
+territorial. Sin dicha referencia, el registro de consultas no permite distinguir las zonas
+donde la aplicación atiende adecuadamente a su población de aquellas donde podría existir
+una necesidad no cubierta.
 
-Desde el punto de vista práctico, una estimación de la demanda esperada permitiría
-transformar un registro histórico de uso en un insumo para la toma de decisiones. La
-comparación entre lo observado y lo esperado ofrecería a los voluntarios un criterio
-adicional, reproducible y verificable para decidir dónde concentrar sus esfuerzos de mapeo,
-complementario al conocimiento del territorio que ya poseen. En una organización cuyo recurso
-más limitado es el tiempo de sus miembros, incluso una mejora modesta en la asignación de ese
-tiempo tiene un impacto apreciable.
+Desde el punto de vista práctico, una estimación de la demanda esperada transforma un
+registro histórico de uso en un insumo para la toma de decisiones. La comparación entre lo
+observado y lo esperado ofrece a los voluntarios un criterio adicional, reproducible y
+verificable para decidir dónde concentrar sus esfuerzos de mapeo, complementario al
+conocimiento del territorio que ya poseen.
 
-Desde la perspectiva de la Ciencia de Datos, el problema presenta un interés técnico
-particular. En primer lugar, los datos corresponden a conteos cuya magnitud depende de la
-población expuesta, lo que exige técnicas capaces de estimar tasas por habitante y de tratar
-la sobredispersión propia de este tipo de variables. En segundo lugar, la demanda de
-transporte suele presentar dependencia espacial, de modo que una evaluación convencional
-basada en particiones aleatorias podría sobrestimar la capacidad predictiva de cualquier
-técnica; por ello, resulta necesario diseñar un esquema de evaluación que respete la
-estructura geográfica de los datos. En tercer lugar, la comparación entre técnicas de
-distinta complejidad plantea el reto metodológico de seleccionar la solución sin sesgos, de
-manera que una mayor sofisticación solo se adopte cuando mejore de forma clara el desempeño.
-
-Los beneficiarios directos del trabajo son Trufi Association y sus voluntarios. Los
-beneficiarios indirectos son los usuarios de la aplicación, los gobiernos municipales del eje
-metropolitano, los planificadores urbanos y otras comunidades que mantienen planificadores de
-rutas en sistemas de paratránsito, para quienes el procedimiento desarrollado podría resultar
-replicable.
-
-Es menester destacar que la presente monografía se elabora de manera estructurada y que la
-información se desarrolla de forma secuencial, con el propósito de guiar al lector hacia la
-resolución del problema planteado. En este sentido, los capítulos iniciales establecen el
-problema, el alcance y los objetivos; el marco teórico proporciona los conceptos necesarios;
-y el capítulo de desarrollo documenta, fase por fase, cómo los hallazgos de cada etapa
-condicionan las decisiones de la siguiente, hasta llegar a los resultados y a su propuesta de
-uso.
+Desde la perspectiva de la Ciencia de Datos, el problema presenta interés técnico porque los
+datos corresponden a conteos cuya magnitud depende de la población expuesta, lo que exige
+técnicas capaces de estimar tasas por habitante y de tratar la sobredispersión. Además, la
+dependencia espacial obliga a diseñar un esquema de evaluación que respete la estructura
+geográfica de los datos, de modo que una partición aleatoria no sobrestime la capacidad
+predictiva del modelo.

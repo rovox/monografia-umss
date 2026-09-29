@@ -204,6 +204,10 @@ def comprobar_folios(cajas, m, continua=False):
         candidatos = [l for l in lineas
                       if l[1] > alto - 2.9 * CM and l[3] < alto - 0.8 * CM
                       and FOLIO.match(l[4].strip())]
+        # Si una página llena deja su última línea dentro de la franja
+        # (p. ej. el folio de una entrada del índice), el folio real es
+        # siempre el número situado más abajo.
+        candidatos.sort(key=lambda l: l[1], reverse=True)
         if numero <= SIN_FOLIO_INICIAL:
             if candidatos:
                 problemas.append(
@@ -237,6 +241,7 @@ def comprobar_folios(cajas, m, continua=False):
         candidatos = [l for b in bloques for l in b
                       if l[1] > alto - 2.9 * CM and l[3] < alto - 0.8 * CM
                       and FOLIO.match(l[4].strip())]
+        candidatos.sort(key=lambda l: l[1], reverse=True)
         if candidatos:
             serie.append(candidatos[0][4].strip())
     arabes = [t for t in serie if t.isdigit()]
