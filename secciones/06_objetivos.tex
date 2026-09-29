@@ -7,70 +7,31 @@
 \chapter{Objetivos}
 \label{cap:objetivos}
 
-\section{Objetivo General}
+\section{Objetivo general}
 \label{sec:objetivo-general}
 
-Construir un diagnóstico espacial de las brechas de información de transporte público en el
-eje metropolitano de Cochabamba, a partir de las consultas de ruta de Trufi App del período
-septiembre de 2022 a junio de 2024, y derivar de él una lista priorizada de zonas para
-orientar el trabajo de mapeo de la organización.
+Estimar el número esperado de consultas de ruta de Trufi App por celda H3 en el eje
+metropolitano de Cochabamba, entre septiembre de 2022 y junio de 2024, a partir de la
+población, la ubicación y el contexto territorial de cada celda, con el fin de proporcionar
+a Trufi Association una referencia cuantitativa que oriente la priorización del mapeo
+voluntario.
 
-\section{Objetivos Específicos}
+\section{Objetivos específicos}
 \label{sec:objetivos-especificos}
 
-Los objetivos específicos descomponen el objetivo general en resultados parciales y
-verificables, alineados con el proceso de trabajo:
-
-\begin{enumerate}
-  \item [OE1.] Consolidar y auditar los 85 archivos semanales de consultas en un conjunto
-        único y trazable, documentando esquema, calidad, duplicados, vacíos temporales y
-        procedencia de las variables derivadas recibidas. \textbf{(Completado --- ver
-        sección~\ref{sec:comprension-datos}.)}
-  \item [OE2.] Caracterizar la demanda de información mediante análisis exploratorio
-        espacio-temporal sobre una teselación H3, evaluando la sensibilidad de los
-        resultados a la resolución espacial elegida.
-  \item [OE3.] Construir, por celda territorial y semana, indicadores que integren demanda
-        de consultas, cobertura de rutas GTFS, centralidad respecto del núcleo urbano y
-        composición temporal del uso, documentando el método de cálculo de cada uno y las
-        variables descartadas por fuga de información.
-  \item [OE4.] Contrastar formalmente, mediante pruebas de hipótesis, si la brecha de
-        cobertura de transporte es mayor en la periferia que en el centro, y si un modelo
-        de predicción de demanda mejora de forma significativa sobre líneas base
-        explícitas.
-  \item [OE5.] Entrenar y comparar modelos de predicción de demanda de consultas por celda
-        y período frente a líneas base explícitas, con validación cronológica.
-  \item [OE6.] Derivar y validar una regla de priorización de mapeo que combine demanda
-        esperada y brecha de cobertura, evaluando con un criterio declarado de antemano si
-        el modelo de predicción aporta valor de ordenamiento frente a una línea base simple.
-  \item [OE7.] Proponer una arquitectura de actualización periódica del diagnóstico, con un
-        prototipo ejecutable y un plan de monitoreo, para su uso operativo por parte de
-        Trufi App.
-\end{enumerate}
-
-\vspace{6pt}
-\noindent
-Nota de coherencia: cada objetivo específico se corresponde con una fase del desarrollo
-presentado en el capítulo~\ref{cap:desarrollo} y es retomado explícitamente en las
-conclusiones del capítulo~\ref{cap:conclusiones}. La tabla~\ref{tab:matriz-coherencia}
-resume esa correspondencia y el estado de avance de cada objetivo.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Matriz de coherencia objetivos-resultados-evidencias}
-  \label{tab:matriz-coherencia}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}p{0.28\textwidth}p{0.32\textwidth}X@{}}
-    \toprule
-    \textbf{Objetivo específico} & \textbf{Resultado esperado} & \textbf{Evidencia en la monografía} \\
-    \midrule
-    OE1. Auditar y consolidar datos & Conjunto de datos único, trazable y con calidad documentada & Sección~\ref{sec:comprension-datos} (completa) \\
-    OE2. Caracterizar demanda (EDA espacial) & Tablas y figuras de distribución espacio-temporal; análisis de sensibilidad de resolución H3 & Secciones~\ref{sec:comprension-datos} y~\ref{sec:preparacion-datos} (completa) \\
-    OE3. Construir indicadores por celda-semana & Tabla de indicadores con demanda, cobertura GTFS, centralidad y composición temporal & Sección~\ref{sec:preparacion-datos} (completa) \\
-    OE4. Contrastar hipótesis de brecha y de mejora predictiva & Pruebas de Mann-Whitney (H1) y Diebold-Mariano/Wilcoxon (H2) & Sección~\ref{sec:evaluacion-resultados} (completa) \\
-    OE5. Predecir demanda & Cuatro modelos comparados contra dos líneas base, con métricas de error & Secciones~\ref{sec:modelado} y~\ref{sec:evaluacion-resultados} (completa) \\
-    OE6. Regla de priorización de mapeo & Ranking de celdas por demanda no resuelta, con contraste preinscrito del aporte del modelo & Secciones~\ref{sec:evaluacion-resultados} y~\ref{sec:despliegue} (completa) \\
-    OE7. Proponer despliegue & Prototipo ejecutable, arquitectura y plan de monitoreo & Sección~\ref{sec:despliegue} (completa) \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia.}
-\end{table}
+\begin{itemize}
+  \item \textbf{OE1.} Caracterizar la calidad, la cobertura temporal y la distribución
+        espacial de las consultas de ruta y de las fuentes de población y de oferta de
+        transporte, para fundamentar las reglas de limpieza y el diseño de la evaluación.
+  \item \textbf{OE2.} Construir un conjunto de datos por celda H3 que incorpore las celdas
+        pobladas sin consultas y que reserve un conjunto de prueba independiente, definido
+        por bloques espaciales, antes de cualquier modelado.
+  \item \textbf{OE3.} Comparar técnicas de estimación de distinta complejidad mediante
+        validación cruzada espacial, seleccionando la técnica final con una regla definida
+        antes de conocer los resultados.
+  \item \textbf{OE4.} Evaluar la técnica seleccionada sobre el conjunto de prueba y analizar
+        la diferencia entre las consultas observadas y esperadas, su estabilidad y su
+        relación con la cobertura de la red de transporte mapeada.
+  \item \textbf{OE5.} Elaborar una propuesta de uso del resultado para Trufi Association,
+        con productos reproducibles y un procedimiento de actualización.
+\end{itemize}

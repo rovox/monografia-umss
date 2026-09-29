@@ -31,8 +31,11 @@ INTERLINEADO = 27.6
 TOL_INTERLINEADO = 0.5
 # Desborde máximo admitido (pt)
 DESBORDE_MAX = 2.0
-# Fuentes admitidas (nombre sin el prefijo de subconjunto "ABCDEF+")
-FUENTES_OK = re.compile(r"^(Arial|LiberationSans|Garamond|EBGaramond|IBMPlexMono)")
+# Fuentes admitidas (nombre sin el prefijo de subconjunto "ABCDEF+").
+# LatinModernMath: base de unicode-math declarada en preambulo.tex; solo
+# aporta los símbolos que Arial no tiene (sumatorio, raíz, barra "∣"...),
+# las letras y cifras de las fórmulas siguen en Arial.
+FUENTES_OK = re.compile(r"^(Arial|LiberationSans|Garamond|EBGaramond|IBMPlexMono|LatinModernMath)")
 # Páginas que cuentan en la serie pero NO muestran folio (guía §3.1):
 # carátula, dedicatoria y agradecimientos, en ese orden.
 SIN_FOLIO_INICIAL = 3
@@ -45,6 +48,13 @@ FOLIO = re.compile(r"^(?:[ivxlcdm]{1,7}|[0-9]{1,3})$")
 # La lista se reconoce por su encabezado, no por el número de página.
 MARCADERES_PERMITIDOS = re.compile(
     r"^\[(?:Incluya|pendiente de consolidar)", re.I)
+# Corchetes que NO son marcadores: abreviaturas y descriptores de APA 7
+# que imprime biblatex-apa ("Instituto Nacional de Estadística [INE]",
+# "[Ponencia]", "[Documentación de software]"...) y corchetes de fórmulas
+# del Marco teórico (esperanza condicional E[Y ∣ P, X], término de sesgo).
+CORCHETES_LEGITIMOS = re.compile(
+    r"^\[(?:[A-Z]{2,8}\]|Ponencia|Documentación de software|Publicación en el sitio"
+    r"|Ficha de la aplicación|Conjunto de datos|Software|Sesgo\()|∣")
 
 
 def roman(n):
@@ -304,6 +314,7 @@ def marcadores(pdf):
                    re.findall(r"\[(?:[A-ZÁÉÍÓÚÑ…][^\]]{2,400}?|…|\.\.\.)\]", texto)]
     encontrados += re.findall(r"\b(?:TODO|FIXME|XXX)\b", texto)
     bloqueantes, permitidos = [], []
+    encontrados = [x for x in encontrados if not CORCHETES_LEGITIMOS.search(x)]
     for x in encontrados:
         (permitidos if MARCADERES_PERMITIDOS.match(x) else bloqueantes).append(x)
     return bloqueantes, permitidos

@@ -13,10 +13,10 @@
 \vspace*{6cm}
 \begin{flushright}
   \interlineadoResumen
-  \textit{A mi abuelo que me enseñó a no parar de estudiar y aprender, a mi abuela que
-  me transmitió su curiosidad, a mi hermano que me extiende la mano cuando tengo\\
-  problemas y a mi querida madre que me impregnó de su enorme\\
-  fuerza de voluntad y paciencia.}
+  \textit{A mi abuelo, que me enseñó a no parar de estudiar y aprender; a mi abuela, que
+  me transmitió su curiosidad; a mi hermano, que me extiende la mano cuando tengo
+  problemas; y a mi querida madre, que me impregnó de su enorme fuerza de voluntad y
+  paciencia.}
 \end{flushright}
 \clearpage
 
@@ -25,10 +25,11 @@
 \thispagestyle{empty}   % debe ir DESPUÉS de \chapter*, que reimpone el estilo
 \begingroup           % \interlineadoResumen no debe filtrarse al resto del documento
 \interlineadoResumen
-Agradezco a mi familia que me sostiene, impulsa y ayuda sin importar las adversidades.
+Agradezco a mi familia, que me sostiene, impulsa y ayuda sin importar las adversidades.
 Agradezco también a la vida por todas aquellas personas que por azares del destino llegué
-a conocer, con las cuales he pasado inolvidables momentos, mañanas de estudio, tardes de
-juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
+a conocer, con las cuales he pasado inolvidables momentos. Agradezco a los docentes del
+Diplomado en Ciencia de Datos y al equipo de Trufi Association por facilitar los datos que
+hicieron posible este trabajo.
 \endgroup
 \clearpage
 
@@ -49,44 +50,52 @@ juegos y paseos, noches de cuestionamientos filosóficos y charlas sin sentido.
   \setlength{\parindent}{0pt}
 
   % --- Párrafo 1: introducción / contexto ---------------------
-  Cada vez que alguien abre Trufi App para preguntarle cómo llegar de un lugar a otro, esa
-  consulta queda registrada. Multiplicado por casi dos millones de veces entre 2022 y 2024,
-  ese registro es un mapa involuntario de todos los lugares del eje metropolitano de
-  Cochabamba donde la gente no sabe cómo moverse. El proyecto parte de una constatación
-  simple: una consulta de ruta ya es, por definición, una necesidad de información que el
-  sistema de transporte no resolvió por sí solo. El problema que se aborda no es predecir
-  si una persona en particular va a repetir su consulta, sino identificar en qué zonas del
-  territorio esa necesidad se concentra, en qué medida coincide con la falta de cobertura
-  de rutas mapeadas en el feed GTFS de la aplicación, y qué zonas debería priorizar el
-  trabajo voluntario de mapeo de Trufi App.
+  El transporte público del eje metropolitano de Cochabamba opera principalmente bajo la
+  modalidad de paratránsito, y Trufi App constituye una de las pocas fuentes públicas de
+  información sobre sus rutas, mantenida mediante el trabajo voluntario de Trufi
+  Association. La aplicación registra cuántas consultas de ruta se originan en cada zona,
+  pero no cuántas cabría esperar según sus características; en consecuencia, un conteo
+  bajo no permite distinguir entre una zona poco poblada y una zona donde la aplicación no
+  resulta útil. La presente monografía estima el número esperado de consultas por celda
+  hexagonal H3 de resolución 8 (aproximadamente 0,74~km\textsuperscript{2}) a partir de la
+  población, la ubicación y el contexto territorial de cada celda, utilizando 1.927.675
+  consultas registradas entre septiembre de 2022 y junio de 2024.
 
   % --- Párrafo 2: metodología ----------------------------------
-  La metodología sigue las seis fases de CRISP-DM. Los datos primarios son 85 archivos
-  semanales de consultas (1.927.675 registros, septiembre de 2022 a junio de 2024), que se
-  auditaron, consolidaron y validaron de forma exhaustiva antes de cualquier análisis: se
-  verificó el esquema de los 85 archivos, se resolvieron dos variantes de codificación y de
-  nomenclatura de columnas, se validó empíricamente la variable de distancia recibida, se
-  caracterizó el comportamiento del identificador de usuario y se documentó un vacío
-  temporal de siete semanas. El análisis territorial se apoya en una teselación de
-  hexágonos H3, sobre la cual se integrarán métricas de cobertura de rutas GTFS y de
-  entorno urbano (Puntos de Interés de OpenStreetMap).
+  El proyecto se desarrolló bajo la metodología CRISP-DM. Tras la depuración de los datos
+  se conservaron 1.924.578 consultas válidas y se construyó una tabla de 1.381 celdas
+  pobladas según Kontur Population, que incluye 444 celdas sin ninguna consulta
+  registrada. Dado que el análisis exploratorio evidenció una fuerte autocorrelación
+  espacial de la demanda, antes de ajustar cualquier modelo se reservó como conjunto de
+  prueba el 20~\% de los bloques espaciales. Se compararon siete técnicas mediante
+  validación cruzada espacial por bloques: cuatro líneas base de tasa (global, por
+  municipio, por anillo de distancia y por vecindad H3), dos modelos lineales generalizados
+  con offset poblacional (Poisson y Binomial Negativa) y un modelo de
+  gradient boosting con pérdida Poisson. La técnica final se seleccionó mediante
+  una regla declarada antes de conocer los resultados.
 
-  % --- Párrafo 3: enfoque analítico -----------------------------
-  El proyecto contempla tres frentes analíticos combinados: segmentación no supervisada de
-  zonas según su perfil de demanda y cobertura, un modelo supervisado de predicción de
-  demanda de consultas contrastado contra líneas base estacionales, y un índice de
-  prioridad de mapeo. El resultado esperado no es un clasificador abstracto sino una
-  herramienta que Trufi App pueda usar para decidir dónde enviar a sus voluntarios primero.
+  % --- Párrafo 3: hallazgos ------------------------------------
+  La regla adoptó la estimación por vecindad H3, que multiplica la tasa de consultas por
+  habitante de las celdas vecinas por la población de cada celda. En el conjunto de
+  prueba, evaluado una única vez, esta técnica redujo la devianza de Poisson de 1.807,2 a
+  981,7 respecto de una tasa única para toda el área y explicó el 76,5~\% de la devianza.
+  Los modelos basados en población y distancia al centro no la superaron, y una validación
+  aleatoria habría sobrestimado la capacidad predictiva (D\textsuperscript{2} de 0,91
+  frente a 0,64). La brecha entre consultas observadas y esperadas resultó estable ante
+  variaciones razonables de los datos (correlación de Spearman $\geq 0{,}87$), y las
+  celdas sin una parada de la red mapeada a 500~m o menos presentaron, de forma
+  sistemática, menos consultas de las esperadas ($\delta$ de Cliff $= +0{,}37$).
 
-  % --- Párrafo 4: estado del proyecto ---------------------------
-  A la fecha de este documento se ha completado la Comprensión del Negocio y la
-  Comprensión de los Datos. Este documento reporta ese avance con evidencia verificable y
-  deja planteadas, con evidencia y no solo como promesa, las fases de Preparación,
-  Modelado, Evaluación y Despliegue que restan por desarrollar.
+  % --- Párrafo 4: conclusiones ---------------------------------
+  Se concluye que es posible estimar la demanda esperada de información de transporte por
+  celda con un error, en zonas no vistas, cercano a la mitad del de una tasa uniforme, y
+  que la mejor estimación disponible es de carácter local. El resultado se entrega a Trufi
+  Association como un mapa interactivo, un archivo de predicciones por celda y una lista de
+  veinte celdas prioritarias para revisión en terreno, concebidos como apoyo a la
+  priorización del mapeo y no como evidencia concluyente de ausencia de rutas.
 
   \vspace{6pt}
-  \noindent\textbf{Palabras clave:} Ciencia de Datos; movilidad urbana; brechas de
-  información; transporte público; análisis espacial; hexágonos H3; GTFS; CRISP-DM;
-  aprendizaje automático; Cochabamba.
+  \noindent\textbf{Palabras clave:} demanda esperada, datos de conteo, validación cruzada
+  espacial, paratránsito, Trufi App, H3, Kontur Population, CRISP-DM.
 }
 \clearpage

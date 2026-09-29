@@ -7,102 +7,65 @@
 \chapter{Alcance}
 \label{cap:alcance}
 
-\section{Aspectos incluidos}
+El presente trabajo comprende la estimación del número esperado de consultas de ruta de
+Trufi App por unidad territorial en el eje metropolitano de Cochabamba, desde la comprensión
+y preparación de los datos hasta la selección, evaluación e interpretación de la técnica de
+estimación y la formulación de una propuesta de uso para Trufi Association.
 
-\subsection{Alcance temporal}
+El estudio se delimita bajo las siguientes condiciones:
 
-El período de análisis corresponde a los datos efectivamente disponibles: \textbf{12 de
-septiembre de 2022 a 3 de junio de 2024}, verificado a partir de las marcas de tiempo reales
-del conjunto consolidado (sección~\ref{sec:comprension-datos}). Dentro de ese rango existe
-un vacío estructural documentado de siete semanas consecutivas, entre el 11 de marzo y el 22
-de abril de 2024, que se declara como limitación y no se imputa.
+\begin{itemize}
+  \item \textbf{Datos considerados.} Se utilizan tres fuentes: el registro de consultas de
+        ruta de Trufi App, las estimaciones de población de Kontur Population y la red de
+        transporte mapeada publicada por Trufi en formato GTFS. No se emplean datos de
+        viajes realizados, encuestas de movilidad ni información socioeconómica.
+  \item \textbf{Período analizado.} Consultas registradas entre el 12 de septiembre de 2022
+        y el 9 de junio de 2024.
+  \item \textbf{Dominio territorial.} El eje metropolitano de Cochabamba y su entorno
+        inmediato. El área de estudio se delimita a partir de los orígenes de las
+        consultas, según el procedimiento descrito en el apartado 7.3.3.
+  \item \textbf{Unidad de análisis.} La celda hexagonal H3 de resolución 8, de
+        aproximadamente 0,74~km\textsuperscript{2}.
+  \item \textbf{Variable a estimar.} El número total de consultas originadas en cada celda
+        durante el período, en relación con su población residente.
+  \item \textbf{Análisis incluidos.} Análisis exploratorio, construcción de la tabla de
+        análisis por celda, comparación de técnicas de estimación con evaluación espacial,
+        análisis de la diferencia entre consultas observadas y esperadas, contraste
+        descriptivo con la red mapeada y análisis de sensibilidad.
+  \item \textbf{Análisis excluidos.} La predicción de la evolución temporal de la demanda,
+        la segmentación de usuarios, la inferencia de relaciones causales y la
+        implementación operativa del resultado dentro de los sistemas de Trufi Association.
+\end{itemize}
 
-\subsection{Alcance espacial}
+\begin{table}[htbp]
+  \centering
+  \caption{Perfil inicial de los datos disponibles}
+  \label{tab:perfil-datos}
+  \interlineadoSimple
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.34\textwidth}X@{}}
+    \toprule
+    \textbf{Atributo} & \textbf{Detalle} \\
+    \midrule
+    Registro de consultas & 85 archivos CSV semanales exportados por Trufi Association \\
+    Volumen inicial & 1.927.675 consultas de ruta \\
+    Ventana temporal & 12 de septiembre de 2022 al 9 de junio de 2024 \\
+    Fuente de población & Kontur Population, ediciones 2022 y 2023 (licencia CC BY) \\
+    Fuente de oferta de transporte & GTFS de Trufi App publicado en Mobility Database \\
+    Unidad de análisis & Celda H3 de resolución 8 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia a partir de los archivos entregados por Trufi Association y de
+  las fuentes públicas citadas.}
+\end{table}
 
-Área de estudio: eje metropolitano de Cochabamba, delimitado operativamente por un
-rectángulo envolvente entre las latitudes -17,6 y -17,2 y las longitudes -66,4 y -65,8,
-dentro del cual se encuentra el 99,82~\% de los registros. El análisis territorial se
-realiza sobre una teselación de hexágonos H3, con resolución preliminar 8 (\textasciitilde
-460~m de arista) sujeta a análisis de sensibilidad.
-
-\subsection{Alcance de datos}
-
-\textbf{Fuente primaria:} 85 archivos CSV semanales de consultas de Trufi App, con las
-columnas \texttt{date/ts}, \var{origin_latitude}, \var{origin_longitude},
-\var{destination_latitude}, \var{destination_longitude}, \texttt{userID},
-\texttt{distancia}, \var{origin_municipio}, \var{dest_municipio} y variables
-temporales derivadas. Total consolidado: 1.927.675 registros.
-
-\textbf{Fuente secundaria, incorporada en la fase de Preparación:} el feed GTFS de rutas de
-Trufi App (Mobility Database, identificador \texttt{mdb-3507}), con 141 líneas mapeadas y
-período de validez declarado 2024-01-01 a 2026-12-31 --- posterior a buena parte de las
-consultas analizadas, limitación que se declara explícitamente cada vez que se cruza
-demanda histórica con cobertura actual. Se evaluó incorporar Puntos de Interés de
-OpenStreetMap como variable adicional de entorno urbano; se descartó por la cobertura
-desigual entre el centro y la periferia del área de estudio, que habría introducido sesgo
-espacial no controlable con la información disponible, y queda como línea de trabajo futura
-(capítulo~\ref{cap:conclusiones}).
-
-\textbf{Criterios de inclusión y exclusión aplicados en la consolidación:} se excluyeron
-los duplicados exactos (104 registros); se conservaron, marcados, los registros con
-coordenadas fuera del área de estudio (3.514) y con coordenadas en cero (3), por tratarse
-de casos válidos que requieren tratamiento distinto al de un error de calidad.
-
-\subsection{Alcance metodológico}
-
-El proyecto combina dos tipos de análisis: \textbf{descriptivo y diagnóstico}
-(caracterización espacio-temporal de la demanda sobre la teselación H3 y contraste
-estadístico formal de la brecha de cobertura centro-periferia) y \textbf{supervisado}
-(modelo de predicción de demanda de consultas por celda y período, contrastado contra
-líneas base explícitas, con validación cronológica y no aleatoria, dada la falta de
-estacionariedad del volumen de consultas documentada en la sección~\ref{sec:comprension-datos}).
-No se incluye un componente no supervisado de segmentación territorial por agrupamiento: se
-consideró en el diseño inicial del proyecto y se descartó en favor de profundizar el
-componente supervisado y el diagnóstico de cobertura, que responden de forma más directa a
-la pregunta de investigación (sección~\ref{sec:formulacion-problema}); queda como
-recomendación de trabajo futuro (capítulo~\ref{cap:conclusiones}). El análisis espacial se
-apoya en H3 y no en buffers circulares individuales, por las razones de aditividad y
-estabilidad de clave espacial explicadas en el capítulo~\ref{cap:marco-teorico}.
-
-\section{Aspectos excluidos}
-
-\begin{enumerate}
-  \item Modelado de la ruta específica elegida por cada usuario entre las opciones
-        ofrecidas.
-  \item Predicción del propósito individual del viaje.
-  \item Uso de datos demográficos, por no estar disponibles.
-  \item Simulación completa de itinerarios mediante motor de ruteo (OpenTripPlanner) sobre
-        la totalidad del dataset; de emplearse, se limitará a los pares origen-destino
-        agregados más frecuentes, por razones de costo computacional.
-  \item Implementación de un sistema en producción; el despliegue se documentará como
-        propuesta arquitectónica fundamentada, no como sistema operativo.
-\end{enumerate}
-
-\section{Limitaciones conocidas}
-
-\begin{enumerate}
-  \item Vacío estructural de siete semanas (11 de marzo -- 22 de abril de 2024) que no
-        puede imputarse y que condiciona cualquier análisis estacional.
-  \item El identificador de usuario corresponde a una instalación de la aplicación, no
-        verificadamente a una persona; reinstalaciones y dispositivos compartidos
-        introducen ruido no cuantificable con la información disponible
-        (sección~\ref{sec:comprension-datos}).
-  \item No se incorporaron Puntos de Interés de OpenStreetMap como variable de entorno
-        urbano, por la cobertura desigual entre el centro y la periferia del área de
-        estudio señalada más arriba; el perfil territorial de cada celda se limita, por
-        tanto, a cobertura GTFS, centralidad y patrones temporales de uso.
-  \item Los datos de \var{origin_municipio} y \var{dest_municipio} fueron recibidos
-        ya calculados y sin documentación del procedimiento que los generó; su precisión no
-        puede darse por establecida hasta completar la verificación prevista en la fase de
-        Preparación.
-  \item Los datos registran intenciones de consulta, no viajes confirmados; ninguna
-        conclusión del proyecto puede afirmar que los desplazamientos consultados se hayan
-        realizado efectivamente.
-  \item El feed GTFS que se utilizará para calcular cobertura corresponde al estado actual
-        del mapeo de Trufi App, que no necesariamente coincide con el estado del mapeo en
-        2022 o 2023; esta limitación se declarará explícitamente al presentar cualquier
-        resultado que cruce demanda histórica con cobertura actual.
-\end{enumerate}
-
-Estas limitaciones deberán retomarse de forma coherente en las conclusiones y
-recomendaciones (capítulo~\ref{cap:conclusiones}).
+Los resultados están condicionados por limitaciones conocidas de antemano. En primer lugar,
+las consultas reflejan el comportamiento de quienes utilizan la aplicación y no el de toda
+la población, de modo que cualquier diferencia entre lo observado y lo esperado podría
+combinar falta de rutas mapeadas, baja adopción digital y otros factores que no pueden
+separarse con los datos disponibles. En segundo lugar, el registro no permite saber si una
+consulta derivó en un viaje ni si el origen registrado corresponde a la ubicación del
+dispositivo o a un punto elegido en el mapa. En tercer lugar, Kontur Population constituye
+una estimación modelada y no un censo. En cuarto lugar, la versión disponible del GTFS
+declara una vigencia posterior a buena parte del período de las consultas. Por consiguiente,
+la solución desarrollada constituye un instrumento de apoyo a la priorización y no sustituye
+el criterio ni el conocimiento territorial de los voluntarios de Trufi Association.

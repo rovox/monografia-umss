@@ -420,6 +420,16 @@
 % ---------- 12. UTILIDADES VARIAS ----------------------------
 \usepackage{xcolor}
 \usepackage{graphicx}
+% TEMPORAL -- retirar cuando el capítulo 7 esté transcrito del .md nuevo.
+% Las figuras antiguas (imagenes/fig_*.png) se borraron, pero los
+% secciones/08_0N_*.tex antiguos aún las piden: una imagen ausente no
+% imprime nada (el PDF queda limpio) y deja un aviso en el log en vez
+% de detener la compilación. Ver docs/figuras_cap7.md.
+\NewCommandCopy{\includegraphicsOriginal}{\includegraphics}
+\renewcommand{\includegraphics}[2][]{%
+  \IfFileExists{#2}%
+    {\includegraphicsOriginal[#1]{#2}}%
+    {\PackageWarning{monografia}{Imagen ausente: #2}}}
 \usepackage{enumitem}
 \setlist{topsep=4pt,itemsep=2pt}
 \frenchspacing

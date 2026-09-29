@@ -16,26 +16,50 @@
 \begingroup           % \interlineadoResumen no debe filtrarse al resto del documento
 \interlineadoResumen
 \begin{description}[leftmargin=3cm,style=nextline,font=\bfseries]
-  \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}. Metodología
-    estándar para proyectos de ciencia de datos.
+  \item[Autocorrelación espacial] Tendencia de las unidades cercanas en el espacio a
+    presentar valores similares de una variable.
+  \item[B0, B0.5, B0.7, B1] Líneas base de tasa: global, por municipio, por anillo de
+    distancia y por vecindad H3.
+  \item[Bloque espacial] Celda H3 de resolución 6 que agrupa aproximadamente 50 celdas de
+    resolución 8; unidad de partición para la evaluación.
+  \item[Brecha] Diferencia, en una escala comparable entre celdas, entre las consultas
+    observadas y las esperadas.
+  \item[Calibración] Cociente entre la suma de las predicciones y la suma de los valores
+    observados.
+  \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}; metodología de
+    seis fases para proyectos de Ciencia de Datos.
+  \item[D\textsuperscript{2}] Fracción de la devianza explicada respecto de predecir el
+    promedio del conjunto evaluado.
+  \item[Devianza de Poisson] Medida de error para datos de conteo que evalúa el error en
+    términos relativos.
+  \item[$\delta$ de Cliff] Medida no paramétrica del tamaño de la diferencia
+    entre dos grupos, en escala de $-1$ a $+1$.
   \item[EDA] Análisis Exploratorio de Datos (\textit{Exploratory Data Analysis}).
-  \item[ML] Aprendizaje automático (\textit{Machine Learning}).
-  \item[POI] Punto de Interés (\textit{Point of Interest}): un lugar georreferenciado con
-    una categoría (tienda, salud, educación, etc.).
-  \item[GTFS] \textit{General Transit Feed Specification}. Formato estándar en el que Trufi
-    App publica las rutas de transporte que ha mapeado.
-  \item[OSM] OpenStreetMap, el mapa colaborativo del que se obtienen los POI.
-  \item[H3] Sistema de teselación jerárquica en hexágonos desarrollado por Uber, usado para
-    agregar datos geográficos en celdas de tamaño uniforme.
-  \item[MAUP] \textit{Modifiable Areal Unit Problem} (Problema de la Unidad de Área
-    Modificable): los resultados de un análisis territorial pueden cambiar según la
-    zonificación elegida.
-  \item[OTP] OpenTripPlanner, motor de cálculo de itinerarios de transporte público a
-    partir de un feed GTFS.
-  \item[PR-AUC] Área bajo la curva de precisión-recall; métrica preferida sobre ROC-AUC
-    cuando las clases están desbalanceadas.
-  \item[UUID] Identificador único universal; formato del \var{userID} recibido en los
-    datos.
+  \item[Exposición] Magnitud a la que se espera que el conteo sea proporcional; en este
+    trabajo, la población de la celda.
+  \item[Fuga de información] Uso inadvertido, durante el entrenamiento, de información de
+    la respuesta o del conjunto de prueba (\textit{data leakage}).
+  \item[GLM] Modelo lineal generalizado (\textit{Generalized Linear Model}).
+  \item[GTFS] \textit{General Transit Feed Specification}; estándar abierto para describir
+    rutas, paradas y horarios de transporte público.
+  \item[H3] Sistema de indexación geoespacial hexagonal y jerárquico.
+  \item[I de Moran] Estadístico de autocorrelación espacial global.
+  \item[IRR] Razón de tasas (\textit{Incidence Rate Ratio}), $e^{\beta}$.
+  \item[Kontur Population] Conjunto de datos abiertos de población estimada sobre
+    hexágonos H3.
+  \item[LISA] Indicadores locales de asociación espacial (\textit{Local Indicators of
+    Spatial Association}).
+  \item[M1, M2, M3] GLM Poisson, GLM Binomial Negativa y gradient boosting con pérdida
+    Poisson.
+  \item[MAE] Error absoluto medio.
+  \item[Offset] Término del modelo con coeficiente fijado en 1; en este trabajo,
+    $\log(\text{población})$.
+  \item[Paratránsito] Transporte público operado por sindicatos y cooperativas con rutas
+    flexibles y sin horarios fijos.
+  \item[RMSE] Raíz del error cuadrático medio.
+  \item[Sobredispersión] Condición en la que la varianza de un conteo supera a su media.
+  \item[Tabla minable] Conjunto de datos final, con una fila por unidad de análisis,
+    preparado para el modelado.
 \end{description}
 \endgroup
 \clearpage

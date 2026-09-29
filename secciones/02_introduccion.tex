@@ -11,56 +11,47 @@
 \chapter{Introducción}
 \label{cap:introduccion}
 
-Imaginemos a una persona en Sacaba que necesita llegar a un hospital en Cercado. No conoce
-la ruta. Abre Trufi App, escribe el destino, y la aplicación le responde. Si la respuesta es
-buena, el problema queda resuelto y esa persona nunca vuelve a pensar en ello. Si la
-respuesta es mala o no existe, esa persona probablemente vuelve a intentarlo minutos
-después, o simplemente se queda sin saber cómo llegar. Ese segundo intento —esa necesidad
-de información que no quedó satisfecha a la primera— es exactamente lo que este proyecto se
-propone encontrar y ubicar en el mapa.
+El crecimiento sostenido de las áreas urbanas y la transformación de los patrones de
+movilidad plantean desafíos significativos para garantizar un transporte público accesible y
+comprensible para la población. En el eje metropolitano de Cochabamba, el servicio de
+transporte público funciona principalmente bajo la modalidad de paratránsito: cientos de
+sindicatos y cooperativas operan micros, trufis y taxitrufis con recorridos que no siempre se
+encuentran documentados ni cuentan con horarios fijos \parencite{cabrera2022}. En este
+contexto, conocer qué línea conecta dos puntos de la ciudad constituye, para muchos usuarios,
+una dificultad cotidiana.
 
-El transporte público en el eje metropolitano de Cochabamba (Cercado, Sacaba, Quillacollo y
-zonas aledañas) es mayoritariamente informal: no hay horarios fijos, las rutas cambian según
-decisiones de cada operador, y no existe una fuente oficial y actualizada de ``cómo moverse
-por la ciudad''. Trufi App nació justamente para llenar ese vacío. Un grupo de personas
-voluntarias mapea las rutas de transporte y las publica en un formato estándar llamado GTFS,
-y la aplicación usa ese mapeo para responder consultas de la gente.
+Trufi App surge como una respuesta a esta carencia. Se trata de un planificador de rutas de
+código abierto, mantenido por Trufi Association, cuya información sobre recorridos y paradas
+es relevada y actualizada por voluntarios y publicada en el formato estándar GTFS. Cada vez
+que una persona consulta cómo llegar a un destino, la aplicación registra una consulta de ruta
+con su punto de origen, su punto de destino y el momento en que se produjo. Entre septiembre
+de 2022 y junio de 2024 se acumularon cerca de dos millones de estos registros, lo que
+representa una fuente de información de alcance metropolitano sobre la demanda de
+información de transporte.
 
-El problema es que ese mapeo no es parejo. Hay zonas —sobre todo el centro de la ciudad—
-muy bien mapeadas, y zonas periféricas donde la información es escasa o inexistente. Trufi
-App lo sabe de manera general, pero no tiene hoy una forma sistemática de saber exactamente
-dónde falta mapear primero. El trabajo de sus voluntarios, que es limitado, se reparte más
-por intuición que por evidencia.
+No obstante, estos registros indican cuántas consultas se originaron en cada zona, pero no
+cuántas cabría esperar en ella. Una zona con pocas consultas puede tener poca población
+residente, puede encontrarse lejos de los centros de actividad o puede no estar
+adecuadamente atendida por la aplicación. Solo la última situación representa una
+oportunidad de intervención para los voluntarios, cuyo tiempo constituye el recurso más
+escaso de la organización. En este sentido, el presente trabajo se propone estimar el número
+esperado de consultas de ruta de cada zona a partir de su población y de su contexto
+territorial, y comparar dicha estimación con las consultas efectivamente registradas.
 
-Este proyecto propone usar los propios registros de consultas de la aplicación para
-resolver esa pregunta. Cada consulta que alguien hace es, en sí misma, una señal de que
-existe una necesidad de información de transporte en ese punto del mapa y en ese momento. Si
-se analizan cientos de miles de esas señales en conjunto, es posible ver patrones: zonas
-donde la gente pregunta mucho y probablemente no obtiene una buena respuesta, zonas donde
-casi no hay cobertura de rutas mapeadas, y la relación entre ambas cosas. A partir de ahí, se
-puede construir algo directamente útil: una lista priorizada de zonas donde mapear rendiría
-más.
+Desde la perspectiva de la Ciencia de Datos, el problema resulta de interés porque reúne dos
+características propias de los datos espaciales de conteo. Por un lado, el número de
+consultas depende de la cantidad de personas expuestas en cada zona, lo que exige modelar
+tasas por habitante y no conteos aislados. Por otro lado, las zonas cercanas tienden a
+comportarse de forma similar, lo que obliga a evaluar cualquier estimación en zonas no
+utilizadas durante su construcción. Para abordar el problema se emplean técnicas
+geoespaciales y de aprendizaje automático, organizadas según la metodología CRISP-DM
+\parencite{chapman2000}.
 
-Dicho en una frase, sin tecnicismos: \textbf{este proyecto usa las búsquedas de ruta de la
-gente en Trufi App para averiguar en qué partes de Cochabamba es más difícil saber cómo
-moverse, y le entrega a Trufi App una guía de dónde conviene mapear primero.}
-
-Para llegar a eso, el proyecto combina varias herramientas de Ciencia de Datos. No se trata
-solamente de mirar tablas y gráficos (eso sería quedarse en la superficie): se trata de
-agrupar zonas parecidas entre sí mediante aprendizaje no supervisado, de construir un modelo
-que intente predecir dónde va a crecer la demanda de consultas, y de comparar ese modelo
-contra una línea base simple para saber si realmente aporta algo. Cada una de esas piezas se
-explica en el capítulo~\ref{cap:marco-teorico}, en un lenguaje que no exige conocimientos
-previos de Ciencia de Datos para entender por qué se usa.
-
-Este documento sigue el orden de CRISP-DM, la metodología estándar para proyectos de este
-tipo: primero se presenta el problema (capítulo~\ref{cap:problema}), se justifica por qué
-vale la pena resolverlo (capítulo~\ref{cap:justificacion}), se delimita qué entra y qué no
-entra en el proyecto (capítulo~\ref{cap:alcance}), se fijan los objetivos
-(capítulo~\ref{cap:objetivos}) y se desarrolla el marco teórico necesario para entender las
-decisiones técnicas (capítulo~\ref{cap:marco-teorico}). El capítulo~\ref{cap:desarrollo}
-documenta el trabajo aplicado: hasta este punto del proyecto, se ha completado la
-comprensión del negocio y una auditoría exhaustiva de los datos disponibles, cuyos
-resultados —incluidos varios hallazgos no anticipados— se reportan en detalle. Las fases
-siguientes, de preparación de datos en adelante, quedan explícitamente señaladas como
-trabajo pendiente.
+El documento se estructura de forma secuencial. En los capítulos~\ref{cap:problema}
+a~\ref{cap:objetivos} se identifica el problema, se justifica su estudio, se delimita su
+alcance y se establecen los objetivos. En el capítulo~\ref{cap:marco-teorico} se presentan
+los fundamentos teóricos necesarios para comprender las decisiones técnicas. El
+capítulo~\ref{cap:desarrollo} documenta la aplicación de las seis fases de CRISP-DM, desde la
+comprensión del negocio hasta el despliegue del resultado. Finalmente, el
+capítulo~\ref{cap:conclusiones} expone las conclusiones y recomendaciones derivadas del
+trabajo.
