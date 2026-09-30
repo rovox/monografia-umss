@@ -183,7 +183,7 @@ versión~4.x de H3. Las áreas se calculan con un modelo esférico de la Tierra 
 radio autálico de WGS84, y las longitudes medias de arista se calcularon exactamente para
 las resoluciones 0 a 6 y se extrapolaron para las resoluciones más finas.
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \caption{Resoluciones H3 relevantes para el proyecto}
   \label{tab:resoluciones-h3-marco}
@@ -237,10 +237,11 @@ sobre la fiabilidad de los análisis multivariados basados en datos por área.
 
 En el proyecto, la adopción de una grilla H3 regular y fijada de antemano reduce el
 componente arbitrario de la zonificación, porque las celdas no se trazan en función de los
-datos, pero no elimina el efecto de escala. Por ello, se prevé un análisis de sensibilidad a
-la resolución que repite el procedimiento con celdas de resolución~7 (más gruesas) y~9 (más
-finas), y que examina si la ordenación de zonas prioritarias y las conclusiones sustantivas
-se mantienen al cambiar de escala. Este tratamiento no resuelve el MAUP, que carece de
+datos, pero no elimina el efecto de escala. Por ello, se recomienda, como extensión, un
+análisis de sensibilidad a la resolución que repita el procedimiento con celdas de
+resolución~7 (más gruesas) y~9 (más finas), y que examine si la ordenación de zonas
+prioritarias y las conclusiones sustantivas se mantienen al cambiar de escala. Ese análisis
+no se ejecutó en este ciclo (sección~\ref{sec:interpretacion-resultados}). Este tratamiento no resuelve el MAUP, que carece de
 solución general, pero permite informar con transparencia en qué medida las conclusiones
 dependen de la resolución elegida.
 

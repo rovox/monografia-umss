@@ -57,7 +57,7 @@ def buscar_pendientes_en_tex():
             with open(tex_file, encoding='utf8', errors='replace') as f:
                 for i, linea in enumerate(f, 1):
                     # Buscar marcadores
-                    if re.search(r"Pendiente:|TODO|FIXME", linea, re.IGNORECASE):
+                    if re.search(r"(?i:pendiente:|\\pendiente\{)|\bTODO\b|\bFIXME\b", linea):
                         pendientes.append({
                             "archivo": str(tex_file.relative_to(RAIZ)),
                             "linea": i,

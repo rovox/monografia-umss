@@ -2,14 +2,14 @@
 """Trae desde trufi-data-science las figuras que cita el capítulo 7.
 
 Cada notebook del pipeline guarda sus figuras en
-reports/0N_*/figuras/<nombre>.png. Este script copia SOLO las que cita
-la monografía, cada una a la carpeta de la sección donde aparece
+resultados/0N_<fase>/figuras/<nombre>.png. Este script copia SOLO las que
+cita la monografía, cada una a la carpeta de la sección donde aparece
 (imagenes/07_desarrollo/7_N_*/), conservando el nombre original.
 La correspondencia completa figura -> sección -> notebook está en
 docs/figuras_cap7.md.
 
-Los diagramas hechos a mano (Figuras 6-1, 7-1 y 7-22) no vienen del
-pipeline: solo se comprueba que existan, nunca se sobrescriben.
+Los diagramas propios de la monografía (flujo CRISP-DM del proyecto)
+se dibujan con TikZ dentro del .tex y no pasan por este script.
 
 Uso:  scripts/sincronizar_figuras        (o:  make figuras)
 Origen: $TRUFI_REPO, o ../../trufi-data-science respecto de la plantilla.
@@ -27,37 +27,33 @@ D72 = "imagenes/07_desarrollo/7_2_comprension_datos"
 D73 = "imagenes/07_desarrollo/7_3_preparacion"
 D74 = "imagenes/07_desarrollo/7_4_modelado"
 D75 = "imagenes/07_desarrollo/7_5_evaluacion"
+D76 = "imagenes/07_desarrollo/7_6_despliegue"
 
-# (figura, carpeta en reports/, archivo, destino). La carpeta destino
-# sigue la SECCIÓN del texto, no el notebook: 7-14 y 7-15 las genera
-# el notebook 03 (modelado) pero se discuten en 7.5 (evaluación).
+# (carpeta en resultados/, archivo, destino). La carpeta destino sigue la
+# SECCIÓN del texto: 02_preprocesamiento y 03_feature_engineering se
+# discuten juntos en 7.3 (Preparación de los datos).
 MANIFIESTO = [
-    ("7-2",  "01_data_understanding", "esquema_grupos.png",           D72),
-    ("7-3",  "01_data_understanding", "distancia_distribucion.png",   D72),
-    ("7-4",  "01_data_understanding", "usuario_distribuciones.png",   D72),
-    ("7-5",  "01_data_understanding", "cobertura_mensual.png",        D72),
-    ("7-6",  "01_data_understanding", "lorenz_demanda_celdas.png",    D72),
-    ("7-7",  "01_data_understanding", "lisa_clusters_demanda.png",    D72),
-    ("7-8",  "02_preparacion",        "area_estudio_y_consultas.png", D73),
-    ("7-9",  "02_preparacion",        "query_count_mapa.png",         D73),
-    ("7-10", "02_preparacion",        "moran_correlograma.png",       D73),
-    ("7-11", "02_preparacion",        "gtfs_cobertura_mapa.png",      D73),
-    ("7-12", "02_preparacion",        "particion_bloques.png",        D73),
-    ("7-13", "03_modelado",           "pliegues.png",                 D74),
-    ("7-14", "03_modelado",           "devianza_por_pliegue.png",     D75),
-    ("7-15", "03_modelado",           "optimismo_aleatorio.png",      D75),
-    ("7-16", "04_evaluacion",         "calibracion.png",              D75),
-    ("7-17", "04_evaluacion",         "residuos_vs_variables.png",    D75),
-    ("7-18", "04_evaluacion",         "lisa_residuos.png",            D75),
-    ("7-19", "04_evaluacion",         "mapa_residuos.png",            D75),
-    ("7-20", "04_evaluacion",         "residuos_por_cobertura.png",   D75),
-    ("7-21", "04_evaluacion",         "descripcion_modelo_irr.png",   D75),
-]
-
-MANUALES = [
-    ("6-1",  "imagenes/06_marco_teorico/crisp_dm.png"),
-    ("7-1",  "imagenes/07_desarrollo/7_1_comprension_negocio/flujo_crisp_dm_proyecto.png"),
-    ("7-22", "imagenes/07_desarrollo/7_6_despliegue/arquitectura_despliegue.png"),
+    ("01_eda", "area_estudio.png",                D72),
+    ("01_eda", "cobertura_semanal.png",           D72),
+    ("01_eda", "perfil_temporal.png",             D72),
+    ("01_eda", "distancia.png",                   D72),
+    ("01_eda", "gtfs_red_y_demanda.png",          D72),
+    ("01_eda", "objetivo_distribucion.png",       D72),
+    ("01_eda", "objetivo_vs_poblacion.png",       D72),
+    ("01_eda", "lisa.png",                        D72),
+    ("02_preprocesamiento", "flujo_limpieza.png",      D73),
+    ("02_preprocesamiento", "consultas_por_zona.png",  D73),
+    ("03_feature_engineering", "correlacion_predictores.png", D73),
+    ("03_feature_engineering", "anillos_y_prueba.png",        D73),
+    ("04_modelado", "comparacion_tecnicas.png",   D74),
+    ("04_modelado", "calibracion_oof.png",        D74),
+    ("05_evaluacion", "calibracion_deciles.png",   D75),
+    ("05_evaluacion", "observado_vs_esperado.png", D75),
+    ("05_evaluacion", "mapa_brecha.png",           D75),
+    ("05_evaluacion", "brecha_por_cobertura.png",  D75),
+    ("05_evaluacion", "sensibilidad.png",          D75),
+    ("06_propuesta", "mapa_acciones.png",         D76),
+    ("06_propuesta", "zonas_prioritarias.png",    D76),
 ]
 
 
@@ -65,26 +61,21 @@ def main():
     origen = os.path.normpath(ORIGEN)
     print(f"Origen: {origen}")
     faltan = []
-    for fig, carpeta, archivo, destino in MANIFIESTO:
-        src = os.path.join(origen, "reports", carpeta, "figuras", archivo)
+    for carpeta, archivo, destino in MANIFIESTO:
+        src = os.path.join(origen, "resultados", carpeta, "figuras", archivo)
         if not os.path.isfile(src):
-            faltan.append(f"Figura {fig}: {src}")
+            faltan.append(src)
             continue
         dst_dir = os.path.join(RAIZ, destino)
         os.makedirs(dst_dir, exist_ok=True)
         shutil.copy2(src, os.path.join(dst_dir, archivo))
-        print(f"  [OK ] Figura {fig:<5} -> {destino}/{archivo}")
-    for fig, ruta in MANUALES:
-        if os.path.isfile(os.path.join(RAIZ, ruta)):
-            print(f"  [OK ] Figura {fig:<5} (manual) {ruta}")
-        else:
-            faltan.append(f"Figura {fig} (manual): {ruta}")
+        print(f"  [OK ] {carpeta}/{archivo:<30} -> {destino}/")
     if faltan:
         print(f"\nFaltan {len(faltan)} figura(s):")
         for f in faltan:
             print(f"  [MAL] {f}")
         return 1
-    print(f"\n{len(MANIFIESTO)} copiadas del pipeline, {len(MANUALES)} manuales presentes.")
+    print(f"\n{len(MANIFIESTO)} figuras copiadas del pipeline.")
     return 0
 
 

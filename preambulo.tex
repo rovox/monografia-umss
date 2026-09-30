@@ -251,6 +251,12 @@
 % argumento propio): TeX toma el grupo {#1} que le sigue como su
 % argumento. #1 incluye el numberline, pero \MakeUppercase no afecta a
 % los dígitos, así que "7." no se ve alterado.
+% Columna del folio en índices: memoir reserva 1.55em, que no alcanza
+% para folios de tres cifras en Arial 12 (desborde de 1,4 pt por línea
+% desde la página 100). Se amplía el folio y, en la misma medida, el
+% margen derecho del texto de cada entrada.
+\setpnumwidth{2.2em}
+\setrmarg{3.2em}
 \renewcommand{\cftchapterfont}{\arialfont\normalsize\MakeUppercase} % SIN negrilla (regla explícita)
 \renewcommand{\cftchapterpagefont}{\arialfont\normalsize}
 \cftsetindents{chapter}{0em}{1.5em}   % secciones principales SIN sangría
@@ -344,6 +350,10 @@
 \usepackage{booktabs}       % líneas horizontales limpias, sin verticales
 \usepackage{graphicx}
 \usepackage{caption}
+% Especificador [H]: el flotante queda exactamente donde se escribe, entre dos párrafos.
+% Con [htbp] LaTeX puede retrasar una figura al tope de la página siguiente, por
+% encima de las líneas con que continúa el párrafo anterior.
+\usepackage{float}
 % Rótulo "Tabla N"/"Figura N" en negrita + título en cursiva, EN UNA
 % SOLA LÍNEA (2.5: "rótulo arriba, en una línea, centrado"), separados
 % por un espacio (antes iban en líneas distintas con labelsep=newline).
@@ -454,23 +464,23 @@
 % ---------- 12. UTILIDADES VARIAS ----------------------------
 \usepackage{xcolor}
 \usepackage{graphicx}
-% Manejo inteligente de imágenes pendientes: si existe, se incluye;
-% si falta, genera un recuadro visible (modo borrador) o aviso silencioso.
-% Ver docs/figuras_cap7.md y configuracion.tex.
-% Guardamos el original y reemplazamos solo para chequear existencia.
-\NewCommandCopy{\includegraphicsOriginal}{\includegraphics}
-\renewcommand{\includegraphics}[2][]{%
-  \IfFileExists{#2}{%
-    \includegraphicsOriginal[#1]{#2}%
-  }{%
-    % Imagen ausente: recuadro (modo borrador) o aviso silencioso
-    \ifborrador
-      \fbox{\parbox[c][6cm]{.9\textwidth}{\centering%
-        \textcolor{gray!50}{\small Figura pendiente:\\#2}}}%
-    \fi
-    \PackageWarning{monografia}{Imagen ausente: #2}%
-  }%
-}
+% Diagramas propios del capítulo 7 (flujo CRISP-DM del proyecto),
+% dibujados en el propio .tex para que hereden la fuente del cuerpo.
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,fit}
+% Columnas de texto alineadas a la izquierda (sin justificar) para
+% tablas con celdas estrechas: L{ancho} en lugar de p{ancho} e Y en
+% lugar de X de tabularx. Evitan los huecos entre palabras.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+% Encabezado de tabla en varias líneas (p. ej. \celda{Bloques\\de prueba})
+% para columnas numéricas estrechas sin recurrir a paquetes extra.
+\newcommand{\celda}[1]{\begin{tabular}[b]{@{}c@{}}#1\end{tabular}}
+% Dato que el autor debe revisar o completar: se imprime en rojo
+% oscuro entre corchetes para que no pase inadvertido en el PDF, y
+% scripts/pendientes lo lista en docs/PENDIENTES.md.
+\newcommand{\pendiente}[1]{%
+  \textcolor{red!65!black}{\textbf{[Revisar:}~#1\textbf{]}}}
 % Comandos semánticos para reservar espacio en secciones nuevas sin
 % escribir formato (reutilizable cuando se transcriba desde Markdown).
 \newcommand{\figuraPendiente}[2][\textwidth]{%

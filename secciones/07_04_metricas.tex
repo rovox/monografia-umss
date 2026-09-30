@@ -131,16 +131,18 @@ solapamiento del conjunto de zonas priorizadas. Si $A$ y $B$ son los conjuntos d
 zonas con mayor prioridad bajo dos variantes, el índice de Jaccard
 $J = \lvert A \cap B \rvert / \lvert A \cup B \rvert$ mide la proporción de zonas
 compartidas. En el proyecto, estas medidas se calculan entre las variantes que surgen de las
-decisiones metodológicas documentadas: las dos ediciones de Kontur Population (2022-06-30 y
-2023-11-01), las resoluciones H3 7, 8 y 9 (comparadas tras agregar las prioridades a una
-escala común) y los períodos anterior y posterior al hueco de siete semanas.
+decisiones metodológicas documentadas: el período anterior al hueco de siete semanas, un
+umbral de población mínima más exigente y la técnica de estimación. Las variantes con las
+dos ediciones de Kontur Population (2022-06-30 y 2023-11-01) y con las resoluciones H3 7 y
+9, comparadas tras agregar las prioridades a una escala común, se recomiendan como
+extensión.
 
 \subsection{Comparación de grupos con y sin cobertura}
 \label{subsec:comparacion-cobertura}
 
 Para describir si las zonas cubiertas por el trazado de las rutas difieren de las no
-cubiertas en su tasa de consultas o en su brecha, se emplea la prueba de Mann-Whitney
-\parencite{mann1947}, una prueba no paramétrica que no supone normalidad y que contrasta si
+cubiertas en su tasa de consultas o en su brecha, el punto de partida es la prueba de
+Mann-Whitney \parencite{mann1947}, una prueba no paramétrica que no supone normalidad y que contrasta si
 los valores de un grupo tienden a ser mayores que los del otro. Su estadístico $U$ cuenta el
 número de pares, formados por una observación de cada grupo, en los que la del primer grupo
 supera a la del segundo, y resulta adecuado para distribuciones asimétricas con abundancia de
@@ -159,9 +161,9 @@ $\lvert\delta\rvert < 0{,}147$, pequeño si $\lvert\delta\rvert < 0{,}33$, media
 $\lvert\delta\rvert < 0{,}474$ y grande en caso contrario. Debe advertirse que, con
 autocorrelación espacial, las observaciones no son independientes y el tamaño efectivo de la
 muestra es menor que el nominal, de modo que los $p$-valores de la prueba de Mann-Whitney
-resultan optimistas; por ello, en el proyecto se privilegia la magnitud del efecto frente a
-la significación, y la comparación se interpreta como descriptiva, no como prueba causal del
-efecto de la cobertura.
+resultan optimistas; por ello, en el proyecto se reporta solo la magnitud del efecto
+($\delta$ de Cliff), sin $p$-valor, y la comparación se interpreta como descriptiva, no como
+prueba causal del efecto de la cobertura.
 
 \subsection{Evaluación desagregada y análisis de sensibilidad}
 \label{subsec:evaluacion-desagregada}
@@ -177,10 +179,11 @@ global se concentre en un solo estrato, o que empeore en las zonas periféricas 
 priorización es más necesaria, debe interpretarse con cautela.
 
 El análisis de sensibilidad completa la evaluación examinando la robustez de las
-conclusiones frente a las decisiones metodológicas que no pueden fijarse con certeza: la
-edición de la población, la resolución de la grilla, el umbral de cobertura, el período de
-datos respecto del hueco de siete semanas y, en su caso, el tamaño de los bloques de
-validación. Su propósito no es elegir la variante más favorable, sino documentar qué
+conclusiones frente a las decisiones metodológicas que no pueden fijarse con certeza. En
+este ciclo se evalúan el período de datos respecto del hueco de siete semanas, el umbral de
+población mínima y la técnica de estimación. La edición de la población, la resolución de
+la grilla, el umbral de cobertura y el tamaño de los bloques de validación se recomiendan
+como extensión. Su propósito no es elegir la variante más favorable, sino documentar qué
 conclusiones se mantienen bajo todas las variantes razonables y cuáles dependen de supuestos
 particulares, información indispensable para que los voluntarios interpreten la lista de
 zonas prioritarias con el grado de confianza adecuado.

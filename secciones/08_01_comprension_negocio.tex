@@ -1,37 +1,234 @@
 % ============================================================
 %  7.1. COMPRENSIÓN DEL NEGOCIO  -- parte del capítulo 7
 %  ------------------------------------------------------------
-%  Archivo separado para que cada fase de CRISP-DM se pueda
-%  editar y compilar por separado. Solo contenido: el formato,
-%  los rótulos y las referencias los resuelve el preámbulo.
-%  Los \label originales se conservan sin cambios.
+%  Guía 2.7.1: (1) contexto operativo o institucional,
+%  (2) traducción de la necesidad, (3) resultado esperado y
+%  criterio de utilidad, (4) enlace con lo ya escrito.
+%  No es "Comprensión de los datos" (fuentes, variables, EDA):
+%  eso va en 08_02.
+%  Fuente de verdad: trufi-data-science (EXPLICATIVO.md,
+%  config.py, resultados/<fase>/metricas.json).
 % ============================================================
 \section{Comprensión del negocio}
 \label{sec:comprension-negocio}
 
-El contexto operativo del proyecto es la capacidad de Trufi App para decidir, con evidencia
-y no por intuición, dónde priorizar el trabajo voluntario de mapeo de rutas. El resultado
-esperado no es un modelo abstracto sino un diagnóstico territorial directamente accionable:
-una lista de zonas ordenadas por prioridad, acompañada de la evidencia (demanda, cobertura,
-entorno) que sustenta cada posición del ranking.
+Esta primera fase de CRISP-DM define para quién se trabaja, qué decisión se quiere apoyar y
+cómo se reconocerá que el resultado sirve. No trata todavía de los datos, que se describen
+en la sección~\ref{sec:comprension-datos}, sino del proceso real de la organización y del
+modo en que su necesidad se convierte en un problema que la Ciencia de Datos puede
+abordar.
 
-El criterio de éxito del proyecto, definido en esta fase, es doble. Por un lado, un
-criterio de rigor analítico: que el diagnóstico se sostenga en indicadores verificables,
-con modelos comparados contra líneas base explícitas y con análisis de sensibilidad ante
-las decisiones de diseño (resolución espacial, ventana temporal). Por otro, un criterio de
-utilidad operativa: que el resultado final sea algo que Trufi App pueda efectivamente usar
-para decidir dónde mapear, no una demostración técnica que se agote en sí misma.
+\subsection{Contexto operativo e institucional}
+\label{sec:contexto-operativo}
 
-La comprensión del negocio en este proyecto no quedó fija desde el inicio. La primera
-formulación del problema —descrita en la sección~\ref{sec:friccion-a-brecha}— definía como
-objetivo clasificar consultas individuales según un target de ``fricción'' basado en la
-repetición dentro del mismo municipio. Esa formulación se revisó a partir de un hallazgo de
-la fase siguiente: la constatación de que la segmentación municipal no es lo suficientemente
-precisa como unidad territorial para sostener un análisis de este tipo. Este es, en sí
-mismo, un ejemplo del carácter iterativo de CRISP-DM señalado en el
-capítulo~\ref{cap:marco-teorico}: un hallazgo de datos obligó a revisar una decisión de
-negocio ya tomada, y el proyecto se reformuló en consecuencia antes de avanzar a la
-preparación de los datos.
+Trufi Association es una organización sin fines de lucro que mantiene Trufi App, un
+planificador de viajes para el transporte público del eje metropolitano de Cochabamba.
+Como la mayor parte de ese transporte opera bajo la modalidad de paratránsito, sin
+horarios ni paradas oficiales publicadas (sección~\ref{subsec:paratransito}), la
+información que ofrece la aplicación no proviene de los operadores, sino de un
+relevamiento colaborativo. El proceso real tiene cuatro pasos:
+\begin{enumerate}
+  \item Un grupo de voluntarios recorre una línea de micro o trufi.
+  \item Los voluntarios registran su trayecto en OpenStreetMap
+        (sección~\ref{subsec:cartografia-colaborativa}).
+  \item El trazado se verifica con los operadores o en terreno.
+  \item El trazado se convierte al formato GTFS (sección~\ref{subsec:gtfs}), que es el que
+        consume el planificador de la aplicación.
+\end{enumerate}
+El feed resultante, empleado en este trabajo, describe 141 líneas de 43 operadores.
 
-Esta fase se relaciona con el problema, el alcance y los objetivos ya establecidos en los
-capítulos~\ref{cap:problema},~\ref{cap:alcance} y~\ref{cap:objetivos}.
+Cada jornada de mapeo consume desplazamientos, tiempo de edición y coordinación entre
+personas que colaboran de forma voluntaria. Por eso la capacidad de la organización es
+limitada, y cada jornada debe dirigirse a alguna zona concreta del territorio. Hoy esa
+elección descansa en el conocimiento acumulado del equipo y en observaciones informales.
+Al mismo tiempo, la aplicación genera de forma pasiva un registro de cada consulta de ruta
+que realizan sus usuarios, con origen, destino, hora e identificador anónimo de
+instalación. Ese registro abarca casi dos años (septiembre de 2022 a junio de 2024) y más
+de 1,9~millones de consultas, pero no forma parte del proceso con el que se decide dónde
+mapear. El punto de partida del proyecto es esa desconexión entre un proceso operativo que
+necesita priorizar y un registro de uso que no se aprovecha para hacerlo.
+
+\subsection{Traducción de la necesidad a un problema de Ciencia de Datos}
+\label{sec:traduccion-necesidad}
+
+La necesidad de la organización se expresa en términos operativos: \emph{¿a qué zonas
+conviene enviar primero a los voluntarios?} Esa pregunta no puede responderse contando
+consultas, porque un conteo bajo es ambiguo (sección~\ref{sec:descripcion-problema}).
+Puede tratarse de una zona con poca población, o de una zona donde la aplicación no ofrece
+información útil y, por eso, casi nadie la consulta. Para separar ambas situaciones hace
+falta una referencia: cuántas consultas \emph{cabría esperar} en cada zona si se
+comportara como las zonas comparables.
+
+Con esa idea, la necesidad se traduce en un problema analítico de dos pasos:
+
+\begin{enumerate}
+  \item \textbf{Estimar el conteo esperado de consultas por zona.} Es un problema de
+    regresión sobre datos de conteo (sección~\ref{subsec:datos-conteo}). La variable a
+    estimar es el total de consultas originadas en cada zona H3 de resolución~8 durante el
+    período, y la población residente actúa como \emph{exposición}: a igualdad de
+    condiciones, una zona con el doble de habitantes debería generar el doble de consultas.
+    Lo esperado se estima con información que no depende de la red mapeada: la población y
+    la localización de la zona.
+  \item \textbf{Comparar lo observado con lo esperado.} La diferencia entre ambos,
+    expresada en una escala comparable entre zonas grandes y pequeñas, se denomina
+    \emph{brecha} (sección~\ref{subsec:observado-esperado}). Una brecha negativa indica que
+    la zona consulta menos de lo que cabría esperar por su población y su entorno. Esa
+    señal, contrastada después con la cobertura de la red mapeada, orienta la revisión en
+    terreno.
+\end{enumerate}
+
+Conviene precisar lo que el problema \emph{no} es. No es un pronóstico temporal, porque no
+se predice cuántas consultas habrá la semana próxima, sino cuántas corresponden a cada zona
+en el período observado. Tampoco es una clasificación de zonas en ``bien'' o ``mal''
+mapeadas, porque no existe una etiqueta verificada de cobertura real con la cual entrenar
+un clasificador. La cobertura de la red mapeada se excluye deliberadamente del cálculo de
+lo esperado: si se incluyera, el modelo aprendería que las zonas sin rutas consultan poco y
+les asignaría una expectativa baja, con lo que la brecha que se busca detectar desaparecería
+por construcción.
+
+\subsection{Resultado esperado y criterio de utilidad}
+\label{sec:criterio-utilidad}
+
+El resultado que se espera entregar a Trufi Association no es ``un modelo'', sino tres
+productos que puedan usarse sin conocimientos de programación:
+\begin{itemize}
+  \item un archivo con el valor observado, el esperado y la brecha de cada zona;
+  \item un mapa interactivo de la brecha;
+  \item una lista corta de veinte zonas priorizadas para la revisión en terreno.
+\end{itemize}
+La mejora que se persigue es operativa: sustituir la elección informal entre más de mil
+zonas por una lista corta, ordenada y justificada con datos.
+
+Para que esa lista sea confiable, la técnica que produce el esperado debe cumplir criterios
+medibles, fijados antes de ajustar cualquier modelo. La técnica se elegirá entre siete
+alternativas de complejidad creciente. Sus códigos (B0 a B3 y M1 a M3) se explican en la
+sección~\ref{sec:seleccion-algoritmos}. La tabla~\ref{tab:criterios-utilidad} resume los
+criterios, cómo se mide cada uno y qué pregunta de la organización responde.
+
+\begin{table}[H]
+  \centering
+  \caption{Criterios de utilidad declarados antes de modelar}
+  \label{tab:criterios-utilidad}
+  \interlineadoSimple
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.23\textwidth}L{0.33\textwidth}Y@{}}
+    \toprule
+    \textbf{Criterio} & \textbf{Cómo se mide} & \textbf{Pregunta que responde} \\
+    \midrule
+    Supera al punto de referencia inicial & $D^2$ frente a la tasa global en zonas no vistas, mayor que cero & ¿El contexto territorial aporta algo más que la población? \\
+    Ordena bien las zonas & Correlación de Spearman entre observado y esperado & ¿Las zonas que más consultan quedan arriba? \\
+    Está calibrada & Suma de lo esperado dividida entre suma de lo observado, cercana a 1 & ¿El volumen total estimado es realista? \\
+    Es estable & Índice de Jaccard del top-20 ante variaciones razonables & ¿La lista cambia si se modifica un supuesto menor? \\
+    Es accionable & Número de zonas que el equipo debe revisar & ¿Se reduce el trabajo de decisión? \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia. Las métricas se definen en la sección~\ref{sec:metricas}; los
+  valores obtenidos se presentan en la sección~\ref{sec:evaluacion-resultados}.}
+\end{table}
+
+A estos criterios se suman dos reglas de protocolo, también declaradas de antemano. La
+primera es que la técnica se elige con una regla escrita antes de ver los resultados, y no
+por ser la primera que se probó ni la de menor error aparente
+(sección~\ref{sec:regla-seleccion}). La segunda es que el conjunto de prueba se evalúa una
+sola vez, al final.
+
+La señal definitiva de utilidad, sin embargo, no es estadística. Sería la proporción de
+zonas visitadas en las que los voluntarios encuentran rutas sin mapear. Esa verificación
+en terreno excede el alcance de la materia (capítulo~\ref{cap:alcance}) y no se ha
+realizado. Para que pueda medirse en cuanto empiecen las visitas, el archivo
+\var{zonas_prioritarias.csv} incluye dos columnas de registro:
+\begin{itemize}
+  \item \var{field_result}, que registra el resultado de la visita con una de cuatro
+        categorías: \var{ruta_no_mapeada}, \var{ruta_mapeada_correcta}, \var{sin_transporte}
+        o \var{sin_visitar}. Esta última viene precargada en las veinte zonas.
+  \item \var{field_notes}, que queda libre para observaciones.
+\end{itemize}
+El protocolo correspondiente se describe en la sección~\ref{sec:productos-despliegue}.
+
+\subsection{Enlace con el problema, el alcance y los objetivos}
+\label{sec:enlace-objetivos}
+
+Esta fase concreta en términos operativos lo que los capítulos anteriores plantearon en
+términos de investigación:
+\begin{itemize}
+  \item La ambigüedad del conteo descrita en el capítulo~\ref{cap:problema} se resuelve con
+        la comparación entre lo observado y lo esperado.
+  \item Las exclusiones del capítulo~\ref{cap:alcance} (sin pronóstico temporal, sin datos
+        externos ni imputación de semanas faltantes, sin despliegue en producción) delimitan
+        las técnicas admisibles y el tipo de entrega.
+  \item Cada objetivo específico del capítulo~\ref{cap:objetivos} corresponde a una o dos
+        fases de CRISP-DM y deja una evidencia verificable en el repositorio del proyecto,
+        como se muestra en la tabla~\ref{tab:trazabilidad-oe}.
+\end{itemize}
+
+\begin{table}[H]
+  \centering
+  \caption{Correspondencia entre objetivos específicos, fases y evidencias}
+  \label{tab:trazabilidad-oe}
+  \interlineadoSimple
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.07\textwidth}L{0.25\textwidth}L{0.17\textwidth}Y@{}}
+    \toprule
+    \textbf{OE} & \textbf{Fase y notebook} & \textbf{Sección} & \textbf{Evidencia principal} \\
+    \midrule
+    OE1 & Comprensión de los datos (\var{01_eda}); preparación (\var{02_preprocesamiento}, \var{03_feature_engineering}) & \ref{sec:comprension-datos} y \ref{sec:preparacion-datos} & Tabla de 1.628 zonas con consultas, población y cobertura; \var{metricas.json} de las tres fases \\
+    OE2 & Preparación (reserva de prueba, \var{03_feature_engineering}); modelado (\var{04_modelado}) & \ref{sec:conjuntos-entrenamiento-prueba} y \ref{sec:modelado} & Bloques de prueba (\var{test_blocks.csv}); comparación de siete técnicas (\var{cv_resumen.csv}); regla de selección (\var{regla_seleccion.csv}) \\
+    OE3 & Evaluación (\var{05_evaluacion}) & \ref{sec:evaluacion-resultados} & Métricas de prueba, brecha por zona, contraste con la cobertura y sensibilidad \\
+    OE4 & Despliegue como propuesta (\var{06_propuesta}) & \ref{sec:despliegue} & Predicciones por zona, lista de veinte zonas prioritarias, mapa interactivo y procedimiento de actualización \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de la estructura del repositorio
+  \var{trufi-data-science} (carpetas \var{notebooks/} y \var{resultados/}).}
+\end{table}
+
+La figura~\ref{fig:flujo-crisp-proyecto} muestra cómo se instanciaron las seis fases de
+CRISP-DM en el proyecto. Cada fase de datos corresponde a un notebook que lee lo que dejó
+la anterior, regenera sus salidas y termina con verificaciones automáticas de sus propias
+cifras.
+
+El carácter iterativo de la metodología (sección~\ref{sec:crisp-dm}) se manifestó en dos
+retornos concretos a esta fase, señalados con flechas discontinuas en la figura:
+\begin{itemize}
+  \item El análisis exploratorio fijó la delimitación operativa del área de estudio, que
+        el capítulo~\ref{cap:alcance} había dejado abierta a propósito
+        (sección~\ref{sec:area-estudio}).
+  \item La evaluación mostró que la lista de zonas con mayor brecha estaba formada casi por
+        completo por zonas ya cubiertas por la red mapeada
+        (sección~\ref{sec:interpretacion-resultados}). Como en esas zonas mapear no aporta,
+        se precisó el criterio de utilidad: la lista priorizada se restringe a zonas sin
+        trazado cercano.
+\end{itemize}
+La técnica elegida no se modificó por ese cambio. Ambas decisiones quedan documentadas
+como tales, y no se presentan como parte del diseño original.
+
+\begin{figure}[H]
+  \centering
+  \caption{Flujo CRISP-DM del proyecto: fases, notebooks y objetivos específicos}
+  \label{fig:flujo-crisp-proyecto}
+  \begin{tikzpicture}[
+      font=\small,
+      fase/.style={draw, rounded corners=3pt, fill=gray!8, align=center,
+                   text width=4.0cm, minimum height=2.1cm, inner sep=3pt},
+      flecha/.style={-{Stealth[length=2.5mm]}, thick},
+      retorno/.style={-{Stealth[length=2.5mm]}, thick, dashed, gray!70!black},
+      node distance=0.9cm and 0.45cm]
+    \node[fase] (f1) {\textbf{1. Comprensión\\del negocio}\\[2pt] sección~\ref{sec:comprension-negocio}};
+    \node[fase, right=of f1] (f2) {\textbf{2. Comprensión\\de los datos}\\[2pt] {\footnotesize\texttt{01\_eda}}\\ OE1};
+    \node[fase, right=of f2, text width=5.0cm] (f3) {\textbf{3. Preparación\\de los datos}\\[2pt] {\footnotesize\texttt{02\_preprocesamiento}}\\ {\footnotesize\texttt{03\_feature\_engineering}}\\ OE1 y OE2};
+    \node[fase, below=1.4cm of f3, text width=5.0cm] (f4) {\textbf{4. Modelado}\\[2pt] {\footnotesize\texttt{04\_modelado}}\\ OE2};
+    \node[fase, left=of f4] (f5) {\textbf{5. Evaluación}\\[2pt] {\footnotesize\texttt{05\_evaluacion}}\\ OE3};
+    \node[fase, left=of f5] (f6) {\textbf{6. Despliegue}\\ (propuesta)\\[2pt] {\footnotesize\texttt{06\_propuesta}}\\ OE4};
+    \draw[flecha] (f1) -- (f2);
+    \draw[flecha] (f2) -- (f3);
+    \draw[flecha] (f3) -- (f4);
+    \draw[flecha] (f4) -- (f5);
+    \draw[flecha] (f5) -- (f6);
+    \draw[retorno] (f2.north) to[bend right=25]
+      node[above, font=\footnotesize, text=black] {delimitación del área} (f1.north);
+    \draw[retorno] ($(f5.north west)+(0.5,0)$) --
+      node[right, pos=0.5, font=\footnotesize, text=black] {regla de priorización}
+      ($(f1.south east)+(-0.5,0)$);
+  \end{tikzpicture}
+  \fuente{Elaboración propia. Las flechas discontinuas señalan los dos retornos documentados
+  a la comprensión del negocio.}
+\end{figure}

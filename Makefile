@@ -1,5 +1,5 @@
 # Envoltorio fino sobre latexmk (ver .latexmkrc). Alterna con ./compilar.sh.
-.PHONY: all watch clean figuras pendientes
+.PHONY: all watch clean figuras pendientes flotantes
 
 all:
 	latexmk
@@ -19,3 +19,7 @@ figuras:
 # Genera docs/PENDIENTES.md con contenido faltante y advertencias LaTeX.
 pendientes:
 	scripts/pendientes
+
+# Comprueba que ningún flotante parta un párrafo y lista páginas con mucho blanco.
+flotantes:
+	scripts/verificar_flotantes

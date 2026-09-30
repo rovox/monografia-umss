@@ -3,6 +3,8 @@
 %  Regla explícita: las conclusiones deben derivarse de los
 %  resultados y responder al objetivo general y a los específicos.
 %  NO deben introducir información nueva no desarrollada antes.
+%  Todas las cifras provienen del capítulo 7 (Desarrollo) y de
+%  trufi-data-science/resultados/<fase>/.
 % ============================================================
 \chapter{Conclusiones y Recomendaciones}
 \label{cap:conclusiones}
@@ -10,148 +12,131 @@
 \section{Conclusiones}
 \label{sec:conclusiones}
 
-\subsection{Conclusión respecto del objetivo general}
+\subsection{Conclusión respecto del objetivo general y de los objetivos específicos}
+\label{sec:conclusion-general}
 
-La pregunta de investigación --en qué zonas del eje metropolitano de Cochabamba se
-concentra la demanda de información de transporte no resuelta y qué características del
-territorio se asocian con esa concentración (sección~\ref{sec:formulacion-problema})-- se
-responde con evidencia convergente de tres análisis independientes
-(sección~\ref{sec:interpretacion-resultados}): la brecha de cobertura centro-periferia es
-real y estadísticamente significativa (H1, $p=6{,}1\times10^{-9}$); el gradiente espacial de
-demanda es real y el modelo lo reproduce ($\rho=-0{,}615$ entre distancia al centro y
-demanda observada); y el valor predictivo del modelo está concentrado exactamente en las
-celdas de mayor demanda (H2), no distribuido de manera uniforme. El objetivo general
---construir un diagnóstico espacial de las brechas de información de transporte público y
-derivar de él una lista priorizada de zonas de mapeo (sección~\ref{sec:objetivo-general})--
-se cumple: el proyecto entrega tanto el diagnóstico (indicadores territoriales,
-sección~\ref{sec:tabla-indicadores}, y contraste formal de la brecha, H1) como la lista
-priorizada accionable (top-20 de celdas, sección~\ref{sec:priorizacion}), con evidencia de
-que esta última no depende del modelo predictivo para ser útil.
+El objetivo general (sección~\ref{sec:objetivo-general}) era estimar el número esperado de
+consultas de ruta de Trufi App por zona hexagonal H3 en el eje metropolitano de Cochabamba,
+a partir de la población residente y la localización de cada zona, y contrastar la
+diferencia entre lo observado y lo esperado con la cobertura de la red mapeada, para dar a
+Trufi Association una referencia cuantitativa que oriente la priorización del mapeo. El
+objetivo se cumple, con las salvedades que se detallan en la
+sección~\ref{sec:limitaciones}.
 
-A continuación se presentan las conclusiones correspondientes a cada objetivo específico.
+La técnica seleccionada, el suavizado por vecindad H3 (B3), multiplica la población de cada
+zona por la tasa de consultas de sus vecinas de entrenamiento. En zonas que nunca vio, redujo
+la devianza de Poisson de 2.183,8, la de una tasa única para toda el área, a 1.086,5; es
+decir, un $D^2$ de 0,502 frente a la tasa global (sección~\ref{sec:resultados-modelo}).
+Esto significa que la información de vecindad explica la mitad de lo que la población sola
+no explica. Con esa estimación se calculó la brecha de cada zona y se derivó una lista de
+veinte zonas para revisión en terreno.
+
+A continuación se presentan las conclusiones correspondientes a cada objetivo específico
+(sección~\ref{sec:objetivos-especificos}).
 
 \begin{enumerate}
-  \item [OE1.] \textbf{Consolidar y auditar los archivos de consultas.} Se cumple
-        íntegramente. Se consolidaron 1.927.675 registros de 85 exportaciones semanales sin
-        pérdida ni duplicación silenciosa de filas (sección~\ref{sec:auditoria-esquema}),
-        con las anomalías de esquema y codificación de seis archivos resueltas y
-        documentadas, y la naturaleza de la variable \texttt{distancia} verificada
-        empíricamente en lugar de asumida (sección~\ref{sec:validacion-distancia}). El
-        resultado es un conjunto base donde cada fila excluida tiene un motivo registrado
-        (tabla~\ref{tab:flujo-filtros}), cumpliendo el objetivo de trazabilidad completa
-        entre el dato crudo y el dato modelado.
-  \item [OE2.] \textbf{Caracterizar la demanda mediante análisis exploratorio
-        espacio-temporal.} Se cumple. La demanda está fuertemente concentrada en el espacio
-        (coeficiente de Gini de \textbf{0,934} en resolución 8, sección~\ref{sec:sensibilidad-h3})
-        y decae con la distancia al centro; ambos patrones son estables ante cambios de
-        resolución H3 --correlaciones de rangos superiores a 0,98 entre resoluciones
-        adyacentes-- lo que descarta que sean un artefacto de la escala de agregación
-        elegida (problema de la unidad de área modificable, capítulo~\ref{cap:marco-teorico}).
-        En el tiempo, la demanda no es estacionaria y presenta un vacío estructural de siete
-        semanas que condicionó la partición de entrenamiento y prueba
-        (sección~\ref{sec:particion-cronologica}).
-  \item [OE3.] \textbf{Construir indicadores territoriales por celda y semana.} Se cumple.
-        La tabla de indicadores (sección~\ref{sec:tabla-indicadores}) integra demanda,
-        cobertura GTFS, centralidad y composición temporal sobre 42.676 observaciones
-        celda-semana, con el método de cálculo de cada variable documentado y nueve
-        variables excluidas explícitamente por fuga de información
-        (sección~\ref{sec:seleccion-algoritmos}). No se incorporaron Puntos de Interés de
-        OpenStreetMap como variable de entorno urbano, decisión justificada por su
-        cobertura desigual (capítulo~\ref{cap:alcance}) y retomada como recomendación más
-        abajo.
-  \item [OE4.] \textbf{Contrastar formalmente las hipótesis de brecha y de mejora
-        predictiva.} Se cumple, con dos resultados que se refuerzan mutuamente. H1 se
-        confirma: las celdas periféricas tienen una tasa de demanda no resuelta
-        significativamente mayor que las centrales (Mann-Whitney,
-        $p=6{,}1\times10^{-9}$, sección~\ref{sec:contraste-hipotesis}). H2 se confirma con
-        matices: el test de Diebold-Mariano sobre la serie semanal no alcanza significancia
-        por falta de potencia (8 puntos), pero el Wilcoxon pareado por celda sí
-        ($p=0{,}033$), y la ventaja de Random Forest está concentrada en las celdas de
-        mayor demanda --el segmento operativamente más relevante-- y no distribuida de
-        forma uniforme.
-  \item [OE5.] \textbf{Predecir demanda con modelos comparados contra líneas base.} Se
-        cumple. Se compararon cuatro modelos de tres familias (Ridge, Lasso, Random Forest,
-        XGBoost) bajo validación por ventanas deslizantes, nunca aleatoria
-        (sección~\ref{sec:proceso-entrenamiento}). El hallazgo más informativo no fue qué
-        modelo ``ganó'' en abstracto sino por qué los modelos lineales fallan: Ridge y
-        Lasso extrapolan de forma inestable ante la tendencia de crecimiento sostenido,
-        produciendo R\textsuperscript{2} fuertemente negativo en prueba pese a un ajuste
-        razonable en entrenamiento --evidencia de que la relación entre demanda y
-        condiciones territoriales no es lineal. Random Forest se seleccionó como modelo
-        final con criterios explícitos, no por haber sido el primero ejecutado
-        (sección~\ref{sec:seleccion-final}): MAE de prueba de \textbf{10,19} (o
-        \textbf{5,91} excluyendo dos semanas de prueba que resultaron ser fragmentos de un
-        solo día, sección~\ref{sec:semanas-parciales}), la evaluación más conservadora y la
-        más representativa reportadas juntas, como corresponde cuando ninguna de las dos
-        cifras por sí sola sería honesta.
-  \item [OE6.] \textbf{Derivar una regla de priorización y contrastar el aporte del
-        modelo.} Se cumple, con un resultado negativo declarado como tal. La regla de
-        decisión --demanda esperada multiplicada por tasa de no cobertura-- produce un
-        top-20 de celdas que concentra el 70,5~\% de la demanda no resuelta estimada
-        (sección~\ref{sec:priorizacion}), y esas celdas no son las de mayor demanda
-        absoluta sino zonas de demanda baja o media mal cubiertas --el mismo hallazgo de H1
-        visto desde la decisión operativa. Pero el criterio preinscrito que evaluaría si el
-        modelo predictivo mejora ese ordenamiento frente a una media móvil de 4 semanas
-        \textbf{no se cumplió} (sección~\ref{sec:sirve-para-priorizar}): Random Forest no
-        supera a la media móvil en ninguna de las seis semanas completas de prueba, en
-        ninguna métrica de ordenamiento. Este resultado negativo, obtenido con un criterio
-        declarado antes de observar los datos, es evidencia de rigor y no una falencia: para
-        decidir qué celdas mapear a un horizonte de una semana no se justifica un modelo
-        complejo, y la contribución del proyecto está en el pipeline reproducible, la
-        caracterización territorial y el diagnóstico de cobertura, no en la superioridad de
-        un estimador.
-  \item [OE7.] \textbf{Proponer una arquitectura de actualización periódica.} Se cumple. Se
-        construyó y se ejerció --no solo se documentó-- un prototipo real
-        (\var{src/trufi_ds/api.py}) que sirve predicciones reconstruyendo las mismas
-        variables usadas en entrenamiento, con ejemplos de consumo obtenidos de ejecuciones
-        reales (sección~\ref{sec:despliegue}). Ejercitarlo expuso una limitación operativa
-        real, no hipotética: la última semana del dataset es en sí misma una semana
-        parcial, por lo que la primera predicción en producción heredaría la misma
-        contaminación de rezago detectada en la evaluación. El plan de monitoreo deriva sus
-        umbrales de la distribución real de error y volumen de este mismo proyecto,
-        incluyendo un chequeo de completitud de datos que existe porque este proyecto
-        encontró el problema que previene.
+  \item [OE1.] \textbf{Consolidar y caracterizar un conjunto de datos por zona.} Se cumple.
+        Se consolidaron 1.927.675 consultas de 85 exportaciones semanales, en dos esquemas y
+        dos codificaciones, y tras la limpieza quedaron 1.924.578 consultas válidas
+        (99,84~\%), con cada exclusión registrada (sección~\ref{sec:limpieza}). La tabla por
+        zona reúne 1.628 zonas, de las cuales 1.381, con al menos 10 habitantes, entran al
+        modelo; entre ellas, 444 no registran ninguna consulta, y en toda el área hay 611
+        zonas pobladas sin consultas que se conservaron sin imputar
+        (sección~\ref{sec:seleccion-datos}). El análisis exploratorio documentó la calidad de
+        los datos, un hueco de siete semanas consecutivas sin registro en 2024
+        (sección~\ref{sec:cobertura-temporal}), una concentración extrema de las consultas
+        (coeficiente de Gini de 0,948) y una fuerte dependencia espacial ($I$ de Moran de
+        0,72 entre vecinas), hallazgos que fijaron las decisiones de la preparación y del
+        modelado (sección~\ref{sec:hallazgos-decisiones}).
+
+  \item [OE2.] \textbf{Seleccionar una técnica de estimación.} Se cumple. Se compararon
+        siete técnicas de complejidad creciente, de la tasa global a \emph{gradient
+        boosting}, con validación cruzada espacial de cinco pliegues por bloque H3 de
+        resolución~6, y se reservaron 12 de 53 bloques como prueba antes de modelar
+        (secciones~\ref{sec:conjuntos-entrenamiento-prueba}
+        y~\ref{sec:comparacion-alternativas}). La regla de un error estándar, declarada de
+        antemano, fijó un umbral de 1.518,8. La técnica con menor devianza media fue el
+        modelo de Poisson (M1, 994,6), pero B3 (1.389,3) quedó dentro del umbral y es más
+        simple, por lo que la regla la eligió (sección~\ref{sec:regla-seleccion}). Los
+        modelos que corrigen la sobredispersión o capturan no linealidades no compensaron su
+        complejidad.
+
+  \item [OE3.] \textbf{Evaluar la técnica y analizar la brecha.} Se cumple. En la prueba,
+        evaluada una sola vez sobre 352 zonas, B3 obtuvo una devianza de 1.086,5, un $D^2$ de
+        0,458 frente a la media y de 0,502 frente a la tasa global, y una correlación de
+        Spearman de 0,88 entre observado y esperado (sección~\ref{sec:resultados-modelo}).
+        Ordena bien las zonas, pero subestima el volumen total (calibración de 0,597),
+        sobre todo en los polos de actividad (sección~\ref{sec:analisis-errores}). La brecha
+        deja 923 de las 1.381 zonas por debajo de lo esperado, y 457 con una brecha menor que
+        $-2$. Las zonas sin trazado GTFS a 500~m o menos tienen una brecha mediana más
+        negativa ($-0{,}898$ frente a $-0{,}342$), pero con un tamaño de efecto despreciable
+        ($\delta$ de Cliff de $-0{,}058$). La lista es estable ante el hueco temporal
+        (Jaccard de 1,0) y ante una población mínima mayor (0,818), pero depende de la
+        técnica de estimación (sección~\ref{sec:interpretacion-resultados}).
+
+  \item [OE4.] \textbf{Elaborar una propuesta de uso.} Se cumple. Se generaron tres
+        productos reproducibles: un archivo de predicciones por zona, un mapa interactivo y
+        una lista de veinte zonas prioritarias con plantilla de registro en terreno
+        (sección~\ref{sec:productos-despliegue}). La regla de priorización, precisada tras
+        la evaluación, asigna a cada zona una de tres acciones (598 \emph{mapear}, 325
+        \emph{revisar} y 458 \emph{sin brecha}) y restringe la lista a zonas sin trazado
+        cercano, donde mapear puede aportar (sección~\ref{sec:priorizacion}). La propuesta
+        documenta los datos requeridos, la infraestructura mínima y el procedimiento de
+        actualización, sin implicar un despliegue en los sistemas de la organización
+        (sección~\ref{sec:monitoreo}).
 \end{enumerate}
 
+Los resultados deben leerse como un apoyo a la priorización y no como un diagnóstico. La
+lista ordena las zonas que conviene visitar primero, pero no demuestra que falten rutas en
+ellas: esa verificación en terreno aún no se ha realizado (sección~\ref{sec:criterio-utilidad}).
+
 \subsection{Limitaciones reconocidas}
+\label{sec:limitaciones}
 
 Las limitaciones declaradas de antemano en el capítulo~\ref{cap:alcance} se sostienen, y se
 completan con las que emergieron durante el desarrollo:
 
 \begin{itemize}
-  \item El feed GTFS usado para calcular cobertura tiene un período de validez declarado
-        (2024-2026) posterior a buena parte de las consultas analizadas (desde 2022): la
-        cobertura se mide contra el estado vigente del mapeo, no contra el estado que tenía
-        en cada momento histórico.
-  \item La cobertura se mide contra el trazado de la ruta (\texttt{shapes.txt}) y no contra
-        las paradas (\texttt{stops.txt}), lo que mide accesibilidad a la línea de transporte
-        y no al punto de abordaje efectivo, y por tanto sobreestima la cobertura tal como la
-        percibe el usuario.
-  \item La partición central/periferia usada en H1 se basa en la mediana de distancia al
-        centro (15,49~km), un corte simple y documentado pero arbitrario, que no
-        corresponde a ningún límite administrativo real.
-  \item El test de Diebold-Mariano de H2 tiene solo ocho puntos, potencia insuficiente por
-        construcción; su resultado no significativo no implica equivalencia entre modelos,
-        y se complementó con el Wilcoxon pareado por celda por esa misma razón.
-  \item Una celda ``sin cobertura'' puede tener servicio de transporte no mapeado en el
-        GTFS de Trufi: la métrica localiza la brecha de \emph{información}, que es el
-        objeto de este estudio, y no debe leerse como ausencia real de transporte.
-  \item La demanda hereda el sesgo de adopción de la aplicación: zonas con menos usuarios de
-        Trufi generan menos consultas aunque tengan mayor necesidad de transporte.
-  \item El identificador de usuario es de nivel instalación, no de persona; una
-        reinstalación genera un identificador nuevo y un dispositivo compartido produce el
-        caso inverso.
-  \item No se incorporaron Puntos de Interés de OpenStreetMap como variable de entorno
-        urbano, ni un componente de segmentación por agrupamiento, por las razones
-        declaradas en el capítulo~\ref{cap:alcance}.
-  \item No existe una suite de pruebas automatizadas sobre el pipeline ni sobre las métricas
-        del modelo, reconocida como la principal deuda técnica del proyecto.
+  \item Una consulta es una búsqueda en la aplicación y no un viaje. La demanda hereda el
+        sesgo de adopción: zonas con menos usuarios de Trufi generan menos consultas aunque
+        tengan mayor necesidad de transporte. El identificador de usuario es de nivel
+        instalación y no de persona.
+  \item Kontur Population es una estimación modelada, no un censo, y su edición 2023-11-01 es
+        anterior a los resultados censales de 2024. Las consultas se originan también en
+        polos de actividad con poca población residente, lo que eleva la tasa de sus vecinas
+        en B3 (sección~\ref{sec:analisis-errores}).
+  \item El feed GTFS declara una vigencia posterior a buena parte del período de consultas, y
+        la cobertura se mide contra el trazado de las rutas (\texttt{shapes.txt}) y no contra
+        las paradas, lo que sobreestima la accesibilidad tal como la percibe el usuario. Una
+        zona ``sin cobertura'' puede tener servicio de transporte no mapeado: la métrica
+        localiza una brecha de \emph{información}, no una ausencia real de transporte.
+  \item El registro de consultas es parcial: corresponde a las exportaciones que Trufi
+        Association pudo entregar en el plazo del proyecto, y la causa del hueco de siete
+        semanas de 2024 y del cambio de esquema no pudo confirmarse
+        (sección~\ref{sec:cobertura-temporal}). Los resultados describen los datos
+        entregados.
+  \item El municipio se asigna con la etiqueta de la exportación de Trufi y no con límites
+        oficiales. Solo alimenta la línea base B1, pero no sirve para estadísticas
+        municipales oficiales (sección~\ref{sec:transformaciones}).
+  \item Hay pocos bloques de prueba (12), por lo que las métricas de prueba tienen una
+        varianza alta. La calibración de la prueba es baja (0,597) y la lista de zonas
+        depende de la técnica de estimación.
+  \item La parada temprana de M3 reserva el 10~\% de las zonas al azar y no por bloques; el
+        98,6~\% de esas zonas tiene una vecina en el resto del entrenamiento, por lo que la
+        validación interna de M3 puede ser optimista (sección~\ref{sec:hiperparametros}). La
+        comparación entre técnicas, hecha con validación externa por bloques, no se ve
+        afectada.
+  \item No se ejecutaron variantes de sensibilidad con la edición 2022 de Kontur ni con
+        resoluciones H3 distintas de la 8 (sección~\ref{sec:interpretacion-resultados}).
+  \item No existe todavía una verificación en terreno de la priorización, ni una suite de
+        pruebas automatizadas sobre el pipeline, que es la principal deuda técnica del
+        proyecto.
 \end{itemize}
 
 Estas limitaciones acotan el alcance de las conclusiones anteriores sin invalidarlas: cada
-hallazgo reportado --la brecha de cobertura, el gradiente espacial, la ventaja concentrada
-del modelo, la refutación de su aporte al ordenamiento-- se sostiene dentro de estos límites
-declarados, no a pesar de ocultarlos.
+hallazgo reportado --la subestimación en los polos, la brecha según la cobertura, la
+estabilidad de la lista ante los datos y su sensibilidad a la técnica-- se sostiene dentro de
+estos límites, no a pesar de ocultarlos.
 
 \section{Recomendaciones}
 \label{sec:recomendaciones}
@@ -160,41 +145,40 @@ Las recomendaciones se derivan de los resultados obtenidos y de las limitaciones
 identificadas; ninguna es genérica.
 
 \begin{enumerate}
-  \item [R1.] \textbf{Completar (\textit{backfill}) las semanas de datos parciales antes de
-        cualquier despliegue real}: 2024-W18 y 2024-W23 con datos reales de esas semanas
-        calendario completas (sección~\ref{sec:despliegue}); de lo contrario, la primera
-        predicción en producción hereda el mismo artefacto que ya distorsionó la evaluación.
-  \item [R2.] \textbf{Formalizar el chequeo de completitud de datos} (piso de 10.041
-        consultas semanales, sección~\ref{sec:monitoreo}) como validación automática dentro
-        del pipeline de actualización, no solo como umbral documentado --habría detectado
-        el artefacto de semanas parciales en el momento en que ocurrió.
-  \item [R3.] \textbf{Revisar la inestabilidad de extrapolación de los modelos lineales}
-        antes de usarlos como referencia interpretable en producción: opciones concretas
-        incluyen regresión cuantílica o un techo de extrapolación aprendido en vez del
-        umbral fijo usado en este trabajo.
-  \item [R4.] \textbf{Ampliar la validación de H1} más allá de la partición por mediana de
-        distancia al centro, usando límites administrativos reales de periferia si se
-        consigue una fuente confiable, en vez de un corte simple pero arbitrario.
-  \item [R5.] \textbf{Aumentar la ventana de prueba} en un futuro ciclo de recolección de
-        datos para dar más potencia al test de Diebold-Mariano, sin sacrificar datos de
-        entrenamiento.
-  \item [R6.] \textbf{Evaluar el aporte del modelo a horizontes de predicción mayores a una
-        semana}: la refutación de la sección~\ref{sec:sirve-para-priorizar} vale
-        específicamente para $h=1$ semana; a horizontes mayores la media móvil envejece y
-        el modelo podría mostrar ventaja, pero esa prueba requiere reconstruir los rezagos
-        a $h=2,3,4$ semanas y reentrenar, y queda pendiente.
-  \item [R7.] \textbf{Incorporar Puntos de Interés de OpenStreetMap y un componente de
-        segmentación territorial por agrupamiento} como extensiones del perfil de celda,
-        considerados en el diseño original de este proyecto y descartados por razones de
-        cobertura de datos y de alcance (capítulo~\ref{cap:alcance}), no por falta de
-        valor potencial.
-  \item [R8.] \textbf{Confirmar con el equipo de backend de Trufi App} si el cambio de
-        esquema y codificación detectado en seis archivos, justo después del vacío de siete
-        semanas, corresponde a un cambio real del proceso de exportación
-        (sección~\ref{sec:auditoria-esquema}) --queda como pregunta abierta, nunca
-        confirmada con la fuente.
-  \item [R9.] \textbf{Antes de un despliegue productivo real}: agregar autenticación,
-        límites de tasa, un orquestador para el reentrenamiento trimestral en vez de
-        ejecución manual de scripts, y pruebas automatizadas de regresión sobre las
-        métricas del modelo (sección~\ref{sec:despliegue}).
+  \item [R1.] \textbf{Validar la lista en terreno y medir la proporción de aciertos.}
+        Registrar cada visita en \texttt{field\_result} y \texttt{field\_notes} de
+        \texttt{zonas\_prioritarias.csv} (sección~\ref{sec:productos-despliegue}); la
+        proporción de zonas visitadas con \texttt{ruta\_no\_mapeada} es la medida
+        definitiva de utilidad del resultado y permitiría recalibrar la regla.
+  \item [R2.] \textbf{Contrastar en terreno las listas de B3 y de M1.} Como las listas de
+        ambas técnicas difieren (sección~\ref{sec:interpretacion-resultados}), visitar
+        zonas de ambas ayudaría a saber cuál orienta mejor el trabajo voluntario.
+  \item [R3.] \textbf{Incorporar la localización de los polos de actividad}, por ejemplo con
+        puntos de interés de OpenStreetMap, para corregir la subestimación de B3 en las
+        zonas de mayor demanda. Esta extensión exige fuentes de datos que el alcance de este
+        trabajo excluye (capítulo~\ref{cap:alcance}).
+  \item [R4.] \textbf{Ampliar o repetir la reserva de prueba}, con más bloques o con varios
+        sorteos, para reducir la varianza de las métricas de prueba.
+  \item [R5.] \textbf{Reservar por bloques la fracción de parada temprana de M3}, para
+        eliminar la fuga de su validación interna.
+  \item [R6.] \textbf{Automatizar un chequeo de completitud semanal} en el pipeline, que
+        alerte de semanas faltantes o parciales antes de interpretar una nueva edición
+        (sección~\ref{sec:monitoreo}).
+  \item [R7.] \textbf{Tratar las zonas de acción \emph{revisar}} (brecha negativa con
+        trazado cercano) como candidatas a actualizar rutas ya mapeadas, y no como zonas
+        sin información.
+  \item [R8.] \textbf{Ampliar el registro con las exportaciones pendientes de Trufi App} y
+        confirmar con su equipo técnico la causa del hueco de siete semanas y del cambio de
+        esquema y codificación de los seis archivos posteriores
+        (sección~\ref{sec:cobertura-temporal}). El registro disponible es parcial; con las
+        exportaciones restantes, el análisis puede repetirse sin cambiar el procedimiento.
+  \item [R9.] \textbf{Antes de un uso productivo real}: agregar autenticación, límites de
+        tasa, un orquestador para las reejecuciones periódicas en vez de la ejecución manual
+        de notebooks, y pruebas automatizadas de regresión sobre las métricas del modelo
+        (sección~\ref{sec:alcance-despliegue}).
+  \item [R10.] \textbf{Completar el análisis de sensibilidad} con la edición 2022 de Kontur
+        Population, cuando esté disponible en \texttt{data/raw/}, y con la resolución H3~7,
+        agregando la población de las celdas hijas. La resolución~9 no es viable mientras
+        la población provenga de Kontur en resolución~8
+        (sección~\ref{sec:interpretacion-resultados}).
 \end{enumerate}

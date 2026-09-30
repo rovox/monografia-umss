@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+"""Comprueba la colocación de tablas y figuras en main.pdf (solo lectura).
+
+Dos controles:
+  1. Ningún flotante (Tabla N / Figura N) debe partir un párrafo: el texto
+     anterior debe terminar en un signo de puntuación y el posterior no debe
+     empezar en minúscula. Ese es el patrón de una figura que aparece "a
+     mitad de un párrafo".
+  2. Páginas con mucho espacio en blanco al pie (más del UMBRAL de la altura
+     útil), que son el costo de anclar los flotantes con [H]. Se informan
+     para ajustar el ancho de la figura o mover el flotante después del
+     párrafo siguiente; no hacen fallar el script.
+
+Uso:  scripts/verificar_flotantes [main.pdf] [umbral_en_blanco=0.40]
+Devuelve código 1 si algún flotante parte un párrafo.
+Requiere pdftotext y pdftoppm (poppler).
+"""
+import os
+import re
+import subprocess
+import sys
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PDF = sys.argv[1] if len(sys.argv) > 1 else os.path.join(RAIZ, "main.pdf")
+UMBRAL = float(sys.argv[2]) if len(sys.argv) > 2 else 0.40
+
+CAPTION = re.compile(r"^\s*(Tabla|Figura) \d+\b")
+FIN_PARRAFO = re.compile(r"[.:;!?)\]»”\"]$")
+FOLIO = re.compile(r"^\s*([ivxlc]+|\d+)\s*$", re.I)
+
+
+def paginas_texto():
+    out = subprocess.run(["pdftotext", "-layout", PDF, "-"],
+                         capture_output=True, text=True, check=True).stdout
+    return out.split("\f")[:-1] if out.endswith("\f") else out.split("\f")
+
+
+def lineas_cuerpo(pagina):
+    """Líneas no vacías de la página, sin el folio final."""
+    ls = [l.rstrip() for l in pagina.split("\n") if l.strip()]
+    if ls and FOLIO.match(ls[-1]):
+        ls = ls[:-1]
+    return ls
+
+
+def folio(pagina):
+    ls = [l for l in pagina.split("\n") if l.strip()]
+    return ls[-1].strip() if ls and FOLIO.match(ls[-1]) else "?"
+
+
+def partidos(paginas):
+    """Flotantes cuyo entorno sugiere un párrafo partido."""
+    plano = []  # (página, línea)
+    for i, p in enumerate(paginas, 1):
+        if "  . . ." in p or ". . . . ." in p:  # índices
+            continue
+        for l in lineas_cuerpo(p):
+            plano.append((i, l))
+    casos = []
+    k = 0
+    while k < len(plano):
+        pag, l = plano[k]
+        if CAPTION.match(l) and l.startswith((" ", "T", "F")):
+            # texto anterior: última línea previa que no sea caption de otro flotante
+            j = k - 1
+            while j >= 0 and (CAPTION.match(plano[j][1]) or plano[j][1].lstrip().startswith("Nota.")):
+                j -= 1
+            previa = plano[j][1].strip() if j >= 0 else ""
+            # fin del flotante: línea "Nota." y sus continuaciones centradas
+            m = k
+            while m < len(plano) and not plano[m][1].lstrip().startswith("Nota."):
+                m += 1
+                if m - k > 60:
+                    break
+            if m < len(plano) and plano[m][1].lstrip().startswith("Nota."):
+                n = m + 1
+                while n < len(plano) and (len(plano[n][1]) - len(plano[n][1].lstrip())) >= 8 \
+                        and len(plano[n][1].strip()) < 100:
+                    n += 1
+                siguiente = plano[n][1].strip() if n < len(plano) else ""
+                corta = previa and not FIN_PARRAFO.search(previa) and not re.match(r"^\d+(\.\d+)*\.?\s", previa)
+                minus = siguiente[:1].islower()
+                if corta and minus:
+                    casos.append((pag, l.strip()[:50], previa[-50:], siguiente[:50]))
+                k = n
+                continue
+        k += 1
+    return casos
+
+
+def leer_pgm(ruta):
+    with open(ruta, "rb") as f:
+        datos = f.read()
+    partes = datos.split(b"\n", 3)
+    ancho, alto = (int(x) for x in partes[1].split())
+    return ancho, alto, partes[3]
+
+
+def huecos(paginas):
+    """Páginas con el contenido terminando muy arriba (fracción de la altura útil)."""
+    tmp = os.path.join(RAIZ, "build", "_flot")
+    os.makedirs(tmp, exist_ok=True)
+    subprocess.run(["pdftoppm", "-r", "30", "-gray", PDF, os.path.join(tmp, "p")], check=True)
+    res = []
+    for i, p in enumerate(paginas, 1):
+        ruta = next((os.path.join(tmp, f) for f in os.listdir(tmp)
+                     if re.fullmatch(r"p-0*%d\.pgm" % i, f)), None)
+        if ruta is None:
+            continue
+        ancho, alto, px = leer_pgm(ruta)
+        util = int(alto * 0.90)  # sin la franja del folio
+        ultima = 0
+        for y in range(util):
+            fila = px[y * ancho:(y + 1) * ancho]
+            if min(fila) < 200:
+                ultima = y
+        ls = lineas_cuerpo(p)
+        titulo = bool(ls) and (re.match(r"^\s*\d+\.\s+[A-ZÁÉÍÓÚÑ ()\-:,]+$", ls[0]) is not None)
+        # no cuentan: preliminares (folio romano o sin folio) ni la última página de un capítulo
+        preliminar = folio(p) == "?" or re.fullmatch(r"[ivxlc]+", folio(p), re.I) is not None
+        sig = lineas_cuerpo(paginas[i]) if i < len(paginas) else []
+        fin_capitulo = (not sig) or re.match(r"^\s*\d+\.\s+[A-ZÁÉÍÓÚÑ ()\-:,]+$", sig[0]) is not None
+        if not (titulo or preliminar or fin_capitulo) and ultima < util * (1 - UMBRAL) and ultima > 0:
+            res.append((i, folio(p), round(1 - ultima / util, 2)))
+    for f in os.listdir(tmp):
+        os.remove(os.path.join(tmp, f))
+    os.rmdir(tmp)
+    return res
+
+
+def main():
+    if not os.path.isfile(PDF):
+        print(f"No existe {PDF}; compila primero con make.")
+        return 2
+    paginas = paginas_texto()
+    malos = partidos(paginas)
+    if malos:
+        print(f"[MAL] {len(malos)} flotante(s) parten un párrafo:")
+        for pag, cap, antes, despues in malos:
+            print(f"  pág. PDF {pag}: {cap} | antes: «…{antes}» | después: «{despues}…»")
+    else:
+        print("[OK ] ningún flotante parte un párrafo")
+    vacias = huecos(paginas)
+    if vacias:
+        print(f"[AVISO] {len(vacias)} página(s) con más del {int(UMBRAL*100)} % en blanco al pie:")
+        for i, fol, frac in vacias:
+            print(f"  pág. PDF {i} (folio {fol}): {int(frac*100)} % en blanco")
+    else:
+        print(f"[OK ] ninguna página con más del {int(UMBRAL*100)} % en blanco")
+    return 1 if malos else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

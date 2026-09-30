@@ -42,7 +42,7 @@ SIN_FOLIO_INICIAL = 3
 # Folio: forma admitida en el pie de página
 FOLIO = re.compile(r"^(?:[ivxlcdm]{1,7}|[0-9]{1,3})$")
 # Marcadores de borrador permitidos: los cuatro "[Incluya ...]" de los
-# Anexos C a F son el contenido provisional que el autor dejó escrito,
+# (Anexos C a F eliminados) contenido provisional que el autor dejó escrito,
 # no notas internas de trabajo. Si el autor los sustituye por texto
 # definitivo, este patrón deja de encontrar nada y el aviso desaparece.
 # La lista se reconoce por su encabezado, no por el número de página.

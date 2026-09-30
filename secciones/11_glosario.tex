@@ -18,12 +18,14 @@
 \begin{description}[leftmargin=3cm,style=nextline,font=\bfseries]
   \item[Autocorrelación espacial] Tendencia de las unidades cercanas en el espacio a
     presentar valores similares de una variable.
-  \item[B0, B0.5, B0.7, B1] Líneas base de tasa: global, por municipio, por anillo de
-    distancia y por vecindad H3.
-  \item[Bloque espacial] Celda H3 de resolución 6 que agrupa aproximadamente 50 celdas de
-    resolución 8; unidad de partición para la evaluación.
-  \item[Brecha] Diferencia, en una escala comparable entre celdas, entre las consultas
-    observadas y las esperadas.
+  \item[B0, B1, B2, B3] Líneas base de tasa, ordenadas de menor a mayor complejidad: global
+    (B0), por municipio (B1), por anillo de distancia (B2) y por vecindad H3 (B3). La letra B
+    viene de \textit{baseline}.
+  \item[Bloque espacial] Celda H3 de resolución 6 que agrupa unas 49 zonas de resolución 8;
+    unidad de partición para la validación y la prueba.
+  \item[Brecha] Diferencia, en una escala comparable entre zonas, entre las consultas
+    observadas y las esperadas; se mide con el residuo de Pearson,
+    $(\text{observado} - \text{esperado}) / \sqrt{\text{esperado}}$.
   \item[Calibración] Cociente entre la suma de las predicciones y la suma de los valores
     observados.
   \item[CRISP-DM] \textit{Cross-Industry Standard Process for Data Mining}; metodología de
@@ -36,7 +38,7 @@
     entre dos grupos, en escala de $-1$ a $+1$.
   \item[EDA] Análisis Exploratorio de Datos (\textit{Exploratory Data Analysis}).
   \item[Exposición] Magnitud a la que se espera que el conteo sea proporcional; en este
-    trabajo, la población de la celda.
+    trabajo, la población de la zona.
   \item[Fuga de información] Uso inadvertido, durante el entrenamiento, de información de
     la respuesta o del conjunto de prueba (\textit{data leakage}).
   \item[GLM] Modelo lineal generalizado (\textit{Generalized Linear Model}).
@@ -44,22 +46,30 @@
     rutas, paradas y horarios de transporte público.
   \item[H3] Sistema de indexación geoespacial hexagonal y jerárquico.
   \item[I de Moran] Estadístico de autocorrelación espacial global.
-  \item[IRR] Razón de tasas (\textit{Incidence Rate Ratio}), $e^{\beta}$.
+  \item[Índice de Jaccard] Proporción de elementos compartidos entre dos conjuntos; aquí,
+    entre dos listas de zonas prioritarias.
   \item[Kontur Population] Conjunto de datos abiertos de población estimada sobre
     hexágonos H3.
+  \item[Línea base] Punto de referencia inicial: una estimación deliberadamente simple que
+    cualquier técnica más elaborada debe superar para justificar su complejidad.
   \item[LISA] Indicadores locales de asociación espacial (\textit{Local Indicators of
     Spatial Association}).
-  \item[M1, M2, M3] GLM Poisson, GLM Binomial Negativa y gradient boosting con pérdida
-    Poisson.
+  \item[M1, M2, M3] Modelos que estiman parámetros a partir de predictores: GLM de Poisson
+    (M1), GLM binomial negativa (M2) y \textit{gradient boosting} con pérdida de Poisson
+    (M3). La letra M viene de \textit{modelo}.
   \item[MAE] Error absoluto medio.
   \item[Offset] Término del modelo con coeficiente fijado en 1; en este trabajo,
     $\log(\text{población})$.
   \item[Paratránsito] Transporte público operado por sindicatos y cooperativas con rutas
     flexibles y sin horarios fijos.
+  \item[Regla de un error estándar] Criterio de selección: se elige la técnica más simple
+    cuya devianza media no supera la mejor devianza media más un error estándar de esta.
   \item[RMSE] Raíz del error cuadrático medio.
   \item[Sobredispersión] Condición en la que la varianza de un conteo supera a su media.
-  \item[Tabla minable] Conjunto de datos final, con una fila por unidad de análisis,
-    preparado para el modelado.
+  \item[Spearman, correlación de] Correlación basada en rangos entre dos variables u
+    ordenaciones.
+  \item[Zona] Celda H3 de resolución 8 (unos 0,74~km\textsuperscript{2}); unidad de análisis
+    del proyecto.
 \end{description}
 \endgroup
 \clearpage

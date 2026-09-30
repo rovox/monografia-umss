@@ -29,40 +29,18 @@ cuerpo principal del documento.
 \subsection{Anexo A. Diccionario de datos completo}
 \label{anexo:diccionario-datos}
 
-Ver tabla~\ref{tab:diccionario-datos} (sección~\ref{sec:comprension-datos}) para el
+Ver tabla~\ref{tab:diccionario-datos} (sección~\ref{sec:diccionario-datos}) para el
 diccionario completo del conjunto consolidado, incluyendo los campos de trazabilidad
 (\var{source_file}, \var{source_batch}) añadidos durante la consolidación.
 
-\subsection{Anexo B. Trazabilidad de scripts y evidencias}
+\subsection{Anexo B. Trazabilidad de notebooks y evidencias}
 \label{anexo:trazabilidad-scripts}
 
-Ver tabla~\ref{tab:scripts-evidencias} (sección~\ref{sec:comprension-datos}) para la
-correspondencia entre los ocho scripts ejecutados y la evidencia que produce cada uno.
-Estructura del repositorio del proyecto de datos: \texttt{data/raw} (85 CSV originales,
-solo lectura), \texttt{data/interim} (conjunto consolidado y agregados H3 en formato
-Parquet), \texttt{data/processed} (reservado para las tablas de indicadores por celda de la
-fase de Preparación), \texttt{src} (scripts numerados del pipeline),
-\var{reports/01_data_understanding} (informes y figuras de la fase de Comprensión de
-los Datos).
-
-\subsection{Anexo C. Fragmentos relevantes de código}
-\label{anexo:fragmentos-codigo}
-[Incluya únicamente los fragmentos que resulten necesarios para comprender decisiones
-técnicas clave. El código extenso debe permanecer en el repositorio del proyecto. Pendiente:
-se incorporará junto con las fases de Preparación y Modelado.]
-
-\subsection{Anexo D. Resultados adicionales}
-\label{anexo:resultados-adicionales}
-[Incluya tablas y gráficos complementarios que no forman parte del cuerpo principal.
-Pendiente: se incorporará junto con la fase de Evaluación.]
-
-\subsection{Anexo E. Capturas del prototipo}
-\label{anexo:capturas-prototipo}
-[Incluya las capturas de la aplicación, tablero o servicio desarrollado. Pendiente: se
-incorporará junto con la fase de Despliegue.]
-
-\subsection{Anexo F. README y reproducibilidad}
-\label{anexo:readme-reproducibilidad}
-[Incluya las instrucciones mínimas para ejecutar el proyecto: requisitos, estructura de
-carpetas, orden de ejecución de los notebooks o scripts y origen del conjunto de datos.
-Pendiente de consolidar en un README único del repositorio de datos.]
+Ver tabla~\ref{tab:trazabilidad-oe} (sección~\ref{sec:enlace-objetivos}) para la
+correspondencia entre los objetivos específicos, los seis notebooks del pipeline y la
+evidencia que produce cada uno. Estructura del repositorio del proyecto de datos:
+\texttt{data/raw} (85 CSV de consultas, el feed GTFS y el archivo de Kontur, solo
+lectura), \texttt{data/interim} (consultas limpias y tablas intermedias en formato Parquet),
+\texttt{data/processed} (tabla de modelado por zona), \texttt{src} (funciones que llaman
+los notebooks), \texttt{notebooks} (\var{01_eda} a \var{06_propuesta}) y
+\texttt{resultados/<fase>} (tablas, figuras y \var{metricas.json} de cada fase).

@@ -1,170 +1,212 @@
 % ============================================================
 %  7.6. DESPLIEGUE  -- parte del capítulo 7
 %  ------------------------------------------------------------
-%  Archivo separado para que cada fase de CRISP-DM se pueda
-%  editar y compilar por separado. Solo contenido: el formato,
-%  los rótulos y las referencias los resuelve el preámbulo.
-%  Los \label originales se conservan sin cambios.
+%  Guía 2.7.6: uso en contexto real, prototipo o arquitectura,
+%  consumo del resultado, monitoreo y actualización; si no hay
+%  despliegue completo, propuesta técnicamente fundamentada.
+%  Notebook: 06_propuesta.ipynb
+%  Cifras:   resultados/06_propuesta/metricas.json
+%  Texto del autor, con cuatro ajustes de coherencia (ver
+%  docs/inconsistencias_pendientes.md, sección 2b).
 % ============================================================
 \section{Despliegue}
 \label{sec:despliegue}
 
-Esta sección documenta la sexta fase de CRISP-DM, construida sobre el modelo final de la
-sección~\ref{sec:seleccion-final} y la evaluación de la
-sección~\ref{sec:evaluacion-resultados}.
+El alcance de este trabajo excluye la puesta en operación del resultado dentro de los
+sistemas de Trufi Association (capítulo~\ref{cap:alcance}). Por esa razón, esta fase no
+describe un servicio en producción, sino una propuesta de uso verificable localmente. La
+propuesta se apoya en el prototipo construido y ejercitado en el notebook
+\var{06_propuesta}, que convierte la brecha por zona en productos que la organización puede
+consultar sin conocimientos de programación, y define la arquitectura, el modo de consumo y
+la frecuencia con que el pipeline podría reejecutarse.
 
-\subsection{Caso de uso en un contexto real}
-
-El resultado del proyecto es una \textbf{capa analítica de priorización territorial}: demanda
-esperada de consultas por celda H3 y semana, cruzada con la brecha de cobertura GTFS. No
-sustituye la decisión humana de planificación de rutas: implica error real por celda (MAE de
-10,19, o 5,91 en semanas completas, sección~\ref{sec:semanas-parciales}), y H2
-(sección~\ref{sec:contraste-hipotesis}) mostró que la ventaja del modelo se concentra en
-celdas de alta demanda, no en todas. El uso concreto propuesto es priorizar, dentro del
-proceso de mapeo voluntario de rutas de Trufi App descrito en la
-sección~\ref{sec:comprension-negocio}, qué celdas de baja cobertura conviene atender primero.
-
-\subsection{Prototipo y arquitectura}
-
-Se construyó un \textbf{servicio real y ejecutable}, no solo un diagrama: \var{src/trufi_ds/api.py}
-(FastAPI), que carga el modelo Random Forest final y reconstruye, para cualquier celda, el
-vector de variables de la semana siguiente a la última observada, con exactamente la misma
-lógica de ingeniería de características usada en el entrenamiento
-(sección~\ref{sec:seleccion-algoritmos}). Expone \texttt{GET /predict?cell=...} para una
-celda individual y \texttt{GET /cells/top?n=...} para el caso de uso de priorización. La guía
-UMSS admite una propuesta fundamentada cuando no hay despliegue completo; un prototipo
-verificable localmente satisface el requisito con evidencia y no solo con intención.
-
-\begin{figure}[htbp]
-  \centering
-  \caption{Arquitectura de actualización y consumo del modelo}
-  \label{fig:arquitectura}
-  \includegraphics[width=0.85\textwidth]{imagenes/logo_facultad.png}
-  \fuente{Elaboración propia. Diagrama descrito textualmente a continuación; el flujo
-  completo (Mermaid) está documentado en \var{reports/05_deployment/01_deployment_architecture.md}.}
-\end{figure}
-
-El flujo conecta componentes que ya existen como código en este repositorio, sin
-componentes hipotéticos: el feed GTFS (actualización semanal, \var{run_update_pipeline.py})
-y las exportaciones de consultas alimentan el cálculo de cobertura
-(sección~\ref{sec:cobertura-gtfs}) y la tabla de indicadores
-(sección~\ref{sec:tabla-indicadores}); de ahí se derivan, por un lado, el reentrenamiento
-trimestral del modelo (\var{18_model_training.py}) y, por otro, la reconstrucción del
-panel de features que consume el servicio de predicción; el plan de monitoreo
-(sección~\ref{sec:monitoreo}) vigila el servicio en producción.
-
-\subsection{Consumo del modelo}
-
-Los siguientes son ejemplos reales, obtenidos ejecutando el servicio contra los datos y el
-modelo actuales del repositorio --no respuestas hipotéticas--, incluido un caso de error
-controlado.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Ejemplos de consumo del prototipo de predicción}
-  \label{tab:ejemplos-api}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}p{0.34\textwidth}X@{}}
-    \toprule
-    \textbf{Solicitud} & \textbf{Respuesta (resumida)} \\
-    \midrule
-    \texttt{\small GET /predict?\allowbreak cell=\allowbreak 888b2c8ae5fffff}\newline (celda central, alta demanda) &
-      Demanda predicha para 2024-W24: 737,0 consultas; distancia al centro 2,2~km; sin
-      brecha de cobertura (\var{pct_uncovered_orig}$=0$) \\
-    \texttt{\small GET /predict?\allowbreak cell=\allowbreak 888b2c80d5fffff}\newline (celda periférica, baja demanda) &
-      Demanda predicha: 8,2 consultas; distancia al centro 17,2~km \\
-    \texttt{\small GET /predict?\allowbreak cell=\allowbreak celda\_inexistente} &
-      HTTP 404, error controlado: \textit{``Celda desconocida (sin historial)''} \\
-    \texttt{\small GET /cells/top?\allowbreak n=5} &
-      Devuelve las 5 celdas de mayor demanda predicha (782,0 a 732,3 consultas), calculadas
-      en vivo sobre la última semana observada \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{24_deployment_architecture.py} ---
-  \var{reports/05_deployment/01_deployment_architecture.md}.}
-\end{table}
-
-Construir y ejercitar el prototipo --no solo describirlo-- expuso una limitación operativa
-real: la última semana del dataset, 2024-W23, es en sí misma una de las semanas parciales
-documentadas en la sección~\ref{sec:semanas-parciales}, por lo que la primera predicción en
-vivo heredaría un \texttt{lag1} artificialmente bajo para todas las celdas. La mitigación
-propuesta es completar (\textit{backfill}) esa semana con datos reales antes de servir la
-primera predicción en producción, o aceptar explícitamente un primer ciclo de error elevado.
-
-\subsection{Priorización territorial: celdas a mapear}
+\subsection{Priorización territorial}
 \label{sec:priorizacion}
 
-La regla de decisión propuesta ordena las celdas por \textbf{demanda no resuelta}: el
-producto de la demanda semanal esperada por la tasa de no cobertura de cada celda, usando la
-mediana de cobertura de cada celda en el período de \emph{entrenamiento} --nunca el valor de
-la semana objetivo, que sería conocer el futuro. Ordenar por demanda bruta, en cambio, no
-sirve como regla de priorización: devuelve las cinco celdas más consultadas del área
-metropolitana, todas ellas ya con tasa de no cobertura nula --intervenirlas no aportaría
-nada. Cruzar demanda con brecha de cobertura es lo que convierte el ranking en una decisión
-accionable.
+La regla de priorización combina la brecha con la cobertura de la red mapeada, tal como se
+precisó después de la evaluación (sección~\ref{sec:interpretacion-resultados}). A cada zona
+se le asigna una de tres acciones:
+\begin{itemize}
+  \item \emph{mapear}: brecha negativa y ningún trazado GTFS a 500~m o menos (598 zonas);
+  \item \emph{revisar}: brecha negativa, pero con trazado cercano; son candidatas a
+        actualizar rutas existentes (325 zonas);
+  \item \emph{sin brecha}: brecha mayor o igual que cero (458 zonas).
+\end{itemize}
+Las veinte zonas prioritarias son las de brecha más negativa entre las de acción
+\emph{mapear}. Se reparten en cuatro municipios (Cercado, Colcapirhua, Quillacollo y
+Sacaba), suman 20.370 habitantes y concentran el 79,7~\% de la demanda no resuelta estimada
+de las zonas sin cobertura (figuras~\ref{fig:mapa-acciones} y~\ref{fig:zonas-prioritarias}).
+Esta cifra no es comparable con el 60,2~\% de la sección~\ref{sec:interpretacion-resultados}:
+aquella corresponde a las veinte zonas de mayor brecha entre \emph{todas} las zonas, que
+están casi todas cubiertas por la red, mientras que el 79,7~\% se calcula solo sobre las
+zonas sin cobertura, que es el universo en el que mapear puede aportar.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Cuadrantes de priorización: demanda esperada vs. cobertura GTFS}
-  \label{fig:cuadrantes-priorizacion}
-  \includegraphics[width=0.75\textwidth]{imagenes/fig_priority_quadrants.png}
-  \fuente{Elaboración propia, a partir de \var{27_priority_cells.py} ---
-  \var{reports/05_deployment/03_priority_cells.md}.}
+  \caption{Acción sugerida por zona y zonas prioritarias}
+  \label{fig:mapa-acciones}
+  \includegraphics[width=0.85\textwidth]{imagenes/07_desarrollo/7_6_despliegue/mapa_acciones.png}
+  \fuente{Elaboración propia, a partir de \var{06_propuesta} (sección 5).}
 \end{figure}
 
-El top-20 de celdas prioritarias concentra el \textbf{70,5~\%} de toda la demanda no resuelta
-estimada del área metropolitana. Consistente con la figura, esas celdas \textbf{no son las de
-mayor demanda absoluta}: son celdas de demanda baja o media (entre 1 y 74 consultas/semana)
-mal cubiertas por el mapeo actual --la misma conclusión de H1 vista desde la decisión
-operativa. Dieciocho de las veinte celdas coinciden entre usar Random Forest o la media móvil
-como estimador de demanda, coherente con la refutación de la
-sección~\ref{sec:sirve-para-priorizar}: el valor de esta tabla está en cruzar demanda con
-cobertura, no en el estimador que produce la demanda.
-
-\subsection{Monitoreo y reentrenamiento}
-\label{sec:monitoreo}
-
-Los umbrales de monitoreo se derivan de la distribución real de error y volumen de este
-proyecto, no de valores convencionales.
-
-\begin{table}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Plan de monitoreo y reentrenamiento}
-  \label{tab:monitoreo}
+  \caption{Consultas esperadas y observadas por semana en las veinte zonas prioritarias}
+  \label{fig:zonas-prioritarias}
+  \includegraphics[width=\textwidth]{imagenes/07_desarrollo/7_6_despliegue/zonas_prioritarias.png}
+  \fuente{Elaboración propia, a partir de \var{06_propuesta} (sección 5). Valores por semana
+  observada ($W_{obs} = 81{,}143$).}
+\end{figure}
+
+\subsection{Productos y forma de consumo}
+\label{sec:productos-despliegue}
+
+La tabla~\ref{tab:entregables} resume los tres entregables, que se regeneran en
+\var{resultados/06_propuesta/} en cada ejecución.
+
+\begin{table}[H]
+  \centering
+  \caption{Entregables de la propuesta de uso}
+  \label{tab:entregables}
   \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}p{0.30\textwidth}p{0.16\textwidth}X@{}}
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.32\textwidth}Y@{}}
     \toprule
-    \textbf{Métrica} & \textbf{Frecuencia} & \textbf{Umbral / acción} \\
+    \textbf{Archivo} & \textbf{Contenido y consumo} \\
     \midrule
-    Volumen semanal total de consultas & Semanal & $<10.041$ consultas (30~\% de la mediana
-    de las últimas 13 semanas no parciales) $\to$ marcar la semana como incompleta y
-    excluirla del cálculo de \texttt{lag1} \\
-    MAE semanal (predicción vs. real) & Semanal & $>11{,}64$ consultas (media $+\ 2\sigma$
-    de las 6 semanas de prueba limpias) durante 2 semanas consecutivas $\to$ reentrenar antes
-    del ciclo trimestral \\
-    Actualización del feed GTFS & Semanal & Automática, ya implementada
-    (\var{run_update_pipeline.py}) \\
-    Reentrenamiento completo & Trimestral & Alineado con la ventana de 13 semanas de la
-    validación cruzada (sección~\ref{sec:proceso-entrenamiento}) \\
+    \var{predicciones_por_zona.csv} y \var{.geojson} & Por zona: observado, esperado (total y por semana observada), brecha, cobertura GTFS y acción sugerida; se abre en una hoja de cálculo o en un SIG \\
+    \var{zonas_prioritarias.csv} & Las veinte zonas para revisión en terreno, con enlace a OpenStreetMap y columnas de registro \\
+    \var{mapa_brecha.html} & Mapa interactivo de la brecha; se abre en cualquier navegador \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{25_monitoring_plan.py} ---
-  \var{reports/05_deployment/02_monitoring_plan.md}.}
+  \fuente{Elaboración propia, a partir de \var{06_propuesta} (secciones 4 a 6).}
 \end{table}
 
-El chequeo de completitud de datos existe \emph{porque} la sección~\ref{sec:semanas-parciales}
-encontró el problema que previene: con este piso, las semanas 2024-W18 (909 consultas) y
-2024-W23 (1.367 consultas) se habrían marcado automáticamente como incompletas en lugar de
-descubrirse meses después durante el análisis de errores.
+El consumo por parte de los voluntarios de Trufi Association sigue un flujo de cuatro pasos:
+\begin{enumerate}
+  \item El voluntario abre \var{mapa_brecha.html} en su navegador e identifica las veinte
+        zonas prioritarias, señaladas en el mapa con un contorno.
+  \item Consulta \var{zonas_prioritarias.csv} para obtener el identificador de cada zona, su
+        demanda esperada, su brecha y el enlace directo a OpenStreetMap.
+  \item Visita la zona y verifica en terreno si existen rutas sin mapear, si las rutas
+        mapeadas están actualizadas, o si la zona carece de transporte.
+  \item Registra el resultado en la columna \var{field_result} de
+        \var{zonas_prioritarias.csv}, con una de las cuatro categorías previstas:
+        \var{ruta_no_mapeada}, \var{ruta_mapeada_correcta}, \var{sin_transporte} o
+        \var{sin_visitar}. Puede añadir observaciones en \var{field_notes}.
+\end{enumerate}
+
+Las columnas de registro permiten medir, después de una primera ronda de visitas, la
+proporción de zonas en las que la lista acertó. Esa proporción es la medida definitiva de
+utilidad del resultado y hoy no existe, porque no se ha realizado ninguna verificación en
+terreno (sección~\ref{sec:criterio-utilidad}).
+
+\subsection{Arquitectura de actualización y monitoreo}
+\label{sec:monitoreo}
+
+El pipeline se compone de seis notebooks que se ejecutan en orden, cada uno de los cuales
+lee lo que dejó el anterior y regenera sus salidas. La arquitectura propuesta
+(figura~\ref{fig:arquitectura}) no requiere servidor: basta un equipo con Python y el gestor
+de entornos \var{uv}. La secuencia es la siguiente:
+\begin{enumerate}
+  \item \textbf{Entradas.} Se incorporan a \var{data/raw/} las nuevas exportaciones
+        semanales de consultas, el GTFS vigente de Trufi Association y la edición más
+        reciente de Kontur Population.
+  \item \textbf{Proceso.} Se ejecutan los seis notebooks (\var{01_eda} a
+        \var{06_propuesta}) con \texttt{uv run}. Cada notebook verifica sus propias cifras
+        contra la fase anterior y escribe sus resultados en \var{resultados/<fase>/}.
+  \item \textbf{Salidas.} Se regeneran \var{predicciones_por_zona.csv},
+        \var{zonas_prioritarias.csv} y \var{mapa_brecha.html} en
+        \var{resultados/06_propuesta/}.
+  \item \textbf{Comparación.} Se contrastan las métricas de la nueva edición con las de la
+        edición anterior, y se entrega la lista y el mapa actualizados.
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \caption{Arquitectura de actualización de la propuesta de uso}
+  \label{fig:arquitectura}
+  \begin{tikzpicture}[
+      font=\small,
+      dato/.style={draw, rounded corners=3pt, fill=blue!6, align=center,
+                   text width=2.3cm, minimum height=1.1cm, inner sep=3pt},
+      proc/.style={draw, rounded corners=3pt, fill=gray!10, align=center,
+                   text width=2.8cm, minimum height=3.4cm, inner sep=4pt},
+      sal/.style={draw, rounded corners=3pt, fill=green!8, align=center,
+                  text width=4.75cm, minimum height=1.0cm, inner sep=3pt},
+      usr/.style={draw, rounded corners=3pt, fill=orange!12, align=center,
+                  text width=2.2cm, minimum height=2.2cm, inner sep=3pt},
+      flecha/.style={-{Stealth[length=2.5mm]}, thick},
+      solo/.style={-{Stealth[length=2.5mm]}, thick, dashed},
+      node distance=0.6cm and 0.75cm]
+    \node[dato] (c) {Consultas de\\Trufi App};
+    \node[dato, below=0.75cm of c] (g) {GTFS de Trufi\\[-1pt]{\footnotesize solo contraste}};
+    \node[dato, below=0.75cm of g] (k) {Kontur\\Population};
+    \node[proc, right=0.65cm of g] (p) {\textbf{Seis\\notebooks}\\[2pt]
+      {\footnotesize\texttt{01\_eda} a\\\texttt{06\_propuesta}}\\[3pt]
+      {\footnotesize se ejecutan en orden con \texttt{uv run}}};
+    \node[sal, right=0.65cm of p, yshift=1.35cm] (s1)
+      {\footnotesize\texttt{predicciones\_por\_zona}\\\footnotesize\texttt{.csv} y \texttt{.geojson}};
+    \node[sal, below=0.3cm of s1] (s2) {\footnotesize\texttt{zonas\_prioritarias.csv}};
+    \node[sal, below=0.3cm of s2] (s3) {\footnotesize\texttt{mapa\_brecha.html}};
+    \node[usr, right=0.65cm of s2] (v) {\textbf{Voluntarios}\\de Trufi:\\revisión en\\terreno};
+    \draw[flecha] (c.east) -- ++(0.4,0) |- ($(p.west)+(0,0.9)$);
+    \draw[solo] (g.east) -- (p.west);
+    \draw[flecha] (k.east) -- ++(0.4,0) |- ($(p.west)+(0,-0.9)$);
+    \draw[flecha] (p.east) -- (s1.west);
+    \draw[flecha] (p.east) -- (s2.west);
+    \draw[flecha] (p.east) -- (s3.west);
+    \draw[flecha] (s2.east) -- (v.west);
+    \draw[flecha] (s3.east) -- ++(0.35,0) |- ($(v.west)+(0,-0.6)$);
+    \draw[solo] (v.south) -- ++(0,-1.15) -|
+      node[pos=0.25, below, font=\footnotesize]
+      {registro en \texttt{field\_result} para la edición siguiente} (p.south);
+  \end{tikzpicture}
+  \fuente{Elaboración propia. Línea discontinua superior: el GTFS solo se usa para contrastar
+  la brecha; línea discontinua inferior: resultado de las visitas, que alimenta la edición
+  siguiente.}
+\end{figure}
+
+La frecuencia de actualización no queda fijada por el proyecto, porque depende de la
+entrega de datos por parte de la organización. La propuesta recomienda reejecutar el
+pipeline cuando se acumulen nuevas exportaciones, idealmente con cadencia trimestral. No hay
+reentrenamiento en el sentido estricto: B3 no estima parámetros, solo recalcula la tasa
+vecinal con los datos disponibles, de modo que el costo computacional de una reejecución
+completa es bajo.
+
+El monitoreo se apoya en tres alertas. Las dos primeras usan umbrales orientativos, que
+conviene calibrar con las primeras reejecuciones; no son valores absolutos, pues la
+calibración de la prueba (0,597) ya queda fuera del intervalo propuesto y esa diferencia es
+propia de los datos y no de un fallo del proceso:
+\begin{itemize}
+  \item si el Spearman de la brecha frente a la edición anterior cae por debajo de 0,8,
+        revisar antes de publicar la nueva lista;
+  \item si la calibración frente a la edición anterior sale del intervalo $[0{,}9;\ 1{,}1]$,
+        revisar antes de publicar la nueva lista;
+  \item si aparecen semanas faltantes o parciales nuevas, revisar la cobertura temporal
+        antes de interpretar el resultado.
+\end{itemize}
+La tercera alerta existe porque este proyecto encontró el problema que previene: un hueco de
+siete semanas consecutivas sin registro (sección~\ref{sec:cobertura-temporal}). Formalizarla
+como validación automática evitaría que un hueco similar pase inadvertido en una edición
+futura.
 
 \subsection{Alcance del despliegue y trabajo pendiente}
+\label{sec:alcance-despliegue}
 
-No se despliega el servicio a un dominio público ni se automatiza el reentrenamiento con un
-orquestador real (Airflow o un programador de tareas en un servidor productivo) --fuera del
-alcance declarado de este trabajo (capítulo~\ref{cap:alcance}). Lo que se entrega en su lugar
-es un prototipo funcional y verificable localmente, una arquitectura documentada que conecta
-código ya existente, umbrales de monitoreo cuantificados a partir de los propios resultados
-del proyecto, y una limitación operativa real --no hipotética-- descubierta al construir el
-prototipo, con su mitigación propuesta. Antes de un uso productivo más allá de lo local
-harían falta, como mínimo, autenticación, límites de tasa, un orquestador para el
-reentrenamiento periódico y pruebas automatizadas de regresión sobre las métricas del modelo.
+La propuesta no se extiende a un despliegue en producción dentro de los sistemas de Trufi
+Association. Antes de un uso sostenido, y fuera del alcance de este trabajo, harían falta al
+menos cuatro componentes:
+\begin{itemize}
+  \item autenticación y control de acceso a los entregables;
+  \item límites de tasa si el mapa se sirviera desde un dominio público;
+  \item un orquestador para las reejecuciones periódicas, en lugar de la ejecución manual de
+        notebooks;
+  \item pruebas automatizadas de regresión sobre las métricas del modelo, que hoy no
+        existen.
+\end{itemize}
+El prototipo verificable localmente, el archivo de predicciones por zona y la lista
+priorizada de veinte zonas constituyen los entregables máximos de este trabajo. Su valor no
+depende de una infraestructura adicional, sino de que Trufi Association pueda consultarlos
+sin conocimientos de programación y usarlos como insumo para decidir dónde concentrar el
+esfuerzo de mapeo.

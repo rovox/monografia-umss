@@ -27,7 +27,7 @@ Estado de compilación: `make` sin errores y `scripts/verificar main.pdf` → *T
 - **[MEJORAR] Excede una plana.** La guía pide que el resumen ocupe una sola hoja, incluidas las palabras clave. Con el formato exigido (Garamond 11,5 e interlineado 1,2), el texto del .md (~500 palabras) ocupa las páginas iv y v. Caben unas **290–300 palabras**, así que hay que recortar unas 200. Sugerencias:
   - Párrafo 2: resumir la lista de las siete técnicas, p. ej. "cuatro líneas base de tasa, dos GLM con offset poblacional y un gradient boosting".
   - Párrafo 3: quedarse con 2–3 cifras clave (devianza de 1.807,2 a 981,7, D² 76,5 % y δ de Cliff).
-- **[OBS]** Las cifras del resumen (1.924.578 consultas; 1.381 celdas; 444 sin consultas; 20 % de bloques; devianza 1.807,2 → 981,7; D² 76,5 %; 0,91 frente a 0,64; Spearman ≥ 0,87; δ = +0,37; veinte celdas prioritarias) deberán cotejarse con el capítulo 7 cuando se transcriba.
+- **[RESUELTO 30-09-2026]** El resumen se reescribió con las cifras del capítulo 7 real (devianza 2.183,8 → 1.086,5; D² 0,502; Spearman 0,88; δ = −0,058) y cabe en una plana. Ver `docs/inconsistencias_pendientes.md`, sección 2b.
 - **[OBS]** "offset" y "gradient boosting" se dejaron sin cursiva, como en el .md. En el glosario, los términos en inglés sí van en cursiva. Conviene unificar el criterio.
 
 ### Glosario y abreviaturas (`secciones/11_glosario.tex`)

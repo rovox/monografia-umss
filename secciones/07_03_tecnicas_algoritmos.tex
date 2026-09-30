@@ -102,9 +102,8 @@ verosimilitud mediante mínimos cuadrados reponderados iterativamente
 La principal ventaja de este peldaño es su interpretabilidad: cada coeficiente representa el
 cambio en el logaritmo de la tasa de consultas por habitante asociado a una unidad de la
 variable correspondiente, de modo que $\exp(\beta_k)$ es una razón de tasas. Por ejemplo, un
-coeficiente asociado a la cobertura se interpretaría como el factor multiplicativo de la tasa
-en las zonas cubiertas respecto de las no cubiertas, manteniendo constantes las demás
-variables. En términos de implementación, la biblioteca statsmodels admite directamente un
+coeficiente asociado a la distancia al centro se interpretaría como el factor multiplicativo
+de la tasa por cada kilómetro adicional, manteniendo constantes las demás variables. En términos de implementación, la biblioteca statsmodels admite directamente un
 \textit{offset} en sus modelos GLM, mientras que en scikit-learn, cuyo
 \var{PoissonRegressor} no admite \textit{offset}, puede obtenerse un ajuste equivalente
 modelando la tasa $y_i / P_i$ con pesos muestrales iguales a $P_i$. Este modelo encarna la
@@ -200,11 +199,14 @@ trazados del feed GTFS reconstruidos como líneas a partir de \var{shapes.txt}. 
 distancias deben calcularse en un sistema de coordenadas proyectado métrico, como la
 proyección UTM zona 19~Sur (EPSG:32719) que corresponde a Cochabamba, y no en grados
 geográficos. Las uniones espaciales (\textit{spatial joins}) de GeoPandas permiten además
-asignar a cada zona el municipio en el que se sitúa la mayor parte de su superficie.
+asignar a cada zona el municipio en el que se sitúa la mayor parte de su superficie; en este
+proyecto, en cambio, se emplea la etiqueta de municipio que traen las propias consultas
+(sección~\ref{sec:transformaciones}).
 
 La tercera operación es la construcción de las variables de contexto: la distancia del
 centroide de la zona al centro de la ciudad y su discretización en anillos; el municipio; el
-indicador de cobertura según el umbral de 500~m y la distancia continua al trazado; y las
+indicador de cobertura según el umbral de 500~m y la distancia continua al trazado, que en este
+proyecto sirven solo de contraste y nunca como predictores; y las
 variables de vecindad, como la población del primer anillo o la tasa vecinal calculada con
 las precauciones contra la fuga descritas en \ref{subsec:fuga-datos}. Todas estas
 transformaciones se implementan como funciones reproducibles que se ajustan, cuando tienen

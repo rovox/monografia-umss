@@ -11,7 +11,6 @@
 
 \section{Descripción del problema}
 \label{sec:descripcion-problema}
-\label{sec:friccion-a-brecha}% alias temporal: lo cita 08_01 hasta transcribir el 7.1
 
 Trufi Association coordina el relevamiento colaborativo de las rutas de transporte público
 del eje metropolitano de Cochabamba. Su labor consiste en recorrer las líneas de micros y
@@ -33,9 +32,8 @@ orientar la asignación del trabajo voluntario.
 
 La dificultad no radica en la ausencia de datos, sino en su interpretación. El número de
 consultas que genera una zona depende simultáneamente de varios factores: la población
-residente, su localización (distancia a los centros de actividad y municipio de
-pertenencia) y la cobertura de la red mapeada, es decir, la utilidad que la aplicación
-ofrece a sus habitantes. Mientras estos factores no se separen, un conteo bajo resulta
+residente, su localización respecto de los centros de actividad y la cobertura de la red
+mapeada, es decir, la utilidad que la aplicación ofrece a sus habitantes. Mientras estos factores no se separen, un conteo bajo resulta
 ambiguo, puesto que puede reflejar tanto una demanda naturalmente reducida como una
 necesidad no atendida.
 
@@ -61,9 +59,13 @@ enfoques orientados a pronosticar el volumen de consultas dejan fuera del análi
 El problema se delimita a la variación de la demanda de información entre zonas del eje
 metropolitano, y no a su evolución en el tiempo. Desde la perspectiva de la Ciencia de
 Datos, lo que se busca apoyar es una estimación: el número de consultas que cabría esperar
-en cada zona según sus características territoriales —población residente, distancia al
-centro, municipio de pertenencia y cobertura de la red mapeada—, junto con una medida de la
-confiabilidad de dicha estimación en zonas no observadas. La estimación corresponde al
+en cada zona según su población residente y su localización —la distancia al centro y el
+comportamiento de las zonas vecinas—, junto con una medida de la confiabilidad de dicha
+estimación en zonas no observadas. La cobertura de la red mapeada no interviene en el
+cálculo de lo esperado: se reserva para interpretar la diferencia entre lo observado y lo
+esperado, porque si se usara para estimar las consultas esperadas, una zona sin rutas
+mapeadas tendría, por construcción, una expectativa baja, y la brecha que se pretende
+detectar quedaría absorbida por el propio modelo. La estimación corresponde al
 total de consultas acumulado en cada zona a lo largo del período analizado, de modo que
 el conteo esperado de una zona hexagonal pueda compararse con el total de consultas
 efectivamente registradas en ella entre septiembre de 2022 y junio de 2024. Con esta
@@ -76,7 +78,8 @@ cuantitativo para priorizar la revisión del mapeo.
 \begin{quote}
   \textbf{¿Cómo estimar el número esperado de consultas de ruta de Trufi App por zona
   hexagonal en el eje metropolitano de Cochabamba, entre septiembre de 2022 y junio de
-  2024, a partir de la población residente, la localización y la cobertura de la red
-  mapeada de cada zona, utilizando los registros de uso de la aplicación, las estimaciones
-  de población y las capas territoriales disponibles?}
+  2024, a partir de la población residente y la localización de cada zona, de modo que la
+  diferencia entre las consultas observadas y las esperadas pueda contrastarse con la
+  cobertura de la red mapeada, utilizando los registros de uso de la aplicación, las
+  estimaciones de población y las capas territoriales disponibles?}
 \end{quote}

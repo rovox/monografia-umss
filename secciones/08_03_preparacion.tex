@@ -1,357 +1,439 @@
 % ============================================================
 %  7.3. PREPARACIÓN DE LOS DATOS  -- parte del capítulo 7
 %  ------------------------------------------------------------
-%  Archivo separado para que cada fase de CRISP-DM se pueda
-%  editar y compilar por separado. Solo contenido: el formato,
-%  los rótulos y las referencias los resuelve el preámbulo.
-%  Los \label originales se conservan sin cambios.
+%  Guía 2.7.3: (1) datos seleccionados y por qué, (2) limpieza,
+%  faltantes y atípicos, (3) transformaciones y codificación,
+%  (4) ingeniería y selección de características, (5) conjuntos
+%  de entrenamiento y prueba. Justificar, no enumerar comandos.
+%  Notebooks: 02_preprocesamiento.ipynb (limpieza, data/interim/)
+%             03_feature_engineering.ipynb (variables, partición,
+%             data/processed/tabla_modelado.parquet)
 % ============================================================
 \section{Preparación de los datos}
 \label{sec:preparacion-datos}
 
-Esta sección documenta la tercera fase de CRISP-DM, ejecutada mediante nueve scripts
-reproducibles (\var{09_select_filter.py} a \var{17_train_test_split.py}) que
-consumen el conjunto consolidado de la sección~\ref{sec:comprension-datos} y producen la
-tabla de indicadores territoriales y la partición cronológica que alimentan el Modelado
-(sección~\ref{sec:modelado}). El orden de la exposición sigue el orden real del trabajo y
-retoma explícitamente la tabla~\ref{tab:trazabilidad-hallazgos} de decisiones heredadas de
-la fase anterior.
+La preparación convierte las fuentes crudas en la tabla por zona sobre la que se modela.
+Aplica, en el orden fijado por la sección~\ref{sec:hallazgos-decisiones}, los criterios que
+el análisis exploratorio solo había medido. Se ejecuta en dos notebooks:
+\begin{itemize}
+  \item \var{02_preprocesamiento} limpia las consultas y construye la tabla por zona, que
+        guarda en \var{data/interim/}.
+  \item \var{03_feature_engineering} añade las variables, declara cuáles serán predictores y
+        reserva el conjunto de prueba. Su resultado es
+        \var{data/processed/tabla_modelado.parquet}, con 1.628 filas y 18 columnas.
+\end{itemize}
+Todos los umbrales viven en un único archivo de configuración (\var{config.py}), de modo
+que ninguna cifra se escribe a mano dentro de los notebooks.
 
-\subsection{Selección y flujo de filtros}
-\label{sec:seleccion-filtros}
+\subsection{Selección de los datos}
+\label{sec:seleccion-datos}
 
-Sobre el conjunto consolidado de 1.927.675 registros se aplicó el criterio transversal de
-\textbf{marcar en lugar de eliminar}: solo se elimina un registro cuando no aporta
-información —duplicado exacto—; todo otro caso problemático se conserva con una marca que
-documenta por qué queda fuera de un análisis determinado. Este criterio preserva la
-trazabilidad completa entre el dato crudo y el dato modelado y permite que registros
-excluidos de un análisis, como los viajes interurbanos, reciban tratamiento propio en otro.
+Se seleccionan tres conjuntos, cada uno por una razón distinta.
 
-\begin{table}[htbp]
+\textbf{Consultas.} Se conservan todas las consultas válidas del período completo, sin
+muestreo. El problema se formula sobre el total acumulado por zona
+(capítulo~\ref{cap:problema}), y descartar semanas o usuarios reduciría la información de
+las zonas con poca actividad, que son precisamente las de interés.
+
+\textbf{Zonas.} La tabla por zona se construye como la unión de dos conjuntos: las celdas
+de Kontur cuyo centroide cae dentro del área de estudio (1.577) y las celdas donde se
+originó al menos una consulta válida. Esta unión es deliberada. Si solo se tomaran las
+zonas con consultas, desaparecerían las 611 zonas pobladas sin ninguna consulta, que son
+el tipo de zona que el proyecto debe poder señalar. Si solo se tomaran las celdas de
+Kontur, se perderían 51 zonas con consultas situadas en el borde del área. El resultado
+son 1.628 zonas: 1.017 con consultas y 611 pobladas sin consultas
+(figura~\ref{fig:consultas-por-zona}).
+
+\begin{figure}[H]
   \centering
-  \caption{Flujo de filtros aplicados sobre el conjunto consolidado}
+  \caption{Consultas por zona y zonas pobladas sin consultas}
+  \label{fig:consultas-por-zona}
+  \includegraphics[width=0.85\textwidth]{imagenes/07_desarrollo/7_3_preparacion/consultas_por_zona.png}
+  \fuente{Elaboración propia, a partir de \var{02_preprocesamiento} (sección 8). Escala de
+  color: $\log_{10}$ del conteo; gris: zonas pobladas sin consultas.}
+\end{figure}
+
+Las zonas sin consultas no se distribuyen al azar: se concentran en la periferia del
+valle y en el sur del área, lejos del núcleo donde el color es más intenso. Si se
+eliminaran, la tabla describiría solo el territorio donde la aplicación ya se usa.
+
+\textbf{Zonas del modelo.} De las 1.628 zonas, entran al modelo las que tienen al menos
+10 habitantes, que son 1.381. La tabla~\ref{tab:zonas-modelo} muestra qué se excluye. El
+motivo es técnico: el modelo estima una tasa por habitante, y con muy pocos habitantes esa
+tasa se vuelve inestable (una sola consulta en una zona de 2 habitantes equivale a 500 por
+cada 1.000). Las zonas sin población no pueden entrar, porque la exposición sería cero. La
+exclusión apenas afecta al volumen: se pierden 242 consultas, y el modelo conserva
+1.924.336 de las 1.924.578 consultas válidas (el 99,99~\%).
+
+\begin{table}[H]
+  \centering
+  \caption{Zonas del área de estudio según su población}
+  \label{tab:zonas-modelo}
+  \interlineadoSimple
+  \small
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    \textbf{Grupo} & \textbf{Zonas} & \textbf{Consultas} \\
+    \midrule
+    Sin población en Kontur (\var{population} $= 0$) & 43 & 102 \\
+    Entre 1 y 9 habitantes & 204 & 140 \\
+    \textbf{Al menos 10 habitantes (zonas del modelo)} & \textbf{1.381} & \textbf{1.924.336} \\
+    \midrule
+    Total & 1.628 & 1.924.578 \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/03_feature_engineering/zonas_por_grupo.csv}.}
+\end{table}
+
+La población total de las 1.628 zonas es de 1.226.308 habitantes, algo más que los
+1.223.871 de las celdas de Kontur situadas dentro del área
+(sección~\ref{sec:area-estudio}). La diferencia, de 2.437 habitantes, proviene de las
+zonas de borde incorporadas por tener consultas: su centroide queda fuera del contorno,
+pero Kontur les asigna población.
+
+\subsection{Limpieza, datos faltantes y valores atípicos}
+\label{sec:limpieza}
+
+\textbf{Consolidación.} Los 85 archivos se leen con detección automática de codificación:
+se intenta UTF-8 y, si falla, Latin-1. Así se leen correctamente los seis archivos del
+lote 2024 y los nombres con tildes (por ejemplo, ``Santivañez''). Las columnas
+equivalentes de ambos esquemas se unifican, y a cada fila se le añade su linaje. Las
+consultas se ordenan de forma estable (archivo, marca de tiempo, usuario y coordenadas),
+para que cualquier ejecución produzca exactamente el mismo resultado.
+
+\textbf{Filtros.} Se aplican seis filtros en un orden fijo, que va de lo inequívoco a lo
+que depende de decisiones. La tabla~\ref{tab:flujo-filtros} y la
+figura~\ref{fig:flujo-limpieza} muestran cuántas consultas elimina cada paso.
+
+\begin{table}[H]
+  \centering
+  \caption{Flujo de limpieza de las consultas}
   \label{tab:flujo-filtros}
   \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}p{0.26\textwidth}rr>{\raggedright\arraybackslash}p{0.28\textwidth}@{}}
+  \small
+  \begin{tabularx}{\textwidth}{@{}clrrY@{}}
     \toprule
-    \textbf{Etapa} & \textbf{Filas} & \textbf{Variación} & \textbf{Tratamiento} \\
+    \textbf{Paso} & \textbf{Regla} & \textbf{Eliminadas} & \textbf{Quedan} & \textbf{Justificación} \\
     \midrule
-    Conjunto consolidado & 1.927.675 & --- & --- \\
-    Tras eliminar duplicados exactos & 1.927.615 & $-60$ & Eliminar \\
-    Marca \var{zero_coords} & 3 & --- & Excluir del análisis espacial \\
-    Marca \var{out_of_bbox} & 3.511 & --- & Conservar, excluir del análisis metropolitano \\
-    Marca \var{impossible_jump} & 17.741 & --- & Conservar, excluir de variables secuenciales \\
-    \midrule
-    Total excluido (marcado) & 21.255 & $-1{,}10\,\%$ & --- \\
-    \textbf{Incluido en el análisis} & \textbf{1.906.360} & \textbf{98,90\,\%} & --- \\
+    0 & Consultas crudas & --- & 1.927.675 & --- \\
+    1 & Origen en (0,0) & 3 & 1.927.672 & Coordenadas no localizables \\
+    2 & Origen fuera de Bolivia & 9 & 1.927.663 & Coordenadas imposibles para el servicio \\
+    3 & Copia de duplicado exacto & 60 & 1.927.603 & Se conserva la primera aparición \\
+    4 & Origen fuera del área & 2.509 & 1.925.094 & Área fijada en la sección~\ref{sec:area-estudio} \\
+    5 & Distancia $>$ 50~km & 283 & 1.924.811 & Fuera de la escala urbana (sección~\ref{sec:atipicos}) \\
+    6 & Usuario anómalo & 233 & 1.924.578 & Al menos 2 de 6 señales (sección~\ref{sec:atipicos}) \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{09_select_filter.py} ---
-  \var{reports/02_data_preparation/01_filter_flow.md}.}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/02_preprocesamiento/flujo_limpieza.csv}. Se conserva el 99,84~\% de las
+  consultas.}
 \end{table}
 
-Los 104 registros que participaban en grupos de duplicación exacta identificados en la
-sección~\ref{sec:comprension-datos} se reducen a 60 registros efectivamente eliminados: al
-conservar una copia de cada grupo duplicado, la resta es de 60 filas y no de 104. Los 3.514
-registros fuera del área de estudio detectados sobre el consolidado original
-(sección~\ref{sec:comprension-datos}) se reducen a 3.511 una vez retirados los duplicados
-exactos que coincidían con esa condición; ambas cifras son correctas en su propio contexto
-y esta sección usa consistentemente la del conjunto ya depurado. La verificación de
-integridad de la tabla~\ref{tab:flujo-filtros} cuadra exactamente: filas incluidas más
-filas excluidas suman las 1.927.615 filas posteriores a la deduplicación.
-
-Los saltos imposibles —pares de consultas del mismo usuario separadas por menos de 120
-segundos y más de 11 kilómetros, criterio fijado en la sección~\ref{sec:identificador-usuario}—
-se marcan en 17.741 filas exclusivamente por este motivo; el filtro completo detecta 18.009
-filas, cifra que incluye un pequeño solapamiento con otras marcas y no debe confundirse con
-el conteo de pares sospechosos (2.156) reportado en la fase anterior, que cuenta pares y no
-filas.
-
-\subsection{Limpieza}
-
-La limpieza no encontró nulos en coordenadas ni valores fuera de rango geográfico: las
-1.906.360 filas incluidas caen todas dentro de los límites de Cochabamba. Se identificaron
-aproximadamente 19.000 valores atípicos de \texttt{distancia} (por encima del percentil 99),
-que se conservan marcados en lugar de recortarse, siguiendo el mismo criterio transversal de
-esta fase; su presencia es consistente con los viajes interurbanos ya caracterizados en la
-sección~\ref{sec:distribucion-espacial}. Los dos campos exclusivos del segundo lote de
-archivos, \var{year_week_number} y \var{time_of_day}, permanecen nulos en el
-91,6~\% de las filas por diseño —son exclusivos de los archivos posteriores a abril de
-2024— y se documentan como tales en lugar de imputarse.
-
-\subsection{Sesionización}
-\label{sec:sesionizacion}
-
-Las consultas de un mismo usuario se agrupan en sesiones cuando la separación entre
-consultas consecutivas no supera un \textbf{umbral de 30 minutos}, criterio estándar de
-definición de sesión y coherente con la duración habitual de un trayecto urbano. El
-resultado son 934.096 sesiones sobre las 1.906.360 consultas incluidas.
-
-\begin{table}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Distribución de sesiones de consulta}
-  \label{tab:sesionizacion}
+  \caption{Consultas eliminadas en cada paso de la limpieza}
+  \label{fig:flujo-limpieza}
+  \includegraphics[width=0.9\textwidth]{imagenes/07_desarrollo/7_3_preparacion/flujo_limpieza.png}
+  \fuente{Elaboración propia, a partir de \var{02_preprocesamiento} (sección 5). Eje
+  horizontal en escala logarítmica.}
+\end{figure}
+
+El orden importa por dos motivos. Primero, los filtros geográficos inequívocos (pasos 1 y
+2) van antes que la detección de duplicados, para que las coordenadas imposibles no
+cuenten como consultas válidas. Segundo, el área de estudio (paso 4) se delimitó con los
+orígenes de usuarios no anómalos y \emph{sin} aplicar el umbral de distancia, de modo que
+los dos criterios no se contaminan entre sí. La mayor exclusión, la de consultas fuera del
+área, representa apenas el 0,13~\% del total. En conjunto, la limpieza no altera la
+estructura de los datos: corrige errores puntuales. Las cifras coinciden exactamente con
+las que midió el análisis exploratorio, porque ambos notebooks usan las mismas funciones.
+
+\textbf{Datos faltantes.} La limpieza no imputa ningún valor, por tres razones:
+\begin{itemize}
+  \item Las columnas que usa el proyecto no tienen nulos
+        (sección~\ref{sec:datos-faltantes-eda}).
+  \item Las 611 zonas pobladas sin consultas reciben un conteo de 0, que es su valor
+        observado. No se trata como faltante.
+  \item Las 43 zonas con consultas pero sin registro en Kontur reciben población 0. Es una
+        ausencia estructural de la fuente, no un dato que deba estimarse; esas zonas quedan
+        fuera del modelo por el umbral de población.
+\end{itemize}
+Las siete semanas sin datos tampoco se rellenan. Se registran para calcular las semanas
+realmente observadas (sección~\ref{sec:transformaciones}).
+
+\textbf{Valores atípicos.} Solo se eliminan los atípicos que representan errores o un uso
+no humano: la distancia de más de 50~km y los usuarios anómalos. Los valores extremos
+legítimos se conservan. Por ejemplo, la zona con más consultas acumula 152.494, frente a
+una mediana de 6. Esas zonas son reales, están en el centro de la ciudad y forman parte
+del fenómeno. Su efecto se controla con métricas y modelos propios de datos de conteo, no
+eliminándolas.
+
+\subsection{Transformaciones y codificación de variables}
+\label{sec:transformaciones}
+
+Las transformaciones convierten consultas individuales en una tabla por zona y dejan cada
+variable en la escala que requieren los modelos. La tabla~\ref{tab:transformaciones} las
+resume con su justificación.
+
+\begin{table}[H]
+  \centering
+  \caption{Transformaciones y codificación aplicadas}
+  \label{tab:transformaciones}
   \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.26\textwidth}L{0.34\textwidth}Y@{}}
     \toprule
-    \textbf{Indicador} & \textbf{Valor} \\
+    \textbf{Transformación} & \textbf{Qué hace} & \textbf{Por qué} \\
     \midrule
-    Sesiones totales & 934.096 \\
-    Sesiones de una sola consulta & 402.350 (43,1~\%) \\
-    Sesiones de más de una consulta & 531.746 (56,9~\%) \\
-    Mediana de duración (sesiones múltiples) & 1 minuto \\
-    Percentil 95 de duración (sesiones múltiples) & 25 minutos \\
+    Asignación de zona & Convierte las coordenadas de origen en su celda H3 de resolución~8 (\var{h3_origin}) & Unidad de análisis común con Kontur, sin reproyección (sección~\ref{subsec:h3}) \\
+    Agregación & Cuenta las consultas por zona de origen (\var{query_count}) & La variable objetivo es el total del período \\
+    Bloque espacial & Asigna a cada zona su celda madre H3 de resolución~6 (\var{block_id}), de unos 36~km\textsuperscript{2} & Unidad de validación y de reserva de prueba \\
+    Semanas equivalentes observadas & $W_{obs} = \text{días con datos} / 7 = 568/7 = 81{,}143$ & Expresar lo esperado por semana sin contar el hueco \\
+    Exposición & $\log(\text{population})$ como \emph{offset} (coeficiente fijo igual a 1) & Modelar la tasa por habitante (sección~\ref{subsec:glm-poisson}) \\
+    Escala de población & $\log(1 + x)$ en \var{pop_ring1} dentro de los modelos & Reduce la asimetría; no depende de los datos, así que no filtra información \\
+    Municipio & Municipio más frecuente entre los orígenes de la zona; sin consultas, el de las zonas vecinas etiquetadas más cercanas & Estrato de la línea base B1 \\
+    Anillo de distancia & Cuatro anillos (A1 a A4) según los cuartiles de la distancia media de cada bloque a la Plaza & Estrato de la línea base B2 y del sorteo de prueba \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{11_sessionize.py} ---
-  \var{reports/02_data_preparation/03_sessionization.md}.}
+  \fuente{Elaboración propia, a partir de \var{src/features.py}, \var{src/modelos.py},
+  \var{src/limpieza.py} y \var{resultados/02_preprocesamiento/metricas.json}.}
 \end{table}
 
-La distribución resultante valida el umbral elegido: tanto la mediana (1 minuto) como el
-percentil 95 (25 minutos) de duración de las sesiones múltiples quedan muy por debajo de los
-30 minutos del corte, lo que indica que el umbral no está fragmentando episodios de consulta
-genuinos. Que el 43,1~\% de las sesiones contenga una única consulta, con una mediana de dos
-consultas por sesión, es la evidencia central que más adelante (sección~\ref{sec:tipo-problema})
-justifica no construir un objetivo de predicción a nivel de usuario individual: hay poca
-repetición dentro de una misma sesión sobre la cual apoyar ese tipo de señal.
+\textbf{Semanas equivalentes observadas ($W_{obs}$).} Hubo datos 538 días antes del hueco
+y 30 después, 568 días en total, que equivalen a 81,143 semanas. Todos los modelos estiman
+el total del período. Para comunicar el resultado a la organización en una unidad
+intuitiva (consultas por semana), ese total se divide por $W_{obs}$ y no por las 91
+semanas calendario. Dividir por 91 subestimaría el ritmo semanal, porque contaría semanas
+en las que no se registró nada.
 
-\subsection{Teselación H3}
-\label{sec:teselacion-h3}
+\textbf{Codificación de las variables categóricas.} El municipio y el anillo no se
+convierten en variables indicadoras (\emph{one-hot}), porque ningún modelo los usa como
+predictores. Sirven para definir los estratos de dos líneas base, que calculan una tasa
+separada por grupo.
 
-Se adoptó formalmente la teselación de hexágonos H3 en \textbf{resolución 8} (celdas de
-aproximadamente 460 metros de arista y 0,74~km² de superficie) como unidad de análisis
-territorial de todo el resto del proyecto, reemplazando la agregación preliminar de la
-sección~\ref{sec:agregacion-h3}. Tres criterios convergen en esta elección. El primero es de
-granularidad: la resolución 8 produce 1.113 celdas de origen, suficientes para preservar el
-detalle de barrio sin dispersar en exceso la señal. El segundo es de robustez ante el
-problema de la unidad de área modificable (MAUP), verificado en la
-sección~\ref{sec:sensibilidad-h3}. El tercero es de aditividad: al no solaparse ni dejar
-huecos, los hexágonos permiten agregar y comparar celdas entre sí sin ambigüedad.
+La etiqueta de municipio proviene del campo \var{origin_municipio} de las exportaciones de
+Trufi Association, no de límites oficiales, y queda asignada a 14 municipios
+(tabla~\ref{tab:municipios}). El municipio figura como ``Cochabamba'' en los datos, pero
+corresponde a Cercado. Para comprobar si esa etiqueta es coherente dentro de cada zona, se
+verificó su pureza. El 99,38~\% de las consultas comparte la etiqueta modal de su zona. Solo
+el 5,02~\% de las zonas con consultas es de municipio \emph{mixto}, es decir, tiene menos
+del 90~\% de sus consultas con la etiqueta modal. El único caso llamativo, Arani (50~\%),
+corresponde a una zona con apenas dos consultas.
 
-\begin{table}[htbp]
+Esta decisión es aceptable para el propósito del proyecto porque el municipio se usa
+únicamente como estrato en la línea base B1, que no fue la técnica seleccionada; ningún
+modelo que participa en la selección final lo usa como predictor. Los resultados se
+guardan en \var{resultados/03_feature_engineering/resumen_municipio.csv} y en
+\var{metricas.json} (\var{pct_consultas_municipio_modal},
+\var{pct_zonas_municipio_mixto}).
+
+\begin{table}[H]
   \centering
-  \caption{Celdas de origen por resolución H3 y concentración de la demanda}
-  \label{tab:resoluciones-h3}
+  \caption{Zonas del modelo por municipio asignado y pureza de la etiqueta}
+  \label{tab:municipios}
   \interlineadoSimple
-  \begin{tabular}{lrrr}
+  \small
+  \begin{tabular}{@{}lrrrrr@{}}
     \toprule
-    \textbf{Resolución} & \textbf{Arista} & \textbf{Celdas de origen} & \textbf{Top-10 celdas} \\
+    \textbf{Municipio} & \textbf{Zonas} & \textbf{Consultas} & \textbf{Población} & \textbf{\celda{\% consultas con\\etiqueta modal}} & \textbf{\celda{Zonas\\mixtas}} \\
     \midrule
-    7 & \textasciitilde 1,22~km & 320 & 79,6~\% \\
-    \textbf{8 (adoptada)} & \textbf{\textasciitilde 0,46~km} & \textbf{1.113} & \textbf{42,2~\%} \\
-    9 & \textasciitilde 0,17~km & 4.170 & 16,2~\% \\
+    Cochabamba (Cercado) & 318 & 1.662.310 & 622.120 & 99,69 & 13 \\
+    Sacaba & 259 & 90.113 & 180.427 & 99,99 & 1 \\
+    Quillacollo & 137 & 65.275 & 146.291 & 97,71 & 12 \\
+    Colcapirhua & 35 & 53.209 & 47.652 & 97,17 & 5 \\
+    Tiquipaya & 47 & 46.785 & 60.991 & 92,27 & 7 \\
+    Vinto & 89 & 3.403 & 56.167 & 95,53 & 4 \\
+    Sipe Sipe & 92 & 1.357 & 35.950 & 99,78 & 2 \\
+    Arbieto & 86 & 546 & 17.368 & 97,99 & 1 \\
+    Villa Punata & 74 & 488 & 23.430 & 100,00 & 0 \\
+    Tolata & 37 & 302 & 5.115 & 100,00 & 0 \\
+    Villa Santivañez & 79 & 300 & 4.163 & 100,00 & 0 \\
+    Villa José Quintín Mendoza & 76 & 170 & 13.386 & 99,41 & 1 \\
+    Cliza & 47 & 76 & 11.604 & 100,00 & 0 \\
+    Arani & 5 & 2 & 1.015 & 50,00 & 1 \\
+    \midrule
+    Total & 1.381 & 1.924.336 & 1.225.679 & 99,38 & 47 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{12_build_h3.py} ---
-  \var{reports/02_data_preparation/04_h3_tessellation.md}.}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/03_feature_engineering/resumen_municipio.csv} y \var{metricas.json}. Zona
+  mixta: menos del 90~\% de sus consultas con la etiqueta modal.}
 \end{table}
 
-La resolución 7 concentra el 79,6~\% de la demanda en apenas diez celdas, lo que vuelve el
-análisis territorial poco informativo; la resolución 9 dispersa las observaciones en 4.170
-celdas con conteos ruidosos. La resolución 8 concentra el 42,2~\% de la demanda en las diez
-celdas principales y el 78,0~\% en las cincuenta principales --- un patrón de fuerte
-centralización, cuantificado en la sección~\ref{sec:sensibilidad-h3} mediante el coeficiente
-de Gini.
+La tabla muestra por qué el área de estudio excede los siete municipios del eje
+metropolitano mencionados en el alcance. La componente contigua de orígenes se extiende
+hacia el valle alto y el sur (Arbieto, Santivañez, Punata, Cliza, Tolata). Esos
+municipios aportan muchas zonas pobladas, pero casi ninguna consulta. Cercado concentra el
+86~\% de las consultas con el 51~\% de la población.
 
-\subsection{Cobertura de rutas GTFS}
-\label{sec:cobertura-gtfs}
+\subsection{Ingeniería y selección de características}
+\label{sec:ingenieria-caracteristicas}
 
-Se integró el feed GTFS (\textit{General Transit Feed Specification}) mantenido por Trufi
-Association para Cochabamba, con 141 líneas mapeadas y período de validez declarado del
-1 de enero de 2024 al 31 de diciembre de 2026 --- posterior a buena parte de las consultas
-analizadas, que comienzan en septiembre de 2022; la cobertura se calcula, por tanto, contra
-el estado vigente del mapeo y no contra el estado que tenía en cada momento histórico. Cada
-consulta se cruzó contra el trazado de rutas (\texttt{shapes.txt}, muestreado cada 50 metros
-e indexado en un KD-tree) y no contra las paradas (\texttt{stops.txt}), lo que mide
-accesibilidad a la línea de transporte y no al punto de abordaje efectivo, y por tanto
-sobreestima la cobertura tal como la percibe el usuario. Un punto se considera
-\textbf{cubierto} si queda a 500 metros o menos del trazado más próximo --- una caminata de
-cinco a siete minutos y un estándar habitual en análisis de accesibilidad al transporte
-público, que además absorbe el error típico de posicionamiento GPS urbano.
+Cada columna de la tabla de modelado tiene un papel declarado antes de modelar. La
+tabla~\ref{tab:grupos-variables} organiza las variables por su uso. Distinguir estos
+papeles es la principal salvaguarda contra la fuga de información
+(sección~\ref{subsec:fuga-datos}).
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
-  \caption{Cobertura de rutas GTFS sobre las consultas incluidas}
-  \label{tab:cobertura-gtfs}
+  \caption{Variables de la tabla de modelado según su papel}
+  \label{tab:grupos-variables}
   \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}Xr@{}}
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.18\textwidth}L{0.28\textwidth}Y@{}}
     \toprule
-    \textbf{Indicador} & \textbf{Valor} \\
+    \textbf{Papel} & \textbf{Variables} & \textbf{Uso} \\
     \midrule
-    Orígenes cubiertos ($\leq$500~m) & 1.895.861 (99,4~\%) \\
-    Destinos cubiertos ($\leq$500~m) & 1.885.160 (98,9~\%) \\
-    Ambos extremos cubiertos & 1.874.948 (98,4~\%) \\
-    Distancia mediana a la ruta más cercana (orígenes) & 10~m \\
-    Distancia media a la ruta más cercana (orígenes) & 37~m \\
-    Percentil 95 de distancia (orígenes) & 131~m \\
+    Objetivo & \var{query_count} & Lo que se estima: total de consultas de la zona en el período \\
+    Exposición & \var{population} & Entra como \emph{offset} $\log(\text{population})$: convierte el conteo en una tasa por habitante \\
+    Predictores & \var{dist_centro_km}, \var{pop_ring1} & Únicas variables explicativas de los modelos M1 a M3 \\
+    Contraste & \var{dist_trazado_m}, \var{gtfs_covered} & Solo para interpretar la brecha; nunca entran a un modelo \\
+    Grupos y validación & \var{municipality}, \var{distance_ring}, \var{block_id}, \var{in_test} & Estratos de las líneas base, pliegues de validación y marca de prueba \\
+    Apoyo & \var{h3_cell}, \var{lat}, \var{lon}, \var{in_model}, \var{user_count}, conteos antes y después del hueco & Identificación, mapas, universo del modelo y análisis de sensibilidad \\
     \bottomrule
   \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{13_gtfs_coverage.py} ---
-  \var{reports/02_data_preparation/05_gtfs_coverage.md}.}
+  \fuente{Elaboración propia, a partir de \var{config.py} (\var{PREDICTORES},
+  \var{CONTRASTE}) y \var{03_feature_engineering} (secciones 3 a 7).}
 \end{table}
 
-Esta cifra agregada de 99,4~\% de cobertura --- ponderada por consulta, y por tanto dominada
-por el núcleo urbano donde se concentra la demanda (sección~\ref{sec:teselacion-h3}) --- no
-contradice el hallazgo de brecha centro-periferia que se contrasta formalmente en la
-sección~\ref{sec:evaluacion-resultados} (hipótesis H1): cuando la unidad de observación pasa
-de la consulta a la celda territorial, dando el mismo peso a una celda con tres consultas
-semanales que a una con mil, la brecha de cobertura en la periferia se vuelve visible. Ambas
-cifras son correctas porque ponderan cosas distintas, y el proyecto las reporta juntas
-precisamente porque la brecha de información no aparece en el agregado del sistema, solo
-cuando se examina el territorio celda por celda.
+La construcción de las variables sigue cuatro decisiones:
 
-\subsection{Validación de las variables de municipio}
-\label{sec:validacion-municipios}
+\textbf{Centro de referencia exógeno.} La distancia al centro (\var{dist_centro_km}) se
+mide como distancia geodésica desde el centroide de cada zona hasta la Plaza 14 de
+Septiembre, un punto fijado desde fuera de los datos. Como se vio en la
+sección~\ref{sec:relaciones-variables}, este centro se asocia con las consultas mucho más
+que el centroide del área. Tiene además una ventaja metodológica: al no calcularse con los
+datos, no cambia entre pliegues de validación ni puede filtrar información de las zonas de
+prueba.
 
-Las variables \var{origin_municipio} y \var{dest_municipio}, recibidas ya calculadas
-y sin documentación de procedencia (sección~\ref{sec:comprension-datos}), se contrastaron
-contra la lista de municipios metropolitanos conocidos y se revisó la coherencia de
-asignación dentro de cada celda H3. Se identificaron 21 municipios de origen distintos; el
-núcleo metropolitano concentra la enorme mayoría de la demanda: Cercado de Cochabamba
-86,6~\%, Sacaba 4,7~\%, Quillacollo 3,1~\%, Colcapirhua 2,9~\%, Tiquipaya 2,4~\%, Vinto
-0,2~\% y Sipesipe 0,1~\%. El resto --- entre ellos Villa Santiváñez y Villa José Quintín
-Mendoza, cuyos nombres llegaron con codificación defectuosa y se corrigen aquí --- no supera
-individualmente el 0,05~\% y corresponde a los desplazamientos interurbanos ya identificados
-por la marca \var{out_of_bbox} (sección~\ref{sec:seleccion-filtros}). La validación no
-alcanza a reconstruir el procedimiento original de asignación --- esa limitación permanece
-declarada (capítulo~\ref{cap:alcance}) --- pero sí confirma que la distribución observada es
-internamente consistente con la delimitación espacial adoptada.
+\textbf{Población del entorno.} \var{pop_ring1} suma la población de las seis zonas del
+primer anillo H3 alrededor de cada zona, sin incluirla a ella. \var{pop_ring2} hace lo
+mismo con el segundo anillo. Ambas se calculan con la cobertura completa de Kontur para
+Bolivia, y no solo con el área de estudio. Así, las zonas de borde no ven su entorno
+artificialmente vacío. Estas variables capturan la densidad del vecindario, un indicador
+indirecto de la concentración de actividades.
 
-\subsection{Tabla de indicadores por celda y semana}
-\label{sec:tabla-indicadores}
+\textbf{Selección por colinealidad.} La figura~\ref{fig:correlacion-predictores} muestra
+la correlación de Spearman entre los predictores candidatos. \var{pop_ring1} y
+\var{pop_ring2} tienen una correlación de 0,954: aportan prácticamente la misma
+información, e incluir ambas inflaría la varianza de los coeficientes sin mejorar la
+estimación. Se conserva \var{pop_ring1}, que describe el entorno más inmediato y se asocia
+un poco más con el conteo (0,836 frente a 0,804). La población de la propia zona no
+aparece como predictor porque ya entra como exposición.
 
-Las consultas incluidas se agregaron por celda H3 (resolución 8) y semana, combinando
-demanda, cobertura GTFS y patrones temporales en una única tabla de indicadores:
-\textbf{42.676 observaciones celda-semana}, sobre \textbf{1.552 celdas únicas} activas como
-origen o como destino en algún momento del período de 84 semanas con datos.
-
-\begin{table}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Estadísticos descriptivos de los indicadores territoriales (celda-semana)}
-  \label{tab:indicadores-estadisticos}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}Xrrrrr@{}}
-    \toprule
-    \textbf{Variable} & \textbf{Mediana} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Máximo} & \textbf{Nulos} \\
-    \midrule
-    \var{n_queries_orig} & 3 & 44,67 & 165,79 & 3.663 & 0 \\
-    \var{n_queries_dest} & 4 & 44,67 & 140,57 & 2.307 & 0 \\
-    \var{dist_gtfs_mean_orig_m} & 50,93 & 240,65 & 925,81 & 25.081 & 11.367 \\
-    \var{pct_uncovered_orig} & 0,00 & 0,08 & 0,27 & 1,00 & 11.367 \\
-    \var{mean_trip_dist_m} & 7.434,67 & 8.846,15 & 5.599,97 & 55.517,85 & 11.367 \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{15_indicators_table.py} ---
-  \var{reports/02_data_preparation/07_indicators_table.md}. La variable
-  \var{od_balance} se excluye de esta tabla: sus estadísticos calculados presentan un
-  desbordamiento de tipo entero de 32 bits y no son citables; queda fuera del conjunto de
-  modelado por fuga de información (sección~\ref{sec:tipo-problema}), de modo que el defecto
-  no afecta a ningún resultado.}
-\end{table}
+  \caption{Correlación de Spearman entre los predictores candidatos}
+  \label{fig:correlacion-predictores}
+  \includegraphics[width=0.5\textwidth]{imagenes/07_desarrollo/7_3_preparacion/correlacion_predictores.png}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/03_feature_engineering/correlacion_predictores.csv}.}
+\end{figure}
 
-Las 11.367 observaciones nulas (26,6~\%) en las variables de cobertura y composición
-temporal corresponden a celdas-semana con actividad únicamente como destino, sin ninguna
-consulta originada esa semana --- no a un defecto de calidad. En el panel de modelado
-(sección~\ref{sec:tipo-problema}) se imputan con la mediana histórica de la propia celda.
+\textbf{Exclusión de la cobertura.} \var{dist_trazado_m} es la distancia del centroide de
+la zona al trazado GTFS más cercano, calculada en proyección métrica UTM 19S.
+\var{gtfs_covered} vale 1 si esa distancia es de 500~m o menos. Con ese criterio, 634 de
+las 1.628 zonas están cubiertas (626 de las 1.381 zonas del modelo). Ambas variables se
+excluyen expresamente de los predictores
+(secciones~\ref{sec:traduccion-necesidad} y~\ref{sec:area-estudio}), y el notebook de
+modelado verifica que ninguna técnica las use. La cobertura se mide contra el trazado y no
+contra las paradas, por la naturaleza del paratránsito (sección~\ref{subsec:gtfs}).
 
-\subsection{Sensibilidad de la resolución H3 y el problema de la unidad de área modificable}
-\label{sec:sensibilidad-h3}
+Con estas decisiones, el conjunto de predictores queda reducido a dos variables:
+\var{dist_centro_km}, que resume la localización, y \var{pop_ring1}, que resume el
+entorno. Es un conjunto deliberadamente pequeño. Con 1.381 zonas y una autocorrelación
+fuerte, el número efectivo de observaciones independientes es mucho menor que el nominal,
+y cada predictor adicional aumenta el riesgo de sobreajuste. Además, ambas variables son
+exógenas: ninguna se calcula a partir de las consultas.
 
-El problema de la unidad de área modificable (MAUP) advierte que los resultados de un
-análisis espacial pueden depender de la forma y el tamaño de las unidades territoriales
-elegidas, y no solo del fenómeno estudiado. Se abordó mediante un análisis de sensibilidad
-explícito entre las tres resoluciones H3 evaluadas (capítulo~\ref{cap:marco-teorico}).
+\subsection{Conjuntos de entrenamiento y prueba}
+\label{sec:conjuntos-entrenamiento-prueba}
 
-\begin{table}[htbp]
+El conjunto de prueba se reserva en esta fase, antes de ajustar cualquier modelo, y se usa
+una sola vez en la evaluación. La reserva no se hace por zonas individuales sino por
+\emph{bloques} H3 de resolución~6: por la autocorrelación documentada en la
+sección~\ref{sec:relaciones-variables}, una zona de prueba rodeada de vecinas de
+entrenamiento sería casi una copia de ellas, y el error medido resultaría optimista
+(sección~\ref{subsec:validacion-espacial}).
+
+Las 1.381 zonas del modelo se reparten en 53 bloques. Para que la prueba represente todo el
+gradiente centro-periferia, el sorteo se estratifica por anillo de distancia: en cada
+anillo se reserva el 20~\% de sus bloques, con la semilla fija 42. Los cortes entre anillos
+(12,52, 18,65 y 22,92~km de la Plaza) son los cuartiles de la distancia media de los
+bloques, de modo que cada anillo tiene un número parecido de bloques. El sorteo solo usa la
+geometría de los bloques y su anillo: ninguna consulta interviene en la selección.
+
+\begin{table}[H]
   \centering
-  \caption{Sensibilidad del patrón de concentración a la resolución H3}
-  \label{tab:sensibilidad-h3}
+  \caption{Zonas del modelo por anillo de distancia}
+  \label{tab:anillos}
   \interlineadoSimple
-  \begin{tabular}{lrr}
+  \small
+  \begin{tabular}{@{}lrrrrrr@{}}
     \toprule
-    \textbf{Resolución} & \textbf{Coeficiente de Gini} & \textbf{Correlación cruzada (Spearman $\rho$)} \\
+    \textbf{Anillo} & \textbf{\celda{Distancia\\a la Plaza (km)}} & \textbf{Bloques} & \textbf{\celda{Bloques\\de prueba}} & \textbf{Zonas} & \textbf{Consultas} & \textbf{\celda{Consultas por\\1.000 hab.}} \\
     \midrule
-    7 & 0,954 & $\rho_{7\leftrightarrow8}=0,9854$ \\
-    \textbf{8 (referencia)} & \textbf{0,934} & $\rho_{7\leftrightarrow9}=0,9856$ \\
-    9 & 0,903 & $\rho_{8\leftrightarrow9}=0,9913$ \\
+    A1 & hasta 12,52 & 14 & 3 & 501 & 1.854.930 & 2.139,9 \\
+    A2 & 12,52 a 18,65 & 13 & 3 & 342 & 66.102 & 303,5 \\
+    A3 & 18,65 a 22,92 & 13 & 3 & 234 & 2.251 & 31,9 \\
+    A4 & más de 22,92 & 13 & 3 & 304 & 1.053 & 14,9 \\
+    \midrule
+    Total & & 53 & 12 & 1.381 & 1.924.336 & 1.570,0 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{16_sensitivity_h3.py} ---
-  \var{reports/02_data_preparation/08_h3_sensitivity.md}.}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/03_feature_engineering/resumen_anillo.csv} y \var{test_blocks.csv}.}
 \end{table}
 
-El coeficiente de Gini de la demanda de origen en resolución 8 es \textbf{0,934}, una
-concentración sustancial y estable entre resoluciones adyacentes (0,954 en r7, 0,903 en r9).
-Las correlaciones de rangos entre resoluciones adyacentes superan 0,98 en los tres pares, lo
-que establece que el patrón de concentración territorial es una propiedad del fenómeno
---- la demanda de información de transporte está genuinamente concentrada en un núcleo
-urbano reducido --- y no un artefacto de la escala de agregación elegida. Esta verificación
-sostiene la resolución 8 como unidad de análisis para el resto del proyecto.
+La tabla~\ref{tab:particion} y la figura~\ref{fig:anillos-prueba} muestran el resultado.
+La prueba reúne 12 bloques y 352 zonas (el 25,5~\% de las zonas), pero solo el 9,63~\% de
+las consultas.
 
-\subsection{Partición cronológica de entrenamiento y prueba}
-\label{sec:particion-cronologica}
-
-La cobertura temporal (sección~\ref{sec:cobertura-temporal}) estableció que el volumen de
-consultas \textbf{no es estacionario}: crece de forma sostenida a lo largo del período. Esta
-propiedad exige una partición \textbf{cronológica}, nunca aleatoria: un particionamiento
-aleatorio permitiría que el modelo se entrene con semanas posteriores a las que debe
-predecir, lo que constituye fuga de información temporal y produce una estimación optimista
-del desempeño real.
-
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
-  \caption{Partición cronológica de la tabla de indicadores}
-  \label{tab:particion-indicadores}
+  \caption{Partición en entrenamiento y prueba por bloques espaciales}
+  \label{tab:particion}
   \interlineadoSimple
-  \begin{tabular}{lrrrr}
+  \small
+  \begin{tabular}{@{}lrrrrr@{}}
     \toprule
-    \textbf{Conjunto} & \textbf{Observaciones} & \textbf{\%} & \textbf{Semanas} & \textbf{Rango calendario} \\
+    \textbf{Conjunto} & \textbf{Bloques} & \textbf{Zonas} & \textbf{Consultas} & \textbf{Población} & \textbf{\celda{Consultas por\\1.000 hab.}} \\
     \midrule
-    Entrenamiento & 38.638 & 90,5~\% & 76 & 2022-W37 -- 2024-W08 \\
-    Prueba & 4.038 & 9,5~\% & 8 & 2024-W09 -- 2024-W23 \\
+    Entrenamiento & 41 & 1.029 & 1.738.942 & 908.744 & 1.913,6 \\
+    Prueba & 12 & 352 & 185.394 & 316.935 & 585,0 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{17_train_test_split.py} ---
-  \var{reports/02_data_preparation/09_train_test_split.md}. Estas cifras describen la
-  tabla de indicadores dispersa, previa a la construcción del panel completo celda$\times$semana
-  de la sección~\ref{sec:tipo-problema}; sobre ese panel completo la misma frontera cronológica
-  produce 111.744 filas de entrenamiento y 12.416 de prueba.}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/03_feature_engineering/particion.csv}.}
 \end{table}
 
-El corte de 8 semanas de prueba busca un equilibrio: suficiente para una evaluación
-confiable (aproximadamente dos meses) sin sacrificar una proporción excesiva de los datos de
-entrenamiento (90,5~\% de las observaciones). La consecuencia más importante de este corte
-se advierte aquí y se retoma en las secciones~\ref{sec:proceso-entrenamiento}
-y~\ref{sec:evaluacion-resultados}: como la partición toma las últimas \emph{ocho semanas
-observadas} y no ocho semanas calendario contiguas, el vacío estructural de siete semanas
-(sección~\ref{sec:cobertura-temporal}) queda comprimido \textbf{dentro} de la ventana de
-prueba. Las últimas semanas observadas son 2024-W09, W10, y después --tras el vacío-- W18 a
-W23: la ventana de prueba no son ocho semanas contiguas, sino dos semanas, un hueco de siete,
-y seis semanas más. Esto debilita las variables autorregresivas justamente donde se mide el
-desempeño del modelo, y explica parte de la caída de precisión entre entrenamiento y prueba
-que se documenta más adelante --- no se trata de sobreajuste.
-
-\subsection{Síntesis de la fase de preparación}
-
-\begin{table}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Decisiones de la fase de preparación y su justificación}
-  \label{tab:decisiones-preparacion}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}p{0.30\textwidth}X@{}}
-    \toprule
-    \textbf{Decisión} & \textbf{Justificación} \\
-    \midrule
-    Eliminar solo duplicados exactos; marcar el resto & Preserva trazabilidad completa entre dato crudo y dato modelado \\
-    Timeout de sesión de 30 minutos & Estándar de sesión de aplicación; validado por la distribución resultante \\
-    Teselación H3, resolución 8 & Balance de granularidad, robustez ante el MAUP (correlaciones $>0,98$) y aditividad \\
-    Umbral de cobertura GTFS de 500 metros & Estándar de accesibilidad peatonal; absorbe el error de posicionamiento GPS \\
-    Partición cronológica (76/8 semanas) & La demanda no es estacionaria; evita fuga de información temporal \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia.}
-\end{table}
+  \caption{Anillos de distancia al centro y bloques reservados como prueba}
+  \label{fig:anillos-prueba}
+  \includegraphics[width=\textwidth]{imagenes/07_desarrollo/7_3_preparacion/anillos_y_prueba.png}
+  \fuente{Elaboración propia, a partir de \var{03_feature_engineering} (secciones 8 y 10).
+  Izquierda: anillos A1 a A4 (la estrella marca la Plaza 14 de Septiembre); derecha: bloques
+  de prueba en azul.}
+\end{figure}
 
-Estructura de evidencia de esta fase (referencia): \texttt{data/processed} (tabla de
-indicadores y partición train/test en formato Parquet), \texttt{src} (scripts \texttt{09} a
-\texttt{17}), \var{reports/02_data_preparation} (informes de esta sección).
+El desequilibrio entre zonas y consultas tiene una explicación, y debe tenerse en cuenta
+al leer la evaluación. Los bloques del núcleo central, donde se concentra la mayor parte de
+las consultas, quedaron del lado de entrenamiento. Por eso la tasa de la prueba (585
+consultas por cada 1.000 habitantes) es un tercio de la de entrenamiento (1.913,6). La
+prueba es, por tanto, más periférica y menos intensa que el conjunto con el que se
+entrena. Es una condición exigente pero realista: la organización necesita estimaciones
+confiables justamente en zonas alejadas del centro. Además, 125 de las 352 zonas de prueba
+tocan zonas de entrenamiento en el borde de su bloque
+(\var{zonas_prueba_borde} en \var{resultados/03_feature_engineering/metricas.json}). Es una
+fuga mínima e inevitable en cualquier partición espacial, que se documenta y no se oculta.
+
+El notebook termina con cuatro verificaciones automáticas:
+\begin{itemize}
+  \item la tabla conserva todas las consultas y no tiene nulos;
+  \item los rangos de las variables son válidos;
+  \item entrenamiento y prueba no comparten ningún bloque;
+  \item ni el objetivo ni las variables GTFS figuran entre los predictores.
+\end{itemize}
+Los bloques reservados se guardan en \var{test_blocks.csv}. A partir de aquí, el notebook
+de modelado solo los descarta y el de evaluación los usa una única vez.

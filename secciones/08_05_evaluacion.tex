@@ -1,433 +1,418 @@
 % ============================================================
 %  7.5. EVALUACIÓN Y RESULTADOS  -- parte del capítulo 7
 %  ------------------------------------------------------------
-%  Archivo separado para que cada fase de CRISP-DM se pueda
-%  editar y compilar por separado. Solo contenido: el formato,
-%  los rótulos y las referencias los resuelve el preámbulo.
-%  Los \label originales se conservan sin cambios.
+%  Guía 2.7.5: (1) métricas adecuadas, (2) resultados de cada
+%  alternativa, (3) comparación y análisis de errores,
+%  (4) sobreajuste/subajuste, (5) interpretación desde el
+%  problema original, (6) selección y justificación final.
+%  Notebook: 05_evaluacion.ipynb
+%  Cifras:   resultados/05_evaluacion/ (metricas.json,
+%            metricas_prueba.csv, calibracion_deciles.csv,
+%            contraste_gtfs.csv, sensibilidad.csv, brecha_por_zona.csv)
 % ============================================================
 \section{Evaluación y Resultados}
 \label{sec:evaluacion-resultados}
 
-Esta sección documenta la quinta fase de CRISP-DM, ejecutada mediante cinco scripts
-(\var{21_hypothesis_tests.py} a \var{28_ranking_explainer.py}) sobre las
-predicciones de los cuatro modelos de la sección~\ref{sec:modelado}.
+La evaluación responde a dos preguntas. La primera es técnica: ¿qué tan bien estima B3 el
+conteo esperado en zonas que nunca vio? La segunda es la del problema: ¿qué revela la
+brecha entre lo observado y lo esperado, y qué tan confiable es como criterio para
+priorizar? Se ejecuta en el notebook \var{05_evaluacion}. Es la única fase que usa las 352
+zonas de prueba reservadas en la sección~\ref{sec:conjuntos-entrenamiento-prueba}, y las
+predice una sola vez con el modelo final.
 
-\subsection{Métricas y resultados por modelo}
-\label{sec:resultados-modelo}
+\subsection{Métricas de evaluación}
+\label{sec:metricas-evaluacion}
 
-Se reportan tres métricas, cada una con un rol distinto dado que el objetivo es fuertemente
-asimétrico (sección~\ref{sec:seleccion-algoritmos}): el \textbf{MAE} (error absoluto medio),
-interpretable directamente en consultas por semana; el \textbf{RMSE}, que penaliza más los
-errores grandes y es por tanto sensible a la presencia de valores extremos; y el
-\textbf{R\textsuperscript{2}}, la proporción de varianza explicada respecto de predecir
-siempre la media.
+Las métricas se eligieron por su adecuación a datos de conteo asimétricos y al uso que se
+dará al resultado, que es ordenar zonas. Sus definiciones formales están en la
+sección~\ref{sec:metricas}. La tabla~\ref{tab:metricas-uso} resume qué mide cada una y por
+qué se incluye.
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
-  \caption{Desempeño comparado en el conjunto de prueba (8 semanas nunca vistas)}
-  \label{tab:resultados-modelos}
+  \caption{Métricas empleadas y su justificación}
+  \label{tab:metricas-uso}
   \interlineadoSimple
-  \begin{tabular}{lrrr}
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.26\textwidth}L{0.30\textwidth}Y@{}}
     \toprule
-    \textbf{Modelo} & \textbf{MAE} & \textbf{RMSE} & \textbf{R\textsuperscript{2}} \\
+    \textbf{Métrica} & \textbf{Qué mide} & \textbf{Por qué es adecuada} \\
     \midrule
-    \textbf{Random Forest (final)} & \textbf{10,19} & \textbf{80,70} & \textbf{0,656} \\
-    Base estacional (media móvil 4 sem.) & 11,05 & 85,70 & 0,613 \\
-    Base ingenua (persistencia, $t-1$) & 11,30 & 91,90 & 0,555 \\
-    XGBoost & 13,85 & 102,82 & 0,442 \\
-    Lasso & 44,03 & 520,76 & $-13,305$ \\
-    Ridge & 48,97 & 559,13 & $-15,491$ \\
+    Devianza de Poisson media & Error de estimación ponderado de forma relativa al valor esperado & Es la pérdida natural para conteos: no deja que las zonas centrales dominen como lo haría el error cuadrático \\
+    $D^2$ & Fracción de devianza explicada frente a predecir la media del conjunto evaluado & Resume el desempeño en una escala de 0 a 1, comparable entre conjuntos \\
+    $D^2$ frente a la tasa global & Fracción de devianza explicada frente a B0 & Mide directamente si el contexto aporta algo más que la población (criterio de utilidad) \\
+    Spearman observado--esperado & Concordancia de los rangos & El uso final es ordenar zonas; importa el orden más que el valor exacto \\
+    Calibración & Suma de lo esperado dividida entre suma de lo observado & Detecta si el volumen total está sub- o sobreestimado \\
+    MAE & Error absoluto medio, en consultas & Magnitud interpretable del error por zona \\
+    Brecha de Pearson & $(Y_i - \hat{\mu}_i)/\sqrt{\hat{\mu}_i}$ & Diferencia observado--esperado comparable entre zonas grandes y pequeñas (sección~\ref{subsec:residuos}) \\
+    Jaccard del top-20 & Proporción de zonas compartidas entre dos listas de 20 & Estabilidad de la priorización (sección~\ref{subsec:estabilidad-priorizacion}) \\
+    $\delta$ de Cliff & Tamaño de la diferencia entre zonas con y sin cobertura & Magnitud descriptiva, robusta a asimetría (sección~\ref{subsec:comparacion-cobertura}) \\
     \bottomrule
-  \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py} ---
-  \var{reports/03_modeling/02_model_comparison.md}.}
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{src/modelos.py} y \var{src/evaluacion.py}.}
 \end{table}
 
-\begin{figure}[htbp]
+La brecha de Pearson divide la diferencia por la raíz del esperado. Así, una diferencia de
+100 consultas pesa mucho en una zona donde se esperaban 25 (brecha de 20), pero poco en
+una donde se esperaban 10.000 (brecha de 1). A partir de ella se define la \emph{demanda no
+resuelta estimada} de una zona como $\max(\hat{\mu}_i - Y_i,\ 0)$: las consultas que cabía
+esperar y no se registraron.
+
+\subsection{Resultados de cada alternativa}
+\label{sec:resultados-modelo}
+
+Las siete técnicas se compararon en la validación cruzada espacial, cuyos resultados se
+presentaron en la tabla~\ref{tab:cv-resumen}. Para mantener el conjunto de prueba como una
+evaluación independiente, \emph{solo la técnica elegida} se aplica a él. Si se evaluaran
+las siete en la prueba y se eligiera la mejor, la prueba se convertiría en un segundo
+conjunto de validación, y su resultado dejaría de ser una estimación honesta del desempeño
+en zonas nuevas. Las técnicas no elegidas reaparecen en el análisis de sensibilidad
+(sección~\ref{sec:interpretacion-resultados}), donde se compara la lista de zonas que
+produciría cada una.
+
+La tabla~\ref{tab:metricas-prueba} presenta el resultado de B3 en la prueba junto con su
+desempeño medio en la validación cruzada.
+
+\begin{table}[H]
   \centering
-  \caption{Predicho vs. observado, Random Forest, conjunto de prueba}
-  \label{fig:pred-vs-obs}
-  \includegraphics[width=0.7\textwidth]{imagenes/fig_pred_vs_obs_rf.png}
-  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py}.}
+  \caption{Desempeño de B3 en la prueba y en la validación cruzada}
+  \label{tab:metricas-prueba}
+  \interlineadoSimple
+  \small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \textbf{Métrica} & \textbf{\celda{Prueba\\(352 zonas)}} & \textbf{\celda{Validación\\media}} & \textbf{\celda{Validación\\DE}} \\
+    \midrule
+    Devianza de Poisson media & 1.086,5 & 1.389,3 & 1.944,1 \\
+    $D^2$ (frente a la media) & 0,458 & 0,730 & 0,140 \\
+    Devianza de la tasa global (B0) & 2.183,8 & --- & --- \\
+    $D^2$ frente a la tasa global & 0,502 & --- & --- \\
+    Spearman observado--esperado & 0,880 & 0,799 & 0,040 \\
+    Calibración & 0,597 & 0,977 & --- \\
+    MAE (consultas por zona) & 428,1 & 1.212,6 & 1.619,2 \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de \var{resultados/05_evaluacion/metricas_prueba.csv}.
+  La calibración de validación es la fuera de pliegue sobre las 1.029 zonas de entrenamiento.
+  La devianza de la tasa global se deriva del $D^2$ frente a ella:
+  $1.086{,}5 / (1 - 0{,}502) \approx 2.183{,}8$.}
+\end{table}
+
+Tres resultados destacan:
+\begin{itemize}
+  \item \textbf{B3 supera claramente al punto de referencia inicial.} Frente a la tasa
+        global, reduce la devianza de la prueba a la mitad ($D^2 = 0{,}502$). Suponer que
+        las consultas dependen solo de la población deja sin explicar la mitad de la
+        variación que la información de vecindad sí captura.
+  \item \textbf{El orden de las zonas es muy bueno.} El Spearman de 0,88 indica que, en
+        zonas que el modelo nunca vio, las que más consultan quedan arriba en la estimación.
+  \item \textbf{El volumen total está subestimado.} La calibración de 0,597 significa que,
+        en los bloques de prueba, lo esperado suma en torno al 60~\% de lo observado. La
+        estimación queda un 40~\% por debajo del total real.
+\end{itemize}
+
+\subsection{Comparación del desempeño y análisis de errores}
+\label{sec:analisis-errores}
+
+Para localizar la subestimación, las 352 zonas de prueba se ordenaron por su esperado y se
+dividieron en diez grupos de igual tamaño (deciles). La tabla~\ref{tab:calibracion-deciles}
+y la figura~\ref{fig:calibracion-deciles} comparan lo observado y lo esperado en cada
+decil.
+
+\begin{table}[H]
+  \centering
+  \caption{Calibración de B3 por deciles del esperado en la prueba}
+  \label{tab:calibracion-deciles}
+  \interlineadoSimple
+  \small
+  \begin{tabular}{@{}crrrr@{}}
+    \toprule
+    \textbf{Decil} & \textbf{Zonas} & \textbf{Observado} & \textbf{Esperado} & \textbf{\celda{Observado /\\esperado}} \\
+    \midrule
+    1 & 36 & 23 & 0,9 & 25,03 \\
+    2 & 35 & 75 & 31,2 & 2,40 \\
+    3 & 35 & 120 & 97,6 & 1,23 \\
+    4 & 35 & 266 & 312,2 & 0,85 \\
+    5 & 35 & 1.127 & 934,4 & 1,21 \\
+    6 & 35 & 2.842 & 1.945,6 & 1,46 \\
+    7 & 35 & 18.807 & 3.714,6 & 5,06 \\
+    8 & 35 & 22.341 & 7.796,6 & 2,87 \\
+    9 & 35 & 21.839 & 22.843,7 & 0,96 \\
+    10 & 36 & 117.954 & 73.036,7 & 1,62 \\
+    \bottomrule
+  \end{tabular}
+  \fuente{Elaboración propia, a partir de
+  \var{resultados/05_evaluacion/calibracion_deciles.csv}. Decil 1: zonas con menor esperado.}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \caption{Razón entre observado y esperado por decil en la prueba}
+  \label{fig:calibracion-deciles}
+  \includegraphics[width=0.8\textwidth]{imagenes/07_desarrollo/7_5_evaluacion/calibracion_deciles.png}
+  \fuente{Elaboración propia, a partir de \var{05_evaluacion} (sección 3). La línea
+  discontinua marca la calibración perfecta (razón igual a 1).}
 \end{figure}
 
-\subsubsection{Hallazgo: inestabilidad de extrapolación de los modelos lineales}
+El análisis por deciles distingue tres tipos de error:
+\begin{itemize}
+  \item \textbf{Deciles 3 a 6 y 9.} La razón está entre 0,85 y 1,46: el modelo está
+        razonablemente calibrado en la mayor parte del rango.
+  \item \textbf{Decil 1.} La razón de 25 es llamativa pero irrelevante en volumen: son 23
+        consultas frente a 0,9 esperadas, repartidas entre 36 zonas casi vacías.
+  \item \textbf{Deciles 7, 8 y 10.} Aquí se concentra la subestimación que importa. En los
+        deciles 7 y 8 se observan 41.148 consultas frente a 11.511 esperadas, y en el
+        decil 10 faltan casi 45.000 consultas.
+\end{itemize}
 
-Ridge y Lasso muestran R\textsuperscript{2} fuertemente negativo en prueba pese a un ajuste
-razonable en entrenamiento (MAE de 30,06 y 25,57 respectivamente): 50 y 42 de las 12.416
-predicciones de cada uno alcanzan el techo de seguridad de extrapolación impuesto sobre la
-reversión \texttt{expm1} (sección~\ref{sec:tipo-problema}). La causa es la combinación de una
-tendencia sostenida --\var{week_idx} toma en prueba valores nunca vistos en
-entrenamiento-- con la asimetría extrema del objetivo (Gini~$=0{,}934$,
-sección~\ref{sec:sensibilidad-h3}): un pequeño error en escala logarítmica se amplifica
-exponencialmente al revertir la transformación. \textbf{No es un defecto de implementación:
-es evidencia de que la relación entre demanda y condiciones territoriales no es lineal.} Los
-modelos de árboles no sufren este problema porque sus predicciones están acotadas por los
-valores observados en las hojas de entrenamiento.
+Las zonas de los deciles altos son \emph{polos de actividad}: terminales, mercados o
+centros de servicios. Generan muchas más consultas de las que corresponden a su población
+residente, porque las consultas se originan donde la gente \emph{está}, no solo donde
+\emph{vive}. B3 estima con la tasa de las vecinas, y si las vecinas de entrenamiento no son
+polos, subestima.
+
+La figura~\ref{fig:observado-esperado} muestra el mismo fenómeno para todas las zonas. Las
+de prueba aparecen en azul, y las veinte con brecha más negativa sobre todas las zonas, en
+naranja.
+
+\begin{figure}[H]
+  \centering
+  \caption{Consultas observadas frente a esperadas por zona}
+  \label{fig:observado-esperado}
+  \includegraphics[width=0.7\textwidth]{imagenes/07_desarrollo/7_5_evaluacion/observado_vs_esperado.png}
+  \fuente{Elaboración propia, a partir de \var{05_evaluacion} (sección 4). Ambos ejes en
+  escala logarítmica (valor $+1$). Gris: zonas de entrenamiento (predicción fuera de
+  pliegue); azul: zonas de prueba; naranja: las veinte zonas con brecha más negativa.}
+\end{figure}
+
+El error tiene el signo contrario al otro lado de los polos. Las zonas vecinas de un polo
+heredan su tasa alta y reciben un esperado muy superior a lo que observan. Son los puntos
+naranjas situados por debajo de la diagonal a la derecha, con esperados de decenas de
+miles de consultas y observados mucho menores. Este comportamiento condiciona la
+interpretación de la brecha (sección~\ref{sec:interpretacion-resultados}).
 
 \subsection{Sobreajuste y subajuste}
 \label{sec:sobreajuste}
 
-\begin{table}[htbp]
-  \centering
-  \caption{Brecha entre entrenamiento y prueba (MAE)}
-  \label{tab:brecha-train-test}
-  \interlineadoSimple
-  \begin{tabular}{lrrr}
-    \toprule
-    \textbf{Modelo} & \textbf{MAE entrenamiento} & \textbf{MAE prueba} & \textbf{Brecha} \\
-    \midrule
-    Random Forest & 2,19 & 10,19 & $+8,00$ \\
-    XGBoost & 2,09 & 13,85 & $+11,76$ \\
-    Lasso & 25,57 & 44,03 & $+18,46$ \\
-    Ridge & 30,06 & 48,97 & $+18,92$ \\
-    \bottomrule
-  \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{19_model_comparison.py}.}
-\end{table}
+La comparación entre validación y prueba (tabla~\ref{tab:metricas-prueba}) muestra señales
+en direcciones opuestas:
+\begin{itemize}
+  \item el $D^2$ baja de 0,73 a 0,46 y la calibración de 0,98 a 0,60;
+  \item el Spearman sube de 0,80 a 0,88, y la devianza y el MAE bajan.
+\end{itemize}
+Un sobreajuste clásico empeoraría todas las métricas a la vez. Tres razones indican que no
+es el caso:
+\begin{enumerate}
+  \item \textbf{B3 no tiene parámetros que puedan sobreajustarse.} Su única ``estimación''
+        es una suma de conteos vecinos. Los dos valores que la controlan (tres vecinas y
+        diez anillos) se fijaron antes de ver los datos y no se optimizaron.
+  \item \textbf{La prueba tiene otra composición.} Como se anticipó en la
+        sección~\ref{sec:conjuntos-entrenamiento-prueba}, sus bloques son más periféricos:
+        585 consultas por cada 1.000 habitantes frente a 1.913,6 en entrenamiento. Los
+        conteos menores explican que la devianza y el MAE bajen. El $D^2$ se calcula frente
+        a la media del propio conjunto evaluado, y en un conjunto más homogéneo hay menos
+        variación que explicar, lo que lo reduce aunque el error absoluto sea menor.
+  \item \textbf{Hay pocos bloques de prueba.} Con 12 bloques, la presencia o ausencia de un
+        solo polo de actividad cambia visiblemente la calibración. La desviación estándar
+        entre pliegues de la validación (1.944 unidades de devianza) indica que diferencias
+        de esta magnitud están dentro de lo esperable.
+\end{enumerate}
 
-La brecha de Random Forest ($+8{,}00$) es menor que la de XGBoost ($+11{,}76$) pese a
-hiperparámetros de complejidad similar, señal de menor sobreajuste relativo. Las curvas de
-aprendizaje --Random Forest reentrenado con tamaños de entrenamiento crecientes, evaluado
-contra una ventana de validación de 13 semanas no vista-- refuerzan esta lectura.
-
-\begin{figure}[htbp]
-  \centering
-  \caption{Curva de aprendizaje de Random Forest}
-  \label{fig:curva-aprendizaje}
-  \includegraphics[width=0.7\textwidth]{imagenes/fig_learning_curve.png}
-  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py} ---
-  \var{reports/04_evaluation/03_error_analysis.md}.}
-\end{figure}
-
-La brecha entrenamiento-validación crece de forma moderada a medida que aumenta el tamaño de
-entrenamiento ($+1{,}96 \to +1{,}65 \to +1{,}71 \to +2{,}57 \to +3{,}74$), con un MAE de
-entrenamiento que se mantiene bajo (1,26 a 2,19) mientras el de validación oscila en un rango
-razonable (3,2 a 5,9): la firma esperada de un árbol de profundidad acotada
-(\var{max_depth}$=10$) que ajusta ruido de forma limitada, sin señal de varianza
-descontrolada. La curva tiene solo cinco puntos por costo computacional --cada uno reentrena
-un modelo completo--, suficiente para descartar sobreajuste severo pero no para un
-diagnóstico fino.
-
-\subsection{Contraste de hipótesis}
-\label{sec:contraste-hipotesis}
-
-\subsubsection{H1 --- Brecha de cobertura centro-periferia}
-
-Se contrasta si las celdas periféricas (mayor distancia al centro) tienen una tasa de
-demanda no resuelta (\var{pct_uncovered_orig}) significativamente mayor que las
-centrales. La unidad de análisis es la \textbf{celda}, no la celda-semana: se promedia
-\var{pct_uncovered_orig} sobre todas las semanas de cada celda, porque tratar cada
-semana como observación independiente constituiría pseudorreplicación --inflaría el tamaño
-muestral de 1.552 a decenas de miles y produciría un valor p espuriamente pequeño. Los
-grupos se definen por la mediana de \var{dist_center_km} (15,49~km): 776 celdas
-centrales y 776 periféricas, un corte simple y documentado pero arbitrario, que no
-corresponde a ningún límite administrativo real.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Contraste H1: tasa de demanda no resuelta por grupo territorial}
-  \label{tab:h1-resultado}
-  \interlineadoSimple
-  \begin{tabular}{lrr}
-    \toprule
-    \textbf{Grupo} & \textbf{n celdas} & \textbf{Media \var{pct_uncovered_orig}} \\
-    \midrule
-    Central & 776 & 0,213 \\
-    Periferia & 776 & 0,351 \\
-    \bottomrule
-  \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{21_hypothesis_tests.py} ---
-  \var{reports/04_evaluation/01_hypothesis_tests.md}.}
-\end{table}
-
-La prueba de Shapiro-Wilk rechazó la normalidad en ambos grupos ($p=2{,}18\times10^{-41}$ en
-el centro, $p=1{,}423\times10^{-38}$ en la periferia) --resultado esperable, dado que la
-variable es una proporción con masa concentrada en 0 y 1--, lo que fundamenta el uso de la
-prueba U de Mann-Whitney, no paramétrica. El resultado es concluyente: estadístico
-$341{.}618{,}0$, $p=6{,}101\times10^{-9}$, significativo a $\alpha=0{,}05$, con una
-correlación biserial por rangos de $-0{,}135$ (tamaño de efecto pequeño, dado el tamaño
-muestral). \textbf{Se confirma H1}: las celdas periféricas tienen una tasa de demanda no
-resuelta significativamente mayor que las centrales.
-
-\subsubsection{H2 --- Random Forest frente a la línea base estacional}
-
-Se contrasta si el error del modelo final es significativamente menor que el de la media
-móvil de 4 semanas. El test de Diebold-Mariano, diseñado específicamente para comparar
-exactitud predictiva entre dos modelos sobre una serie temporal, opera sobre la serie
-semanal de 8 puntos de prueba: con esa potencia insuficiente por construcción, el resultado
-no es significativo (estadístico $-0{,}705$, $p=0{,}503$). Un resultado no significativo no
-implica equivalencia entre los modelos, solo que ocho semanas no alcanzan para distinguirlos
-con confianza; la ventana de prueba se fijó en la sección~\ref{sec:particion-cronologica}
-para preservar datos de entrenamiento, no para maximizar la potencia de este contraste.
-
-Se complementa con una prueba de Wilcoxon de rangos con signo, pareada por celda (1.552
-observaciones, potencia suficiente): estadístico $287.045{,}0$, $p=0{,}0326$, significativo.
-A primera vista esto contradice que Random Forest solo supere a la base en el 31,0~\% de las
-celdas; la explicación está en la magnitud, no en el conteo:
-
-\begin{table}[htbp]
-  \centering
-  \caption{Dónde gana cada método (test de Wilcoxon pareado por celda)}
-  \label{tab:h2-desglose}
-  \interlineadoSimple
-  \begin{tabularx}{\textwidth}{@{}Xrrr@{}}
-    \toprule
-    \textbf{Grupo} & \textbf{n celdas} & \textbf{Dif. media (RF $-$ base)} & \textbf{Demanda media} \\
-    \midrule
-    Gana Random Forest & 481 & $-3,72$ & 42,9 consultas/sem. \\
-    Gana la base estacional & 632 & $+0,71$ & 13,8 consultas/sem. \\
-    Empate exacto & 439 & --- & --- \\
-    \bottomrule
-  \end{tabularx}
-  \fuente{Elaboración propia, a partir de \var{21_hypothesis_tests.py}.}
-\end{table}
-
-Random Forest gana por un margen grande en celdas de alta demanda y pierde por un margen
-pequeño en celdas casi sin actividad. \textbf{Se confirma H2, con matices}: la ventaja de
-Random Forest sobre la línea base es estadísticamente significativa y está concentrada
-exactamente en las celdas de mayor demanda --el segmento operativamente más relevante--, no
-distribuida de manera uniforme. Reportar solo el valor p o solo el porcentaje de celdas
-ganadas habría sido engañoso en direcciones opuestas.
-
-\subsection{Análisis de errores}
-\label{sec:analisis-errores}
-
-La media de residuos de Random Forest en prueba es $-4{,}758$. Esta cifra no debe calificarse
-de sesgo despreciable: representa cerca de la mitad del MAE de prueba (10,19), lo que indica
-una tendencia sistemática a la sobrepredicción, atribuible en buena parte a las semanas
-parciales que se describen a continuación.
-
-\begin{figure}[htbp]
-  \centering
-  \caption{Distribución de residuos por celda, conjunto de prueba}
-  \label{fig:residuos}
-  \includegraphics[width=0.65\textwidth]{imagenes/fig_residuals_by_cell.png}
-  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py}.}
-\end{figure}
-
-\subsubsection{Hallazgo: dos semanas de prueba son fragmentos de un día}
-\label{sec:semanas-parciales}
-
-Al construir la serie semanal agregada se detectó que la demanda observada total cae a
-apenas 1--3~\% de una semana normal en dos de las ocho semanas de prueba: 2024-W18 (909
-consultas, la semana de reanudación tras el vacío, con solo unas 5 horas de datos) y
-2024-W23 (1.367 consultas, el corte final del dataset, con solo unas 11 horas de datos). No
-se trata de semanas con demanda real más baja sino de fragmentos de un solo día --un
-artefacto de cobertura de exportación no advertido al fijar la partición
-(sección~\ref{sec:particion-cronologica}).
-
-\begin{table}[htbp]
-  \centering
-  \caption{Impacto de las semanas parciales sobre las métricas del modelo final}
-  \label{tab:semanas-parciales}
-  \interlineadoSimple
-  \begin{tabular}{lrrr}
-    \toprule
-    \textbf{Escenario} & \textbf{MAE} & \textbf{RMSE} & \textbf{R\textsuperscript{2}} \\
-    \midrule
-    Las 8 semanas de prueba (resultado principal) & 10,19 & 80,70 & 0,656 \\
-    Las 6 semanas completas (sin las parciales) & 5,91 & 52,87 & 0,889 \\
-    \bottomrule
-  \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py} ---
-  \var{reports/04_evaluation/03_error_analysis.md}.}
-\end{table}
-
-Esta monografía reporta \textbf{ambas cifras juntas}, y no una sola. El MAE de 10,19 se
-mantiene como resultado principal por ser la evaluación más conservadora y no requerir una
-decisión de exclusión posterior a la observación de los datos; el MAE de 5,91 es la
-estimación más representativa del desempeño en una semana calendario completa, y es
-consistente con el historial de validación cruzada (2,8 a 6,2,
-sección~\ref{sec:hiperparametros}), frente al cual 10,19 resulta atípico una vez comprendida
-su causa. Presentar solo la segunda cifra sería selección posterior favorable; presentar solo
-la primera ocultaría que el error está inflado por un artefacto identificado y rastreado
-hasta el dato crudo.
-
-\begin{figure}[htbp]
-  \centering
-  \caption{Estabilidad temporal del error semanal en el conjunto de prueba}
-  \label{fig:estabilidad-error}
-  \includegraphics[width=0.7\textwidth]{imagenes/fig_weekly_error_stability.png}
-  \fuente{Elaboración propia, a partir de \var{23_error_analysis.py}. Las semanas
-  2024-W18 y 2024-W23 (parciales) se resaltan.}
-\end{figure}
-
-El artefacto no se limita a las dos semanas donde se originó: 2024-W19, la semana
-inmediatamente posterior a 2024-W18, también registra un MAE elevado (11,38, más del doble de
-la mediana de las semanas limpias) pese a no tener ningún problema de datos propio, porque
-hereda de 2024-W18 un \var{lag1_n_queries_orig} artificialmente bajo (909 consultas en
-vez de un nivel normal de más de 40.000). El horizonte de pronóstico evaluado no muestra
-degradación progresiva por sí solo; la única inestabilidad detectada tiene una causa puntual
-e identificada, no un problema estructural del modelo.
+Sí hay una señal de \textbf{subajuste} o sesgo estructural: B3 no puede representar los
+polos de actividad, porque la población residente y la tasa vecinal no contienen esa
+información. Las técnicas más complejas no lo corrigen. M1 subestima en la validación en
+torno a un 19~\% (calibración de 0,807), y M2 y M3 más todavía. La causa no es la
+flexibilidad del modelo, sino una variable ausente: la localización de los centros de
+actividad. Incorporarla requiere fuentes que el alcance excluye (capítulo~\ref{cap:alcance}),
+así que queda como recomendación.
 
 \subsection{Interpretación desde el problema original}
 \label{sec:interpretacion-resultados}
 
-La pregunta de investigación --cómo se distribuye la demanda de información de transporte no
-resuelta y qué características del territorio se asocian con esa distribución-- se responde
-con evidencia convergente de tres análisis. Primero, H1 confirma estadísticamente que la
-brecha de cobertura es mayor en la periferia. Segundo, el gradiente espacial de demanda es
-real: la correlación de Spearman entre \var{dist_center_km} y la demanda decae tanto
-para la demanda observada ($\rho=-0{,}615$, $p=2{,}8\times10^{-162}$) como para la predicha
-($\rho=-0{,}618$, $p=3{,}3\times10^{-164}$).
+El problema no es estimar consultas por sí mismo, sino distinguir las zonas que consultan
+poco porque tienen poca población de las que consultan menos de lo esperado. Para ello se
+calcula el esperado de \emph{todas} las zonas del modelo sin que ninguna se vea a sí misma:
+\begin{itemize}
+  \item las 1.029 zonas de entrenamiento reciben su predicción fuera de pliegue;
+  \item las 352 de prueba reciben la del modelo final.
+\end{itemize}
 
-\begin{figure}[htbp]
+\textbf{La brecha.} De las 1.381 zonas, 923 (el 67~\%) tienen menos consultas de las
+esperadas, y 457 tienen una brecha menor que $-2$, es decir, una diferencia de más de dos
+desviaciones de Poisson por debajo de lo esperado. La demanda no resuelta estimada suma
+641.937 consultas en todo el período. La figura~\ref{fig:mapa-brecha} muestra su
+distribución espacial.
+
+\begin{figure}[H]
   \centering
-  \caption{Demanda semanal observada vs. distancia al centro}
-  \label{fig:demanda-distancia}
-  \includegraphics[width=0.7\textwidth]{imagenes/fig_demand_vs_distance.png}
-  \fuente{Elaboración propia, a partir de \var{22_results_analysis.py} ---
-  \var{reports/04_evaluation/02_results_analysis.md}.}
+  \caption{Brecha de Pearson por zona y veinte zonas con brecha más negativa}
+  \label{fig:mapa-brecha}
+  \includegraphics[width=0.9\textwidth]{imagenes/07_desarrollo/7_5_evaluacion/mapa_brecha.png}
+  \fuente{Elaboración propia, a partir de \var{05_evaluacion} (sección 4) y
+  \var{resultados/05_evaluacion/brecha_por_zona.csv}. Rojo: menos consultas de las esperadas;
+  azul: más; contorno negro: las veinte zonas de brecha más negativa entre todas las zonas.}
 \end{figure}
 
-Tercero, H2 muestra que el valor predictivo del modelo está concentrado exactamente donde
-más importa operativamente: las celdas de mayor demanda. En conjunto, la periferia combina
-\textbf{menor demanda absoluta} con \textbf{peor cobertura relativa} --un patrón consistente
-con zonas de expansión urbana con transporte formal insuficiente, y no con una simple falta
-de interés de los usuarios; debe recordarse, como se ha señalado en capítulos anteriores, que
-``demanda'' significa aquí consultas de planificación --intención de viaje-- y no
-desplazamientos confirmados.
+El mapa confirma lo que anticipaba el análisis de errores. Las veinte zonas con brecha más
+negativa, que concentran el 60,2~\% de la demanda no resuelta estimada de todas las zonas
+(cifra distinta del 79,7~\% de la sección~\ref{sec:priorizacion}, que se calcula solo sobre las
+zonas sin cobertura), forman un racimo en
+el norte de Cercado y en Sacaba, junto a zonas azules de conteo muy alto. Diecinueve de
+ellas están a 500~m o menos de un trazado GTFS. No son zonas desatendidas por la red, sino
+vecinas de polos de actividad a las que B3 asigna la tasa de esos polos. Mapear rutas en
+ellas no aportaría nada: ya están cubiertas.
 
-\begin{figure}[htbp]
+\textbf{Relación con la cobertura de la red mapeada.} La tabla~\ref{tab:contraste-gtfs} y la
+figura~\ref{fig:brecha-cobertura} comparan la brecha entre las zonas con y sin trazado GTFS
+a 500~m o menos.
+
+\begin{table}[H]
   \centering
-  \caption{Demanda semanal agregada, observada vs. predicha (conjunto de prueba)}
-  \label{fig:demanda-semanal}
-  \includegraphics[width=0.7\textwidth]{imagenes/fig_weekly_demand_test.png}
-  \fuente{Elaboración propia, a partir de \var{22_results_analysis.py}. Las semanas
-  2024-W18 y 2024-W23 (parciales, sección~\ref{sec:semanas-parciales}) explican los mayores
-  desvíos agregados de la serie.}
-\end{figure}
-
-\subsubsection{Importancia de variables}
-\label{sec:importancia-variables}
-
-Las variables autorregresivas dominan la importancia en Random Forest y XGBoost
-(\var{roll_mean4_n_queries_orig} explica el 97,9~\% de la reducción de impureza en
-Random Forest), coherente con la fuerte autocorrelación semanal de la demanda documentada en
-la sección~\ref{sec:cobertura-temporal}.
-
-\begin{figure}[htbp]
-  \centering
-  \caption{Importancia de variables (Gini), Random Forest}
-  \label{fig:importancia-rf}
-  \includegraphics[width=0.65\textwidth]{imagenes/fig_feature_importance_rf.png}
-  \fuente{Elaboración propia, a partir de \var{20_feature_importance.py} ---
-  \var{reports/03_modeling/03_feature_importance.md}.}
-\end{figure}
-
-La señal territorial es más relevante de lo que sugiere la importancia por ganancia: en
-XGBoost, \var{dist_center_km} ocupa la octava posición por ganancia pero asciende al
-tercer lugar por magnitud media de SHAP, un método de interpretabilidad que atribuye a cada
-variable su contribución marginal a cada predicción individual. Lasso --que lleva 9 de 13
-coeficientes a cero, actuando como selector de variables-- conserva precisamente
-\var{dist_center_km} (coeficiente estandarizado $-0{,}424$),
-\var{roll_mean4_n_queries_orig} ($+0{,}396$), \var{lag1_n_queries_orig}
-($+0{,}187$) y \var{pct_uncovered_orig} ($-0{,}077$) como la señal independiente más
-robusta, con signos coherentes con H1: mayor distancia al centro y mayor proporción sin
-cobertura se asocian con menor demanda.
-
-\subsection{¿Sirve el modelo para priorizar? Un criterio preinscrito, refutado}
-\label{sec:sirve-para-priorizar}
-
-Si el modelo no gana por precisión de valor de forma contundente, el argumento operativo que
-quedaba era que, aunque no acertara la magnitud exacta, ordenara bien las celdas para efectos
-de priorización territorial. Esta sección lo somete a prueba con un criterio \textbf{declarado
-antes de observar los resultados}: el modelo sirve para priorizar si ordena mejor que la
-media móvil de 4 semanas, con diferencia media positiva, signo consistente entre semanas y
-una prueba pareada que no lo contradiga. Declarar el criterio de antemano es lo que distingue
-un hallazgo de una racionalización posterior, precisamente porque la comparación podía salir
-en contra.
-
-\textbf{El criterio no se cumple.} Promediando sobre las 6 semanas completas de prueba (se
-excluyen las semanas parciales de la sección~\ref{sec:semanas-parciales}):
-
-\begin{table}[htbp]
-  \centering
-  \caption{Métricas de ordenamiento territorial, promedio de las 6 semanas completas de prueba}
-  \label{tab:ranking-metricas}
+  \caption{Brecha según la cobertura de la red mapeada}
+  \label{tab:contraste-gtfs}
   \interlineadoSimple
-  \begin{tabular}{lrrr}
+  \small
+  \begin{tabular}{@{}lrrrrr@{}}
     \toprule
-    \textbf{Método} & \textbf{vRecall@20} & \textbf{NDCG@20} & \textbf{$\tau$-b de Kendall} \\
+    \textbf{Cobertura} & \textbf{Zonas} & \textbf{Población} & \textbf{\celda{Brecha\\mediana}} & \textbf{\celda{\% bajo lo\\esperado}} & \textbf{\celda{Demanda\\no resuelta}} \\
     \midrule
-    \textbf{Base: media móvil 4 sem.} & \textbf{0,996} & \textbf{0,999} & \textbf{0,853} \\
-    Random Forest & 0,995 & 0,996 & 0,850 \\
-    XGBoost & 0,993 & 0,997 & 0,843 \\
-    Base: persistencia ($t-1$) & 0,983 & 0,994 & 0,800 \\
-    Ranking aleatorio (piso) & 0,022 & 0,104 & 0,001 \\
+    Sin trazado a $\leq$ 500~m & 755 & 200.041 & $-0{,}898$ & 79,2 & 26.622 \\
+    Con trazado a $\leq$ 500~m & 626 & 1.025.638 & $-0{,}342$ & 51,9 & 615.316 \\
     \bottomrule
   \end{tabular}
-  \fuente{Elaboración propia, a partir de \var{26_ranking_metrics.py} ---
-  \var{reports/04_evaluation/04_ranking_metrics.md}.}
+  \fuente{Elaboración propia, a partir de \var{resultados/05_evaluacion/contraste_gtfs.csv}.}
 \end{table}
 
-Random Forest no supera a la media móvil de 4 semanas en ninguna de las 6 semanas completas,
-en ninguna de las métricas de ordenamiento evaluadas: el recuento de volumen alcanzable en
-las 20 celdas elegidas (vRecall@20, la métrica principal, continua e insensible a empates), la
-calidad del orden ponderada por posición (NDCG@20, calculada sobre relevancia logarítmica
-porque con conteos crudos todos los métodos saturan por encima de 0,97) y la correlación de
-rangos ($\tau$-b de Kendall, restringida a las celdas con demanda media de entrenamiento
-$\geq 5$ para no dejar que domine el 76,6~\% de observaciones con demanda nula en prueba).
-Ningún corte rescata la comparación: ni el estrato de demanda media (correlación de Spearman
-0,957 contra 0,958 de la base) ni el ranking de los cambios semana a semana (0,458 contra
-0,514, también a favor de la base).
-
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
-  \caption{Comparación de métricas de ordenamiento por método y semana}
-  \label{fig:ranking-comparacion}
-  \includegraphics[width=0.75\textwidth]{imagenes/fig_ranking_comparison.png}
-  \fuente{Elaboración propia, a partir de \var{26_ranking_metrics.py}.}
+  \caption{Distribución de la brecha según la cobertura de la red mapeada}
+  \label{fig:brecha-cobertura}
+  \includegraphics[width=0.7\textwidth]{imagenes/07_desarrollo/7_5_evaluacion/brecha_por_cobertura.png}
+  \fuente{Elaboración propia, a partir de \var{05_evaluacion} (sección 5). Cajas sin valores
+  extremos; la línea naranja marca la mediana.}
 \end{figure}
 
-\begin{figure}[htbp]
+Las zonas sin cobertura muestran el patrón que el problema anticipaba: su brecha mediana es
+más negativa ($-0{,}898$ frente a $-0{,}342$), y el 79,2~\% está por debajo de lo esperado,
+frente al 51,9~\% de las cubiertas. Sin embargo, el tamaño del efecto es
+\emph{despreciable}: el $\delta$ de Cliff vale $-0{,}058$, muy por debajo del umbral de
+0,147 (sección~\ref{subsec:comparacion-cobertura}). La figura explica la aparente
+contradicción. Las zonas sin cobertura tienen brechas pequeñas y concentradas cerca de
+cero, porque su esperado es pequeño. Las zonas cubiertas ocupan \emph{las dos colas}: las
+más negativas, vecinas de polos, y las más positivas, que son los propios polos. En
+conjunto, las distribuciones se solapan casi por completo.
+
+Esta comparación es descriptiva y no causal. No demuestra que la falta de rutas mapeadas
+reduzca las consultas. Tampoco se acompaña de un $p$-valor, porque con autocorrelación
+espacial las zonas no son observaciones independientes.
+
+\textbf{Sensibilidad.} Para saber si la lista de zonas prioritarias depende de decisiones
+metodológicas, se recalculó la brecha con cuatro variantes. Cada variante se comparó con la
+principal en dos universos, todas las zonas y solo las zonas sin cobertura, mediante el
+Spearman de la brecha y el Jaccard del top-20 (tabla~\ref{tab:sensibilidad} y
+figura~\ref{fig:sensibilidad}).
+
+\begin{table}[H]
   \centering
-  \caption{Cómo se calcula e interpreta la métrica de priorización}
-  \label{fig:ranking-explicador}
-  \includegraphics[width=0.75\textwidth]{imagenes/fig_ranking_explainer.png}
-  \fuente{Elaboración propia, a partir de \var{28_ranking_explainer.py}.}
+  \caption{Sensibilidad de la brecha y del top-20 ante variantes metodológicas}
+  \label{tab:sensibilidad}
+  \interlineadoSimple
+  \small
+  \begin{tabularx}{\textwidth}{@{}Yrrrr@{}}
+    \toprule
+     & \multicolumn{2}{c}{\textbf{Todas las zonas}} & \multicolumn{2}{c}{\textbf{Sin cobertura}} \\
+    \cmidrule(lr){2-3}\cmidrule(l){4-5}
+    \textbf{Variante} & \textbf{Spearman} & \textbf{Jaccard} & \textbf{Spearman} & \textbf{Jaccard} \\
+    \midrule
+    Solo el período anterior al hueco & 0,995 & 1,000 & 0,988 & 1,000 \\
+    Población mínima de 50 habitantes & 0,951 & 0,818 & 0,901 & 0,818 \\
+    Técnica con la mejor media (M1) & 0,446 & 0,053 & 0,429 & 0,333 \\
+    Tasa global (B0) & 0,192 & 0,026 & 0,254 & 0,143 \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de \var{resultados/05_evaluacion/sensibilidad.csv}.
+  Con población mínima de 50 se comparan 1.158 zonas (544 sin cobertura).}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \caption{Estabilidad de la brecha y del top-20 en cada variante}
+  \label{fig:sensibilidad}
+  \includegraphics[width=\textwidth]{imagenes/07_desarrollo/7_5_evaluacion/sensibilidad.png}
+  \fuente{Elaboración propia, a partir de \var{05_evaluacion} (sección 6).}
 \end{figure}
 
-Un coeficiente de correlación de rangos alto --como el $\rho=0{,}877$ entre demanda
-observada y predicha reportado en la sección~\ref{sec:interpretacion-resultados}-- es fácil
-de obtener cuando la distribución subyacente está tan concentrada como aquí (Gini$=0{,}934$,
-sección~\ref{sec:sensibilidad-h3}): el ordenamiento de celdas es casi invariante entre
-semanas, de modo que cualquier estimador --incluida una media móvil, e incluso la
-persistencia-- reproduce ese orden. Esa cifra mide que el modelo no destruye una señal
-trivialmente disponible; no mide que aporte capacidad de ordenamiento propia, que es
-justamente lo que esta comparación contra competencia refuta.
+La sensibilidad separa dos tipos de decisiones:
+\begin{itemize}
+  \item \textbf{La lista es robusta a las decisiones sobre los datos.} Usar solo el período
+        anterior al hueco produce exactamente el mismo top-20 (Jaccard de 1,0), y elevar la
+        población mínima a 50 conserva 18 de las 20 zonas. El hueco temporal y el umbral de
+        población no alteran la conclusión.
+  \item \textbf{La lista depende de la técnica.} Con M1 o con la tasa global, las listas
+        sobre todas las zonas casi no comparten zonas con la de B3 (Jaccard de 0,05 y
+        0,03). Cada técnica produce esperados distintos en los polos y en sus vecinas, que
+        son justamente las zonas que dominan el top-20 sin restricción.
+\end{itemize}
+Al restringir la comparación a las zonas sin cobertura, la dependencia de la técnica se
+atenúa: con M1, el Jaccard sube de 0,05 a 0,33.
 
-\textbf{Este resultado no debilita el trabajo, lo fortalece.} Se obtuvo con un criterio
-declarado de antemano y una comparación que podía salir en contra, exactamente lo que
-distingue un hallazgo de una racionalización posterior. La formulación correcta es que, para
-decidir qué celdas mapear a un horizonte de una semana, no se justifica un modelo complejo:
-una media móvil de cuatro semanas ordena igual o mejor, y es además transparente, barata de
-operar y auditable. La contribución de este trabajo está en el pipeline reproducible, la
-caracterización territorial y el diagnóstico de cobertura (H1), no en la superioridad de un
-estimador de valor. El alcance de esta refutación es específico: vale para horizonte de una
-semana; a horizontes mayores la media móvil envejece y el modelo podría mostrar ventaja, pero
-esa prueba no se realizó --requeriría reconstruir los rezagos y reentrenar-- y queda
-declarada como pendiente, no como ventaja supuesta.
+Las variantes de resolución H3 (7 y 9) y de edición de Kontur (2022) mencionadas en el marco
+teórico (secciones~\ref{subsec:maup} y~\ref{subsec:estabilidad-priorizacion}) no se
+ejecutaron en este ciclo. La resolución~9 es incompatible con Kontur, que se publica en
+resolución~8, y la edición 2022 no está en \var{data/raw/}. Quedan registradas como trabajo
+futuro en la recomendación R10.
 
-\subsection{Selección y justificación del modelo final}
+Estos tres resultados, la subestimación en los polos, el top-20 formado por zonas
+cubiertas y la dependencia de la técnica, llevaron a precisar el criterio de utilidad
+(sección~\ref{sec:enlace-objetivos}). La brecha se mantiene como medida para todas las
+zonas, pero la lista para el mapeo voluntario se construye solo con zonas sin trazado
+cercano, donde mapear sí puede aportar y donde la lista es más estable. La decisión se
+tomó después de ver la evaluación y se documenta como parte de la propuesta de uso
+(sección~\ref{sec:priorizacion}), no como parte del modelo.
+
+\subsection{Selección y justificación de la solución final}
 \label{sec:seleccion-final}
 
-\textbf{Random Forest se selecciona como modelo final}, con un criterio explícito aplicado
-en el siguiente orden: menor MAE de prueba entre los cuatro modelos ajustados (10,19); menor
-brecha entre entrenamiento y prueba que XGBoost ($+8{,}00$ frente a $+11{,}76$); y único
-modelo que supera de forma consistente a ambas líneas base. XGBoost se descarta pese a un MAE
-de validación cruzada competitivo (4,17 frente a 3,58 de Random Forest): en el conjunto de
-prueba resulta peor (13,85) que la propia línea base estacional (11,05) --un caso concreto de
-por qué no debe elegirse un modelo por su posición en una única métrica de validación. Haber
-sido el primer modelo ejecutado no cuenta como criterio, exigencia explícita de la guía de la
-materia.
+La solución final es el suavizado por vecindad H3 (B3), elegido por la regla de un error
+estándar (sección~\ref{sec:regla-seleccion}), acompañado de la brecha de Pearson y de una
+lista restringida a zonas sin cobertura. La tabla~\ref{tab:cumplimiento-criterios}
+contrasta el resultado con los criterios de utilidad declarados en la
+sección~\ref{sec:criterio-utilidad}.
 
-La selección se sostiene también en interpretabilidad y costo computacional: Random Forest no
-requiere las precauciones de extrapolación que exigirían Ridge o Lasso en producción, y su
-tiempo de entrenamiento es compatible con la cadencia de reentrenamiento trimestral propuesta
-en la sección~\ref{sec:despliegue}. Su ventaja frente a la línea base es real y
-estadísticamente significativa donde más importa operativamente (H2), aunque --como se
-estableció en la sección~\ref{sec:sirve-para-priorizar}-- esa ventaja no se traduce en una
-mejor capacidad de ordenamiento territorial que una media móvil simple.
+\begin{table}[H]
+  \centering
+  \caption{Cumplimiento de los criterios de utilidad}
+  \label{tab:cumplimiento-criterios}
+  \interlineadoSimple
+  \small
+  \begin{tabularx}{\textwidth}{@{}L{0.23\textwidth}L{0.30\textwidth}L{0.11\textwidth}Y@{}}
+    \toprule
+    \textbf{Criterio} & \textbf{Resultado} & \textbf{Cumple} & \textbf{Lectura} \\
+    \midrule
+    Supera al punto de referencia inicial & $D^2$ frente a la tasa global de 0,502 en la prueba & Sí & El contexto de vecindad explica la mitad de lo que la población sola no explica \\
+    Ordena bien las zonas & Spearman de 0,88 en la prueba & Sí & Útil para priorizar, que es un uso relativo \\
+    Está calibrada & 0,977 en validación; 0,597 en la prueba & Parcial & Subestima los polos de actividad; no usar lo esperado como volumen absoluto \\
+    Es estable & Jaccard de 1,0 y 0,818 ante los datos; de 0,03 a 0,33 ante la técnica & Parcial & Robusta a los datos, sensible a la técnica \\
+    Es accionable & De 1.381 zonas a una lista de 20 & Sí & Reduce el trabajo de decisión a una revisión en terreno acotada \\
+    \bottomrule
+  \end{tabularx}
+  \fuente{Elaboración propia, a partir de las tablas~\ref{tab:metricas-prueba}
+  y~\ref{tab:sensibilidad}.}
+\end{table}
+
+B3 se mantiene como solución final por cuatro razones:
+\begin{enumerate}
+  \item La regla, declarada antes de modelar, la elige, y cambiar de técnica después de ver
+        la prueba invalidaría esa evaluación.
+  \item Cumple los criterios que corresponden al uso previsto, que es ordenar zonas y no
+        pronosticar volúmenes.
+  \item Es la técnica más fácil de explicar a la organización: el esperado de una zona es
+        su población multiplicada por la tasa de las zonas que la rodean.
+  \item La alternativa con mejor media, M1, tiene peor calibración en la validación y no
+        resuelve la subestimación de los polos.
+\end{enumerate}
+
+Sus límites condicionan el modo de uso. Lo esperado no debe leerse como un volumen
+absoluto, y la brecha orienta la revisión en terreno sin demostrar la ausencia de rutas.
+Como las listas de B3 y M1 difieren, conviene contrastarlas en terreno en una siguiente
+edición del análisis.
