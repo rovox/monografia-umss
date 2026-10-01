@@ -1,6 +1,6 @@
 # Informe de Pendientes y Advertencias
 
-**Generado:** 2026-09-30 13:27:35
+**Generado:** 2026-10-01 00:16:17
 
 ## Resumen
 - **Imágenes ausentes:** 0
@@ -8,8 +8,8 @@
 - **Marcadores de contenido:** 0
 - **Placeholders:** 0
 - **Datos faltantes:** 0
-- **Underfull \\hbox:** 1
-- **Overfull \\hbox:** 0
+- **Underfull \\hbox:** 2
+- **Overfull \\hbox:** 1
 
 ---
 
@@ -78,12 +78,12 @@ Estado de compilación: `make` sin
 - **Acción:** Ejecutar `make figuras` para sincronizar desde `trufi-data-science`, o reemplazar con archivos locales.
 
 ### Underfull / Overfull \\hbox
-- **Underfull \\hbox:** 1 (espaciado flojo, menor prioridad)
-- **Overfull \\hbox:** 0 (texto desbordado, revisar tablas largas)
+- **Underfull \\hbox:** 2 (espaciado flojo, menor prioridad)
+- **Overfull \\hbox:** 1 (texto desbordado, revisar tablas largas)
 - **Acción:** Revisar `build/main.log` con `grep Underfull` / `grep Overfull`.
 
 ### microtype
-- **Conteo:** 103 (caracteres sin protrusión en EB Garamond)
+- **Conteo:** 304 (caracteres sin protrusión en EB Garamond)
 - **Severidad:** Inocua, solo aviso tipográfico.
 
 ### Fuentes no encontradas

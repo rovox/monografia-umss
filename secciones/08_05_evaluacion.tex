@@ -40,7 +40,7 @@ qué se incluye.
     \midrule
     Devianza de Poisson media & Error de estimación ponderado de forma relativa al valor esperado & Es la pérdida natural para conteos: no deja que las zonas centrales dominen como lo haría el error cuadrático \\
     $D^2$ & Fracción de devianza explicada frente a predecir la media del conjunto evaluado & Resume el desempeño en una escala de 0 a 1, comparable entre conjuntos \\
-    $D^2$ frente a la tasa global & Fracción de devianza explicada frente a B0 & Mide directamente si el contexto aporta algo más que la población (criterio de utilidad) \\
+    Mejora relativa (MR) & Fracción de la devianza de B0 que la técnica reduce: $1 - D_{\mathrm{técnica}}/D_{\mathrm{B0}}$ & Mide directamente si el contexto aporta algo más que la población (criterio de utilidad) \\
     Spearman observado--esperado & Concordancia de los rangos & El uso final es ordenar zonas; importa el orden más que el valor exacto \\
     Calibración & Suma de lo esperado dividida entre suma de lo observado & Detecta si el volumen total está sub- o sobreestimado \\
     MAE & Error absoluto medio, en consultas & Magnitud interpretable del error por zona \\
@@ -86,7 +86,7 @@ desempeño medio en la validación cruzada.
     Devianza de Poisson media & 1.086,5 & 1.389,3 & 1.944,1 \\
     $D^2$ (frente a la media) & 0,458 & 0,730 & 0,140 \\
     Devianza de la tasa global (B0) & 2.183,8 & --- & --- \\
-    $D^2$ frente a la tasa global & 0,502 & --- & --- \\
+    MR frente a la tasa global & 0,502 & --- & --- \\
     Spearman observado--esperado & 0,880 & 0,799 & 0,040 \\
     Calibración & 0,597 & 0,977 & --- \\
     MAE (consultas por zona) & 428,1 & 1.212,6 & 1.619,2 \\
@@ -94,14 +94,15 @@ desempeño medio en la validación cruzada.
   \end{tabular}
   \fuente{Elaboración propia, a partir de \var{resultados/05_evaluacion/metricas_prueba.csv}.
   La calibración de validación es la fuera de pliegue sobre las 1.029 zonas de entrenamiento.
-  La devianza de la tasa global se deriva del $D^2$ frente a ella:
-  $1.086{,}5 / (1 - 0{,}502) \approx 2.183{,}8$.}
+  El Spearman de validación es la media de los cinco pliegues. La devianza de B0 se calculó
+  directamente sobre las 352 zonas de prueba, con la tasa estimada en las 1.029 de
+  entrenamiento; $\mathrm{MR} = 1 - 1.086{,}5 / 2.183{,}8 = 0{,}502$.}
 \end{table}
 
 Tres resultados destacan:
 \begin{itemize}
   \item \textbf{B3 supera claramente al punto de referencia inicial.} Frente a la tasa
-        global, reduce la devianza de la prueba a la mitad ($D^2 = 0{,}502$). Suponer que
+        global, reduce la devianza de la prueba a la mitad ($\mathrm{MR} = 0{,}502$). Suponer que
         las consultas dependen solo de la población deja sin explicar la mitad de la
         variación que la información de vecindad sí captura.
   \item \textbf{El orden de las zonas es muy bueno.} El Spearman de 0,88 indica que, en
@@ -296,7 +297,10 @@ Las zonas sin cobertura muestran el patrón que el problema anticipaba: su brech
 más negativa ($-0{,}898$ frente a $-0{,}342$), y el 79,2~\% está por debajo de lo esperado,
 frente al 51,9~\% de las cubiertas. Sin embargo, el tamaño del efecto es
 \emph{despreciable}: el $\delta$ de Cliff vale $-0{,}058$, muy por debajo del umbral de
-0,147 (sección~\ref{subsec:comparacion-cobertura}). La figura explica la aparente
+0,147 (sección~\ref{subsec:comparacion-cobertura}). Parte de esa escasa diferencia puede
+deberse al propio método: B3 estima lo esperado de cada zona a partir de sus vecinas, y si
+estas también carecen de rutas mapeadas, el esperado resulta bajo y la brecha tiende a cero
+aunque exista una necesidad no atendida (sección~\ref{sec:limitaciones}). La figura explica la aparente
 contradicción. Las zonas sin cobertura tienen brechas pequeñas y concentradas cerca de
 cero, porque su esperado es pequeño. Las zonas cubiertas ocupan \emph{las dos colas}: las
 más negativas, vecinas de polos, y las más positivas, que son los propios polos. En
@@ -356,7 +360,7 @@ La sensibilidad separa dos tipos de decisiones:
 Al restringir la comparación a las zonas sin cobertura, la dependencia de la técnica se
 atenúa: con M1, el Jaccard sube de 0,05 a 0,33.
 
-Las variantes de resolución H3 (7 y 9) y de edición de Kontur (2022) mencionadas en el marco
+Las variantes de resolución H3~7 y de edición de Kontur (2022) mencionadas en el marco
 teórico (secciones~\ref{subsec:maup} y~\ref{subsec:estabilidad-priorizacion}) no se
 ejecutaron en este ciclo. La resolución~9 es incompatible con Kontur, que se publica en
 resolución~8, y la edición 2022 no está en \var{data/raw/}. Quedan registradas como trabajo
@@ -389,9 +393,9 @@ sección~\ref{sec:criterio-utilidad}.
     \toprule
     \textbf{Criterio} & \textbf{Resultado} & \textbf{Cumple} & \textbf{Lectura} \\
     \midrule
-    Supera al punto de referencia inicial & $D^2$ frente a la tasa global de 0,502 en la prueba & Sí & El contexto de vecindad explica la mitad de lo que la población sola no explica \\
+    Supera al punto de referencia inicial & MR frente a la tasa global de 0,502 en la prueba & Sí & El contexto de vecindad explica la mitad de lo que la población sola no explica \\
     Ordena bien las zonas & Spearman de 0,88 en la prueba & Sí & Útil para priorizar, que es un uso relativo \\
-    Está calibrada & 0,977 en validación; 0,597 en la prueba & Parcial & Subestima los polos de actividad; no usar lo esperado como volumen absoluto \\
+    Está calibrada & 0,977 en validación; 0,597 en la prueba & No & Subestima el volumen en los polos de actividad; lo esperado sirve para ordenar zonas, no como volumen absoluto \\
     Es estable & Jaccard de 1,0 y 0,818 ante los datos; de 0,03 a 0,33 ante la técnica & Parcial & Robusta a los datos, sensible a la técnica \\
     Es accionable & De 1.381 zonas a una lista de 20 & Sí & Reduce el trabajo de decisión a una revisión en terreno acotada \\
     \bottomrule

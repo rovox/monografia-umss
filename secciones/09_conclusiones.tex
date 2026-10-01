@@ -16,7 +16,7 @@
 \label{sec:conclusion-general}
 
 El objetivo general (sección~\ref{sec:objetivo-general}) era estimar el número esperado de
-consultas de ruta de Trufi App por zona hexagonal H3 en el eje metropolitano de Cochabamba,
+consultas de ruta de ``Trufi App'' por zona hexagonal H3 en el eje metropolitano de Cochabamba,
 a partir de la población residente y la localización de cada zona, y contrastar la
 diferencia entre lo observado y lo esperado con la cobertura de la red mapeada, para dar a
 Trufi Association una referencia cuantitativa que oriente la priorización del mapeo. El
@@ -26,7 +26,8 @@ sección~\ref{sec:limitaciones}.
 La técnica seleccionada, el suavizado por vecindad H3 (B3), multiplica la población de cada
 zona por la tasa de consultas de sus vecinas de entrenamiento. En zonas que nunca vio, redujo
 la devianza de Poisson de 2.183,8, la de una tasa única para toda el área, a 1.086,5; es
-decir, un $D^2$ de 0,502 frente a la tasa global (sección~\ref{sec:resultados-modelo}).
+decir, una mejora relativa (MR) de 0,502 frente a la tasa global
+(sección~\ref{sec:resultados-modelo}).
 Esto significa que la información de vecindad explica la mitad de lo que la población sola
 no explica. Con esa estimación se calculó la brecha de cada zona y se derivó una lista de
 veinte zonas para revisión en terreno.
@@ -63,14 +64,16 @@ A continuación se presentan las conclusiones correspondientes a cada objetivo e
 
   \item [OE3.] \textbf{Evaluar la técnica y analizar la brecha.} Se cumple. En la prueba,
         evaluada una sola vez sobre 352 zonas, B3 obtuvo una devianza de 1.086,5, un $D^2$ de
-        0,458 frente a la media y de 0,502 frente a la tasa global, y una correlación de
+        0,458 frente a la media, una mejora relativa (MR) de 0,502 frente a la tasa global y una correlación de
         Spearman de 0,88 entre observado y esperado (sección~\ref{sec:resultados-modelo}).
         Ordena bien las zonas, pero subestima el volumen total (calibración de 0,597),
         sobre todo en los polos de actividad (sección~\ref{sec:analisis-errores}). La brecha
         deja 923 de las 1.381 zonas por debajo de lo esperado, y 457 con una brecha menor que
         $-2$. Las zonas sin trazado GTFS a 500~m o menos tienen una brecha mediana más
         negativa ($-0{,}898$ frente a $-0{,}342$), pero con un tamaño de efecto despreciable
-        ($\delta$ de Cliff de $-0{,}058$). La lista es estable ante el hueco temporal
+        ($\delta$ de Cliff de $-0{,}058$), que en parte puede deberse al propio método, porque
+        B3 toma lo esperado de vecinas igualmente desatendidas (sección~\ref{sec:limitaciones}),
+        y no prueba que la cobertura no influya en las consultas. La lista es estable ante el hueco temporal
         (Jaccard de 1,0) y ante una población mínima mayor (0,818), pero depende de la
         técnica de estimación (sección~\ref{sec:interpretacion-resultados}).
 
@@ -97,6 +100,18 @@ Las limitaciones declaradas de antemano en el capítulo~\ref{cap:alcance} se sos
 completan con las que emergieron durante el desarrollo:
 
 \begin{itemize}
+  \item \textbf{El método absorbe parte de la brecha.} La técnica elegida estima lo esperado
+        de cada zona a partir de las consultas observadas en sus vecinas. Si una zona y sus
+        vecinas carecen de rutas mapeadas, todas consultan poco y el esperado resultante
+        también es bajo, de modo que la brecha tiende a cero aunque exista una necesidad no
+        atendida. Por ello, la escasa diferencia entre zonas con y sin cobertura ($\delta$ de
+        Cliff de $-0{,}058$) puede deberse en parte al propio método, y no debe leerse como
+        evidencia de que la cobertura no influye en las consultas. La técnica M1, que solo
+        emplea la población (de la zona y de su primer anillo de vecinas) y la distancia al
+        centro, sin las consultas de las vecinas, no tiene esta limitación y produce una lista
+        distinta (Jaccard de 0,33 en zonas sin cobertura,
+        tabla~\ref{tab:sensibilidad}), lo que refuerza la recomendación de contrastar ambas
+        listas en terreno (R2).
   \item Una consulta es una búsqueda en la aplicación y no un viaje. La demanda hereda el
         sesgo de adopción: zonas con menos usuarios de Trufi generan menos consultas aunque
         tengan mayor necesidad de transporte. El identificador de usuario es de nivel
@@ -167,7 +182,7 @@ identificadas; ninguna es genérica.
   \item [R7.] \textbf{Tratar las zonas de acción \emph{revisar}} (brecha negativa con
         trazado cercano) como candidatas a actualizar rutas ya mapeadas, y no como zonas
         sin información.
-  \item [R8.] \textbf{Ampliar el registro con las exportaciones pendientes de Trufi App} y
+  \item [R8.] \textbf{Ampliar el registro con las exportaciones pendientes de ``Trufi App''} y
         confirmar con su equipo técnico la causa del hueco de siete semanas y del cambio de
         esquema y codificación de los seis archivos posteriores
         (sección~\ref{sec:cobertura-temporal}). El registro disponible es parcial; con las
@@ -176,9 +191,12 @@ identificadas; ninguna es genérica.
         tasa, un orquestador para las reejecuciones periódicas en vez de la ejecución manual
         de notebooks, y pruebas automatizadas de regresión sobre las métricas del modelo
         (sección~\ref{sec:alcance-despliegue}).
-  \item [R10.] \textbf{Completar el análisis de sensibilidad} con la edición 2022 de Kontur
-        Population, cuando esté disponible en \texttt{data/raw/}, y con la resolución H3~7,
-        agregando la población de las celdas hijas. La resolución~9 no es viable mientras
+  \item [R10.] \textbf{Completar el análisis de sensibilidad y el diagnóstico espacial} con la
+        edición 2022 de Kontur Population, cuando esté disponible en \texttt{data/raw/}, y con
+        la resolución H3~7, agregando la población de las celdas hijas; calcular el $I$ de
+        Moran y los indicadores LISA sobre los residuos (sección~\ref{subsec:residuos}), y
+        desagregar las métricas por anillo de distancia al centro, A1 a A4
+        (sección~\ref{subsec:evaluacion-desagregada}). La resolución~9 no es viable mientras
         la población provenga de Kontur en resolución~8
         (sección~\ref{sec:interpretacion-resultados}).
 \end{enumerate}

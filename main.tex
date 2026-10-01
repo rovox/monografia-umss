@@ -1,7 +1,8 @@
 % ============================================================
 %  MONOGRAFÍA — UNIVERSIDAD MAYOR DE SAN SIMÓN
 %  Facultad de Ciencias y Tecnología — Dirección de Posgrado
-%  Diplomado en Ciencia de Datos
+%  Proyecto de grado — Licenciatura en Ingeniería Informática
+%  (modalidad Doble Titulación)
 %  ------------------------------------------------------------
 %  COMPILACIÓN (IMPORTANTE):
 %     lualatex main.tex      <- recomendado
@@ -10,7 +11,7 @@
 %  (XeLaTeX también funciona: xelatex main.tex, dos veces.)
 %
 %  NO usar pdflatex: este documento carga fuentes del sistema
-%  (Arial / Garamond) vía fontspec, lo cual pdflatex no soporta.
+%  (Arimo / EB Garamond) vía fontspec, lo cual pdflatex no soporta.
 %  Ver README.md para el detalle.
 % ============================================================
 
@@ -25,7 +26,7 @@
 \hypersetup{
   pdftitle={\tituloMonografiaPlano},
   pdfauthor={\nombrePostulante},
-  pdfsubject={Monografía — Diplomado en \nombreDiplomado},
+  pdfsubject={Proyecto de grado — Licenciatura en \nombreLicenciatura, modalidad \modalidadTitulacion},
   pdfkeywords={demanda esperada, datos de conteo, validación cruzada espacial, paratránsito, Trufi App, H3, Kontur Population, CRISP-DM},
   pdflang={es-BO}
 }
@@ -119,7 +120,8 @@
 \ifnumeracionContinua
   \setcounter{page}{\value{pagPreliminar}}
 \fi
-\setSpacing{1.9034}   % red de seguridad: reafirma el interlineado doble del
+\estiloCuerpo         % encabezado corrido y pie completos desde aquí
+\interlineadoCuerpo   % red de seguridad: reafirma el interlineado 1,2 del
                       % cuerpo por si algún preliminar cambió \baselineskip
                       % sin agruparlo (ver secciones/01_preliminares.tex)
 

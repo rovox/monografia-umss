@@ -58,13 +58,15 @@
     (M1), GLM binomial negativa (M2) y \textit{gradient boosting} con pérdida de Poisson
     (M3). La letra M viene de \textit{modelo}.
   \item[MAE] Error absoluto medio.
+  \item[MR] Mejora relativa frente al modelo de referencia (tasa global, B0):
+    $1 - D_{\mathrm{modelo}} / D_{\mathrm{referencia}}$, fracción de la devianza de B0 que
+    reduce una técnica.
   \item[Offset] Término del modelo con coeficiente fijado en 1; en este trabajo,
     $\log(\text{población})$.
   \item[Paratránsito] Transporte público operado por sindicatos y cooperativas con rutas
     flexibles y sin horarios fijos.
   \item[Regla de un error estándar] Criterio de selección: se elige la técnica más simple
     cuya devianza media no supera la mejor devianza media más un error estándar de esta.
-  \item[RMSE] Raíz del error cuadrático medio.
   \item[Sobredispersión] Condición en la que la varianza de un conteo supera a su media.
   \item[Spearman, correlación de] Correlación basada en rangos entre dos variables u
     ordenaciones.

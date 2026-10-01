@@ -201,7 +201,6 @@ las resoluciones 0 a 6 y se extrapolaron para las resoluciones más finas.
     6 & 36,1291 & 3,7245 & 14\,117\,882 & Macrozona (bloques de validación) \\
     7 & 5,1613 & 1,4065 & 98\,825\,162 & Análisis de sensibilidad (escala más gruesa) \\
     8 & 0,7373 & 0,5314 & 691\,776\,122 & Zona (unidad de análisis) \\
-    9 & 0,1053 & 0,2008 & 4\,842\,432\,842 & Análisis de sensibilidad (escala más fina) \\
     \bottomrule
   \end{tabularx}
   \fuente{Elaboración propia a partir de \textcite{h3-restable}, versión 4.x.}
@@ -239,8 +238,9 @@ En el proyecto, la adopción de una grilla H3 regular y fijada de antemano reduc
 componente arbitrario de la zonificación, porque las celdas no se trazan en función de los
 datos, pero no elimina el efecto de escala. Por ello, se recomienda, como extensión, un
 análisis de sensibilidad a la resolución que repita el procedimiento con celdas de
-resolución~7 (más gruesas) y~9 (más finas), y que examine si la ordenación de zonas
-prioritarias y las conclusiones sustantivas se mantienen al cambiar de escala. Ese análisis
+resolución~7, más gruesas, y que examine si la ordenación de zonas prioritarias y las
+conclusiones sustantivas se mantienen al cambiar de escala. La resolución~9 no es viable,
+porque Kontur se publica en resolución~8. Ese análisis
 no se ejecutó en este ciclo (sección~\ref{sec:interpretacion-resultados}). Este tratamiento no resuelve el MAUP, que carece de
 solución general, pero permite informar con transparencia en qué medida las conclusiones
 dependen de la resolución elegida.

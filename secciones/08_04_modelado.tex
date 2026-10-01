@@ -428,8 +428,8 @@ ayudan a interpretar el resultado:
     \bottomrule
   \end{tabular}
   \fuente{Elaboración propia, a partir de \var{resultados/04_modelado/cv_resumen.csv}. DE:
-  desviación estándar entre los cinco pliegues. Calibración: fuera de pliegue, sobre las
-  1.029 zonas.}
+  desviación estándar entre los cinco pliegues. Spearman medio: media de los cinco valores
+  por pliegue. Calibración: fuera de pliegue, sobre las 1.029 zonas.}
 \end{table}
 
 \begin{figure}[H]
@@ -547,7 +547,10 @@ previsto:
 \begin{itemize}
   \item su calibración fuera de pliegue es de 0,977, frente a 0,807 de M1, de modo que
         reproduce mejor el volumen total;
-  \item ordena las zonas algo mejor (Spearman fuera de pliegue de 0,802 frente a 0,760).
+  \item ordena las zonas algo mejor: calculado sobre todas las predicciones fuera de pliegue
+        juntas, el Spearman es de 0,802 frente a 0,760. Estas cifras difieren de las de la
+        tabla~\ref{tab:cv-resumen} (0,799 y 0,772), que son la media de los cinco valores
+        calculados pliegue a pliegue.
 \end{itemize}
 
 La figura~\ref{fig:calibracion-oof} compara las predicciones fuera de pliegue de ambas

@@ -6,13 +6,14 @@
 %   - Línea 2: FACULTAD DE CIENCIAS Y TECNOLOGÍA (Arial 14, neg.)
 %   - Línea 3: DIRECCIÓN DE POSGRADO           (Arial 12, neg.)
 %     ...las tres en INTERLINEADO SIMPLE.
-%   - Logos UMSS y Facultad a la IZQUIERDA, lado a lado;
-%     logo de Posgrado a la DERECHA, alineado con el borde
-%     superior de la primera línea.
+%   - Logos UMSS y Facultad a la IZQUIERDA, lado a lado (el de la
+%     Facultad, más pequeño, justo a la derecha del de la UMSS);
+%     logo de Posgrado pegado al borde DERECHO, con la misma
+%     altura que el logo de la UMSS.
 %   - TÍTULO: mayúsculas, Arial 20 negrita, centrado, en
 %     pirámide invertida mediante saltos de línea explícitos
 %     configurables en configuracion.tex (sin reducir el tamaño).
-%   - Leyenda "MONOGRAFÍA PRESENTADA...": 3 líneas por debajo
+%   - Leyenda "PROYECTO PRESENTADO...": 3 líneas por debajo
 %     del título, a 2,5 cm del margen izquierdo, con
 %     justificación completa, Arial 12 negrita, mayúsculas.
 %   - POSTULANTE: 5 líneas por debajo de la leyenda; "POSTULANTE"
@@ -30,20 +31,22 @@
 \begin{titlingpage}
 \thispagestyle{empty}     % sin folio visible (pero la hoja se cuenta)
 \interlineadoSimple       % toda la carátula va en interlineado simple
+\arialfont               % carátula en sans-serif (Arimo), como exige la guía
 
 % ---------- Bloque superior: logos + encabezado institucional
 % Una fila de tres cajas superiores (\raisebox/[t]) para que los
 % logos queden alineados con la PARTE SUPERIOR de la primera
 % línea de texto, tal como pide la guía.
 \noindent
-\begin{minipage}[t]{0.21\textwidth}
+\begin{minipage}[t]{0.16\textwidth}
   \vspace{0pt}
-  \includegraphics[height=1.5cm]{imagenes/logo_umss.png}%
+  % \mbox: ambos logos en un solo renglón, alineados por su base.
+  \mbox{\includegraphics[height=1.5cm]{imagenes/logo_umss.png}%
   \hspace{1mm}%
-  \includegraphics[height=1.5cm]{imagenes/logo_facultad.png}
+  \includegraphics[height=0.8cm]{imagenes/logo_facultad.png}}
 \end{minipage}%
 \hfill
-\begin{minipage}[t]{0.65\textwidth}
+\begin{minipage}[t]{0.70\textwidth}
   \vspace{0pt}
   \centering
   {\fontsize{16}{18}\selectfont\bfseries UNIVERSIDAD MAYOR DE SAN SIMÓN\par}
@@ -51,7 +54,7 @@
   {\fontsize{12}{14}\selectfont\bfseries DIRECCIÓN DE POSGRADO\par}
 \end{minipage}%
 \hfill
-\begin{minipage}[t]{0.13\textwidth}
+\begin{minipage}[t]{0.115\textwidth}
   \vspace{0pt}
   \raggedleft
   \includegraphics[height=1.5cm]{imagenes/logo_posgrado.png}
@@ -78,8 +81,10 @@
 \begin{minipage}{\dimexpr\textwidth-2.5cm\relax}
   \setlength{\parindent}{0pt}
   \fontsize{12}{16}\selectfont\bfseries
-  MONOGRAFÍA PRESENTADA PARA OBTENER EL CERTIFICADO
-  DE DIPLOMADO EN \MakeUppercase{\nombreDiplomado}~-- \nombreVersion\ VERSIÓN\par
+  \hyphenpenalty=10000\exhyphenpenalty=10000  % sin cortar "LICENCIATURA"
+  PROYECTO PRESENTADO PARA OBTENER EL GRADO DE LICENCIATURA
+  EN \MakeUppercase{\nombreLicenciatura}\par
+  MODALIDAD \MakeUppercase{\modalidadTitulacion}\par
 \end{minipage}\par
 
 \vspace{5\baselineskip}   % "cinco líneas por debajo"

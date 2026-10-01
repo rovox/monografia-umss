@@ -147,12 +147,12 @@ El orden de los capítulos sigue el índice modelo del Anexo A de la guía.
 
 ### Paso 1 — Tus datos
 
-En `main.tex`, edita únicamente estas cinco líneas:
+En `configuracion.tex`, edita únicamente estas líneas:
 
 ```latex
 \newcommand{\tituloMonografia}{Título de la monografía}
-\newcommand{\nombreDiplomado}{Ciencia de Datos}
-\newcommand{\nombreVersion}{4ta.}
+\newcommand{\nombreLicenciatura}{Ingeniería Informática}
+\newcommand{\modalidadTitulacion}{Doble Titulación}
 \newcommand{\nombrePostulante}{Nombre Completo del Postulante}
 \newcommand{\anioMonografia}{2026}
 ```
@@ -192,11 +192,11 @@ Escríbelo con `\\` donde quieras el corte, dejando la primera línea más larga
 
 | Requisito | Regla | Implementación |
 |---|---|---|
-| Arial 12 en el cuerpo | Instr. 3 | `\setmainfont` + opción de clase `12pt` |
+| Garamond 11,5 en el cuerpo; títulos en Arimo (clon de Arial) | Revisión | `\setmainfont` (EB Garamond por archivo) + clase `11pt` con `\normalsize` a 11,5 |
 | Títulos Arial 14 negrilla | Instr. 3 | Estilo de capítulo `umss` |
 | Garamond 11.5, interlineado 1.2 en Resumen | Preliminar | `\garamondfont` + `\interlineadoResumen` |
 | Márgenes 3 / 2,5 / 2,5 / 2,5 cm | Instr. 3 | `geometry` |
-| Interlineado doble | Instr. 3 | `\DoubleSpacing*` de memoir |
+| Interlineado 1,2 | Revisión | `\interlineadoCuerpo` (`\setSpacing{1.2}`) |
 | Folio inferior centrado | 3.1 | `\pagestyle{plain}` |
 | Preliminares en romanos i, ii, iii | 3.1 | `\frontmatter` |
 | Cuerpo en arábigos desde 1 | 3.1 | `\mainmatter` |

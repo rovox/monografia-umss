@@ -14,7 +14,21 @@
 % control fino de índices (TOC/LOF/LOT) y estilos de "caption",
 % todo sin necesitar media docena de paquetes que compitan entre sí
 % (evita choques típicos de report+tocloft+titlesec+fancyhdr).
-\documentclass[12pt,oneside,letterpaper]{memoir}
+\documentclass[11pt,oneside,letterpaper]{memoir}
+% Cuerpo en 11,5 pt: memoir solo ofrece tamaños enteros, así que se
+% parte de 11pt (que fija \small, \footnotesize, etc.) y se redefine
+% únicamente \normalsize a 11,5/13,8 pt, con los mismos espacios de
+% ecuaciones que size11.
+\makeatletter
+\renewcommand*{\normalsize}{%
+  \@setfontsize\normalsize{11.5}{13.8}%
+  \abovedisplayskip 11\p@ \@plus3\p@ \@minus6\p@
+  \abovedisplayshortskip \z@ \@plus3\p@
+  \belowdisplayshortskip 6.5\p@ \@plus3.5\p@ \@minus3\p@
+  \belowdisplayskip \abovedisplayskip
+  \let\@listi\@listI}
+\normalsize
+\makeatother
 
 % ---------- 2. IDIOMA Y CODIFICACIÓN ------------------------
 % Con LuaLaTeX/XeLaTeX el motor ya trabaja en UTF-8 nativo;
@@ -51,39 +65,55 @@
 \usepackage{fontspec}
 \usepackage{microtype}   % micro-tipografía: protrusion, expansion, kerning fino
 
-% --- Fuente general del cuerpo: Arial (Instrucción 3) -------
-% Cadena de respaldo EXPLÍCITA y verificada (\IfFontExistsTF
-% consulta fontconfig de forma estricta, sin sustituciones
-% "difusas"): si "Arial" está instalada de verdad (típico en
-% Windows/macOS y en Overleaf con fuentes del sistema activas)
-% se usa tal cual; si no, se usa Liberation Sans -- el clon libre
-% y métricamente IDÉNTICO a Arial (mismos anchos de carácter,
-% mismo interlineado, 4 variantes Regular/Bold/Italic/
-% BoldItalic) -- de modo que el documento SIEMPRE compila y
-% pagina igual en cualquier máquina, sin intervención manual.
-\IfFontExistsTF{Arial}
-  {\def\arialnombre{Arial}\def\arialitalica{Arial Italic}}
-  {\def\arialnombre{Liberation Sans}\def\arialitalica{Liberation Sans Italic}}
-\setmainfont{\arialnombre}
-% Alias interno: todo el documento (títulos, índices, captions)
-% referencia \arialfont, que simplemente es la fuente principal
-% ya cargada arriba. Si se quisiera una fuente de títulos
-% distinta a la del cuerpo, basta con redefinir SOLO esta línea.
-\newcommand{\arialfont}{\normalfont}
-
-% --- Fuente del Resumen: Garamond, 11.5pt (Sección preliminar)
-% Mismo criterio de respaldo en cascada: Garamond real (Windows/
-% Overleaf) -> EB Garamond (clon libre estándar académico; viene
-% con TeX Live en el paquete "ebgaramond"). Sin respaldo a Latin
-% Modern: si faltara EB Garamond, mejor un error claro que un PDF
-% con una fuente fuera de la guía.
+% --- Fuente del cuerpo: Garamond 11,5 pt ---------------------
+% El cuerpo, las tablas, los rótulos y las notas van en Garamond.
+% Se carga EB Garamond instalada en el sistema (paquete AUR
+% ebgaramond-otf) POR NOMBRE DE ARCHIVO, no por nombre de familia:
+% así no depende del índice de luaotfload, que era la causa de los
+% fallos al instalar fuentes nuevas. Cascada de respaldo: Garamond
+% real (Windows/Overleaf) -> EB Garamond por archivo -> por nombre.
+% \opcionesCuerpo guarda la misma selección para la matemática.
+% \mathRecta/\mathItalica: la misma fuente, redonda y cursiva, para
+% la matemática (\setmathfont no acepta UprightFont/ItalicFont).
 \IfFontExistsTF{Garamond}
-  {\newfontfamily\garamondfont{Garamond}}
-  {\newfontfamily\garamondfont{EB Garamond}}
+  {\def\fuenteCuerpo{Garamond}\def\opcionesCuerpo{}%
+   \def\mathRecta{Garamond}\def\mathItalica{Garamond Italic}\def\opcionesMath{}}
+  {\IfFileExists{/usr/share/fonts/EBGaramond12-otf/EBGaramond-Regular.otf}
+    {\def\fuenteCuerpo{EBGaramond}%
+     \def\opcionesCuerpo{Path=/usr/share/fonts/EBGaramond12-otf/,
+       Extension=.otf, UprightFont=*-Regular, BoldFont=*-Bold,
+       ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic}%
+     \def\mathRecta{EBGaramond-Regular}\def\mathItalica{EBGaramond-Italic}%
+     \def\opcionesMath{Path=/usr/share/fonts/EBGaramond12-otf/, Extension=.otf,}}
+    {\def\fuenteCuerpo{EB Garamond}\def\opcionesCuerpo{}%
+     \def\mathRecta{EB Garamond}\def\mathItalica{EB Garamond Italic}\def\opcionesMath{}}}
+\expandafter\setmainfont\expandafter{\fuenteCuerpo}[Numbers=Lining,\opcionesCuerpo]
+% Alias heredado: el Resumen y el glosario usan \garamondfont.
+\newcommand{\garamondfont}{\normalfont}
+
+% --- Fuente de títulos: Arimo (clon métrico de Arial) -------
+% Títulos, índices, encabezado/pie y carátula en sans-serif, como
+% pide la guía. Arimo tiene los mismos anchos que Arial. Se usa la
+% versión Nerd Font del sistema (ttf-arimo-nerd), también por nombre
+% de archivo; cascada: Arimo Nerd Font -> Arimo -> Arial -> Liberation Sans.
+\IfFileExists{/usr/share/fonts/TTF/ArimoNerdFont-Regular.ttf}
+  {\newfontfamily\arialfont{ArimoNerdFont}[
+     Path           = /usr/share/fonts/TTF/,
+     Extension      = .ttf,
+     UprightFont    = *-Regular,
+     BoldFont       = *-Bold,
+     ItalicFont     = *-Italic,
+     BoldItalicFont = *-BoldItalic,
+     Ligatures      = TeX]}
+  {\IfFontExistsTF{Arimo}
+    {\newfontfamily\arialfont{Arimo}[Ligatures=TeX]}
+    {\IfFontExistsTF{Arial}
+      {\newfontfamily\arialfont{Arial}[Ligatures=TeX]}
+      {\newfontfamily\arialfont{Liberation Sans}[Ligatures=TeX]}}}
 
 % --- Monoespaciada (variables, código): IBM Plex Mono -------
 % Libre (OFL) y empaquetada en fuentes/ para que el PDF sea igual
-% en local, Overleaf y CI. Se escala a la altura de x de Arial
+% en local, Overleaf y CI. Se escala a la altura de x de Garamond
 % para que "origin_latitude" no parezca más grande que el texto.
 \setmonofont{IBMPlexMono}[
   Path           = fuentes/,
@@ -94,69 +124,99 @@
   BoldItalicFont = *-BoldItalic,
   Scale          = MatchLowercase]
 
-% --- Matemática en Arial ------------------------------------
-% Las pocas expresiones del texto (p = 0,033; ρ; α ∈ {…}; 10⁻⁹)
-% salían en Computer Modern. unicode-math necesita una fuente
-% matemática de base (solo aporta parámetros de composición: no
-% se incrusta ningún glifo suyo) y cada rango usado se toma de
-% Arial. Arial no tiene "∈": se dibuja con pict2e (vectorial).
+% --- Matemática en Garamond ---------------------------------
+% Las expresiones del texto (p = 0,033; ρ; D²; 10⁻⁹) toman cifras
+% y letras latinas y griegas de la fuente del cuerpo; los operadores
+% y símbolos (∈, ≤, →, Σ) salen de Latin Modern Math, cuyo trazo
+% serif combina con Garamond.
 \usepackage{amsmath}
 \usepackage[math-style=TeX]{unicode-math}
 \setmathfont{Latin Modern Math}
-\setmathfont{\arialnombre}[range={up/{num,latin,Latin,greek,Greek},
-  "002B,"003D,"003C,"003E,"00D7,"2192,"2194,"2264,"2265,"002C,"002E,
-  "003B,"0025,"2032,"2013,"007B,"007D,"0028,"0029,"005B,"005D,"002F}]
-\setmathfont{\arialnombre}[range={\minus,"2212,"002D}]
-\setmathfont{\arialitalica}[range={it/{latin,Latin,greek,Greek}->up}]
-\usepackage{pict2e}
-\newcommand{\pertenece}{\mathrel{\setlength{\unitlength}{0.1em}%
-  \begin{picture}(6.2,6)(-0.3,-0.4)\linethickness{0.075em}%
-    \put(3.2,2.85){\arc[90,270]{2.85}}%
-    \polyline(3.2,5.7)(6,5.7)\polyline(3.2,0)(6,0)\polyline(0.35,2.85)(5.6,2.85)%
-  \end{picture}}}
-\AtBeginDocument{\let\in\pertenece}
+\edef\x{\noexpand\setmathfont{\mathRecta}[\opcionesMath
+  range={up/{num,latin,Latin,greek,Greek}}]}\x
+\edef\x{\noexpand\setmathfont{\mathItalica}[\opcionesMath
+  range={it/{latin,Latin,greek,Greek}->up}]}\x
 \usepackage{icomma}  % "0,5" en modo matemático sin espacio tras la coma
 
 % ---------- 5. INTERLINEADO ---------------------------------
-% "Doble" en la guía = doble de Word con Arial 12 = 27,6 pt entre
-% líneas (el modelo mide 27,6). memoir 12pt tiene \baselineskip
-% de 14,5 pt, así que el factor exacto es 27,6/14,5 = 1,9034.
+% Cuerpo en Garamond 11,5 pt con interlineado múltiple 1,2, el mismo
+% del Resumen: \normalsize tiene \baselineskip de 13,8 pt (1,2 × 11,5)
+% y \setSpacing{1.2} lo lleva a unos 16,6 pt entre líneas.
 % \setSpacing (sin asterisco) deja en sencillo flotantes (tablas,
-% figuras, captions, "Nota.") y notas al pie, como exige la guía.
+% figuras, captions, "Nota.") y notas al pie.
 % NOTA TÉCNICA: \setSpacing solo toma efecto al final de un cambio
 % de tamaño de fuente (reinvoca \@currsize), y en el preámbulo esa
 % macro todavía no está ligada a \normalsize. Por eso el interlineado
-% doble se activa en \AtBeginDocument, ya con la fuente cargada.
-\AtBeginDocument{\setSpacing{1.9034}}
+% del cuerpo se activa en \AtBeginDocument, ya con la fuente cargada.
+\newcommand{\interlineadoCuerpo}{\setSpacing{1.2}}  % cuerpo: 1,2
+\AtBeginDocument{\interlineadoCuerpo}
 \newcommand{\interlineadoResumen}{\setSpacing{1.2}} % Resumen: 1.2 (Sección preliminar)
 \newcommand{\interlineadoSimple}{\setSpacing{1}}    % carátula, bibliografía interna, notas
 
-% ---------- 6. NUMERACION DE PAGINAS ------------------------
+% ---------- 6. NUMERACIÓN, ENCABEZADO Y PIE DE PÁGINA -------
 % memoir define \frontmatter (activa romanos i,ii,iii...) y
 % \mainmatter (reinicia en arábigo 1,2,3...) automáticamente:
 % así se cumple 3.1 sin tocar contadores a mano.
 % La POSICIÓN del folio (guía §3.1: abajo y centrada) la fija
-% el interruptor "folioDerecha" del panel de control; con
-% fancyhdr se cambia en una línea en vez de reescribir estilos.
+% el interruptor "folioDerecha" del panel de control.
+% Tres estilos:
+%   preliminar  carátula a glosario: solo el folio.
+%   cuerpo      desde \mainmatter: encabezado corrido (capítulo a la
+%               izquierda, sección a la derecha, filete fino) y pie con
+%               filete, autor, folio e institución/año.
+%   plain       primera hoja de cada capítulo: sin encabezado (el título
+%               del capítulo ya está en la página), mismo pie que "cuerpo".
+% El encabezado y el pie van en Arimo 8-9 pt y gris, para que no
+% compitan con el texto; viven dentro de los márgenes (sección 3).
 \usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headrulewidth}{0pt}   % Fase 5 añade el filete del encabezado
-\renewcommand{\footrulewidth}{0pt}
-\fancyfoot[C]{\thepage}
-\iffolioDerecha
-  \fancyfoot[C]{}\fancyfoot[R]{\thepage}
-\fi
-% La primera página de cada capítulo (memoir le aplica el
-% estilo "plain") lleva el mismo folio y ningún encabezado.
+\usepackage[breakwords]{truncate}  % recorta títulos largos con "…"
+\newcommand{\estiloMarcas}{\arialfont\footnotesize\color{gray!80!black}}
+\newcommand{\estiloPie}{\arialfont\fontsize{8}{10}\selectfont\color{gray!80!black}}
+\newcommand{\folio}{{\arialfont\normalsize\thepage}}
+% Marcas: "7. Desarrollo" y "7.5 Evaluación y Resultados", tal como
+% se escribieron (sin forzar mayúsculas). Al abrir un capítulo la
+% marca de sección se vacía hasta la primera \section.
+\newcommand{\pieComun}{%
+  \fancyfoot[L]{\estiloPie\nombrePostulante}%
+  \fancyfoot[C]{\folio}%
+  \fancyfoot[R]{\estiloPie UMSS\,·\,\anioMonografia}%
+  \iffolioDerecha
+    \fancyfoot[C]{}%
+    \fancyfoot[R]{\estiloPie UMSS\,·\,\anioMonografia\quad\folio}%
+  \fi
+  \renewcommand{\footrulewidth}{0.3pt}}
+\fancypagestyle{cuerpo}{%
+  \fancyhf{}%
+  \fancyhead[L]{\estiloMarcas\truncate{0.49\textwidth}{\leftmark}}%
+  \fancyhead[R]{\estiloMarcas\truncate{0.49\textwidth}{\rightmark}}%
+  \renewcommand{\headrulewidth}{0.4pt}%
+  \pieComun}
 \fancypagestyle{plain}{%
   \fancyhf{}%
-  \fancyfoot[C]{\thepage}%
-  \iffolioDerecha\fancyfoot[C]{}\fancyfoot[R]{\thepage}\fi
+  \renewcommand{\headrulewidth}{0pt}%
+  \pieComun}
+\fancypagestyle{preliminar}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\folio}%
+  \iffolioDerecha\fancyfoot[C]{}\fancyfoot[R]{\folio}\fi
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0pt}}
-\aliaspagestyle{chapter}{plain}
-\aliaspagestyle{part}{plain}
+% En los preliminares también las aperturas (Resumen, Índice...) van
+% solo con folio; main.tex cambia a "cuerpo"/"plain" tras \mainmatter
+% con \estiloCuerpo.
+\pagestyle{preliminar}
+\aliaspagestyle{chapter}{preliminar}
+\aliaspagestyle{part}{preliminar}
+\newcommand{\estiloCuerpo}{%
+  \pagestyle{cuerpo}%
+  \aliaspagestyle{chapter}{plain}%
+  \aliaspagestyle{part}{plain}}
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand{\chaptermark}[1]{%
+    \if@mainmatter\markboth{\thechapter.\ #1}{}\else\markboth{#1}{}\fi}%
+  \renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}}
+\makeatother
 % Copia del número de la última hoja preliminar: permite que el
 % interruptor "numeracionContinua" reanude la serie arábica
 % donde terminó el índice de figuras, en vez de reiniciarla.
@@ -205,11 +265,10 @@
 \setaftersecskip{1.3ex plus .2ex}
 \setsubsecheadstyle{\arialfont\fontsize{12}{14}\selectfont\bfseries\itshape}
 
-% Cuerpo general en Arial 12: ya queda cubierto por la opción
-% de clase [12pt] (arriba) + \DoubleSpacing* (sección 5). No se
-% redefine \normalsize a mano: eso rompería las proporciones
-% internas de memoir para encabezados/pies de página y otros
-% tamaños relativos (\small, \footnotesize, etc.).
+% Cuerpo general en Garamond 11,5: opción de clase [11pt] más la
+% redefinición de \normalsize (sección 1) e interlineado 1,2
+% (sección 5). Los demás tamaños (\small, \footnotesize...) son
+% los de memoir 11pt.
 
 % ---------- 8. INDICE GENERAL / LOF / LOT (3.4) --------------
 % Reglas exigidas: sin negrillas, doble espacio entre entradas
@@ -308,7 +367,7 @@
 }
 \newcommand{\cierreFuenterIndice}{%
   \par\vspace{0pt}%  cierre silencioso del grupo de sencillo
-  \setSpacing{1.9034}%  restaura doble
+  \interlineadoCuerpo%  restaura el del cuerpo
 }
 % memoir ofrece ganchos que se ejecutan justo DESPUÉS del título
 % del índice y ANTES/DESPUÉS de las entradas: es el punto exacto

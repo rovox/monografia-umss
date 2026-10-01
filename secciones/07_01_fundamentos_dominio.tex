@@ -103,12 +103,15 @@ alrededores, lo que sugiere que parte de esas cifras corresponde a conexiones y 
 en Android, cerca de 30\,000 sumando las de iOS \parencite{trufi-20000}, y una publicación
 posterior eleva la cifra a 100\,000 instalaciones en Android y cerca de 25\,000 en iOS, salto
 que atribuye a un video de TikTok de Comteco, una cooperativa de telecomunicaciones de
-Cochabamba \parencite{trufi-100000}. En su versión~5, la aplicación ofrece más de 625 rutas
-mantenidas por voluntarios que mapean en OpenStreetMap, con ruteo sin conexión basado en
-GTFS \parencite{trufi-v5}; la ficha de la aplicación en App Store precisa 626 rutas,
-incluidas las líneas Verde y Roja y la del teleférico \parencite{trufi-appstore}.
+Cochabamba \parencite{trufi-100000}. En su versión~5, la aplicación ofrece rutas mantenidas
+por voluntarios que mapean en OpenStreetMap, con ruteo sin conexión basado en GTFS
+\parencite{trufi-v5}; la ficha de la aplicación en App Store precisa 626 rutas, incluidas las
+líneas Verde y Roja y la del teleférico \parencite{trufi-appstore}. Esa cifra corresponde a
+recorridos y no a líneas: el feed empleado en este trabajo describe 141 líneas y 626
+recorridos, porque una línea puede tener varios recorridos, por ejemplo ida y vuelta
+(sección~\ref{sec:fuentes-datos}).
 
-De lo anterior se desprende que la utilidad de Trufi App en cada lugar depende directamente
+De lo anterior se desprende que la utilidad de ``Trufi App'' en cada lugar depende directamente
 de que las rutas que lo sirven hayan sido mapeadas. Una zona sin rutas cargadas no puede
 producir respuestas útiles para el usuario, lo que puede desalentar su uso y reducir las
 consultas; por ello, el patrón espacial de consultas contiene información sobre el esfuerzo
@@ -152,7 +155,7 @@ intervalos nominales. La tercera, y más relevante, es que el feed representa la
 mapeada y no la oferta real, porque una ruta existente pero no mapeada simplemente no
 aparece. De ello se deriva que el proyecto emplea el trazado (\var{shapes.txt}) como
 representación más fiel de la oferta en un sistema sin paradas fijas, y que interpreta
-cualquier medida de cobertura como cobertura de la oferta conocida por Trufi App, no como
+cualquier medida de cobertura como cobertura de la oferta conocida por ``Trufi App'', no como
 accesibilidad efectiva al transporte.
 
 \subsection{Cobertura y accesibilidad al transporte público: ODS 11.2.1 y umbrales de caminata}
@@ -203,8 +206,7 @@ mapeada, no de accesibilidad efectiva, y su sensibilidad al umbral debe explorar
 \subsection{Datos de consultas de una aplicación de ruteo como señal de demanda de información}
 \label{subsec:consultas-senal}
 
-La variable de interés del proyecto es el número de consultas de ruta registradas por Trufi
-App, cada una caracterizada por un origen, un destino, una marca temporal y un identificador
+La variable de interés del proyecto es el número de consultas de ruta registradas por ``Trufi App'', cada una caracterizada por un origen, un destino, una marca temporal y un identificador
 de instalación. Conviene subrayar que una consulta no es un viaje. Una consulta expresa una
 necesidad de información sobre cómo desplazarse entre dos puntos: un mismo viaje puede
 generar varias consultas (por ejemplo, al comparar alternativas o repetir la búsqueda), y
@@ -235,7 +237,7 @@ teléfonos en las estimaciones de movilidad, y mostraron que las inferencias a n
 poblacional se complican porque la tenencia difiere entre grupos demográficos con movilidad
 distinta. \textcite{blondel2015}, en su revisión de resultados con datos de telefonía
 móvil, subrayan tanto el potencial de estos datos para el análisis urbano como la necesidad
-de tratar sus sesgos de cobertura. En consecuencia, las consultas de Trufi App no pueden
+de tratar sus sesgos de cobertura. En consecuencia, las consultas de ``Trufi App'' no pueden
 interpretarse como medida absoluta de la demanda de transporte, pero sí como señal relativa
 cuyo nivel esperado puede modelarse en función de la población y del contexto territorial.
 
@@ -245,7 +247,7 @@ contexto. En este marco, una zona poblada con cero consultas no es un dato falta
 descartarse, sino una observación informativa, porque su contraste con lo esperado es
 precisamente lo que puede señalar un déficit de cartografía o de adopción. Esta decisión
 diferencia al proyecto del antecedente de \textcite{angulo2024}, monografía de la UMSS que
-abordó la predicción de demanda en Trufi App con la metodología CRISP-DM y que excluyó las
+abordó la predicción de demanda en ``Trufi App'' con la metodología CRISP-DM y que excluyó las
 zonas con datos insuficientes.
 
 \subsection{Población como exposición: Kontur Population y fuentes alternativas}
@@ -338,7 +340,7 @@ mortalidad con ese mismo propósito. Este problema es directamente pertinente pa
 proyecto, porque un conjunto de zonas H3 de resolución~8 incluye inevitablemente zonas de
 población reducida cuyas razones $O/E$ serían engañosamente extremas.
 
-La transposición al problema de Trufi App es natural: se sustituye el caso de enfermedad
+La transposición al problema de ``Trufi App'' es natural: se sustituye el caso de enfermedad
 por la consulta de ruta, la población en riesgo por la población residente de la zona y la
 tasa de referencia por el modelo que estima las consultas esperadas dado el contexto. La
 brecha de cada zona puede expresarse en términos absolutos, $B_i = O_i - E_i$, en términos

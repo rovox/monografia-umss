@@ -15,11 +15,11 @@
 % ============================================================
 
 % ---------- Título de la monografía ------------------------
-% El título se imprime en MAYÚSCULAS, Arial 20 negrita, centrado
+% El título se imprime en MAYÚSCULAS, Arimo (Arial) 20 negrita, centrado
 % y con los saltos de línea ESCRITOS A MANO: la guía no permite
 % reducir el tamaño de la fuente, así que la pirámide invertida
 % se consigue cortando el título en renglones explícitos.
-% El bloque útil mide 16,09 cm; a Arial 20 negrita el renglón más
+% El bloque útil mide 16,09 cm; a Arimo (Arial) 20 negrita el renglón más
 % ancho que puede empezar por "IDENTIFICACIÓN" mide 11,8 cm
 % (la palabra siguiente ya no cabe), de modo que la pirámide
 % necesariamente tiene su base en los renglones 2 y 3 y se
@@ -35,28 +35,24 @@
 % o modo entrega sin recuadros (false). Ver preambulo.tex sección 12.
 \newif\ifborrador
 \borradortrue  % default: muestra recuadros de "Figura pendiente"
-\newcommand{\tituloLineaA}{Estimación del número esperado de}
-\newcommand{\tituloLineaB}{consultas de ruta de Trufi App por}
-\newcommand{\tituloLineaC}{celda H3 en el eje metropolitano}
-\newcommand{\tituloLineaD}{de Cochabamba mediante técnicas}
-\newcommand{\tituloLineaE}{geoespaciales de Ciencia de Datos}
+\newcommand{\tituloLineaA}{Estimación de consultas esperadas}
+\newcommand{\tituloLineaB}{de ``Trufi App'' por zona hexagonal H3}
+\newcommand{\tituloLineaC}{ en el eje metropolitano de Cochabamba}
 \newcommand{\tituloMonografia}{%
   \tituloLineaA\\
   \tituloLineaB\\
-  \tituloLineaC\\
-  \tituloLineaD\\
-  \tituloLineaE}
+  \tituloLineaC}
 % Versión en una sola línea, solo para los metadatos del PDF
 % (\hypersetup no admite saltos de línea).
-\newcommand{\tituloMonografiaPlano}{Estimación del número esperado de consultas de ruta
-  de Trufi App por celda H3 en el eje metropolitano de Cochabamba mediante técnicas
-  geoespaciales de Ciencia de Datos}
+\newcommand{\tituloMonografiaPlano}{Estimación de consultas esperadas de “Trufi App” por zona hexagonal H3 en el eje metropolitano de Cochabamba}
 % Título corto: el del encabezado corrido del cuerpo (Fase 5).
-\newcommand{\tituloCorto}{Demanda esperada de consultas de Trufi App por celda H3}
+\newcommand{\tituloCorto}{Demanda esperada de consultas de ``Trufi App'' por zona H3}
 
-% ---------- Postulante, programa, versión y año --------------
-\newcommand{\nombreDiplomado}{Ciencia de Datos}
-\newcommand{\nombreVersion}{CUARTA}
+% ---------- Postulante, grado, modalidad y año ---------------
+% Leyenda de la carátula: "PROYECTO PRESENTADO PARA OBTENER EL GRADO
+% DE LICENCIATURA EN <\nombreLicenciatura>" / "MODALIDAD <\modalidadTitulacion>".
+\newcommand{\nombreLicenciatura}{Ingeniería Informática}
+\newcommand{\modalidadTitulacion}{Doble Titulación}
 \newcommand{\nombrePostulante}{José Roberto Vargas Orellana}
 \newcommand{\anioMonografia}{2026}
 \newcommand{\ciudadMonografia}{Cochabamba -- Bolivia}

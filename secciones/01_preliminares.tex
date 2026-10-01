@@ -13,10 +13,11 @@
 \vspace*{6cm}
 \begin{flushright}
   \interlineadoResumen
-  \textit{A mi abuela, a toda mi familia y amigos que me enseñaron a no darme
-   por vencido y el valor de la paciencia y la persistencia;  
-   a Fer por el apoyo académico que me brindó durante casi toda la carrera,
-   a las comunidades que me dieron el criterio para poder crecer por mi cuenta.}
+  \textit{A mis abuelas Nieves Vargas y Salusta Montaño \dag, a mi papá Ing. Roberto Vargas Montaño , 
+  a mi mamá Lic. Jacqueline Jhanet Orellana Vargas, a mis hermanos Alexander y Nicol y toda mi familia 
+  y amigos que me enseñaron a no darme por vencido , enfrentar los retos con valores, paciencia y persistencia;
+   a Fernando Quinteros Gutierrez por el apoyo académico y moral que me brindó durante casi toda la vida universitaria en la carrera,
+   y a las comunidades que me dieron el criterio para poder crecer por mi cuenta.}
 \end{flushright}
 \clearpage
 
@@ -27,7 +28,10 @@
 \interlineadoResumen
 Agradezco a mi familia, que me sostiene, impulsa y ayuda sin importar las adversidades.
 Agradezco también a la vida por todas aquellas personas que por azares del destino llegué
-a conocer, con las cuales he pasado inolvidables momentos. Agradezco a los docentes del
+a conocer, con las cuales he pasado inolvidables momentos. 
+A los profesionales del plantel docente de la Universidad Mayor de San Simón, por la transmisión de sus
+ conocimientos, orientación y acompañamiento durante mi formación académica.
+Agradezco a los docentes del
 Diplomado en Ciencia de Datos, a Ismael y al equipo de Trufi Association por facilitar los datos que
 hicieron posible este trabajo.
 \endgroup
@@ -50,15 +54,14 @@ hicieron posible este trabajo.
   \setlength{\parindent}{0pt}
 
   % --- Párrafo 1: introducción / contexto ---------------------
-  El transporte público del eje metropolitano de Cochabamba opera como paratránsito, y Trufi
-  App, mantenida con trabajo voluntario, es una de las pocas fuentes sobre sus rutas. La
+  El transporte público del eje metropolitano de Cochabamba opera como paratránsito, y ``Trufi App'', mantenida con trabajo voluntario, es una de las pocas fuentes sobre sus rutas. La
   aplicación registra cuántas consultas se originan en cada zona, pero no cuántas cabría
   esperar; un conteo bajo no distingue una zona poco poblada de una donde la aplicación no
   resulta útil. Esta monografía estima el número esperado de consultas por zona H3 de
   resolución~8 con 1.927.675 consultas de 2022 a 2024.
 
   % --- Párrafo 2: metodología ----------------------------------
-  Bajo CRISP-DM se conservaron 1.924.578 consultas válidas y se construyó una tabla de 1.381
+  Bajo CRISP-DM se conservaron 1.924.578 consultas válidas y se construyó un conjunto de datos H3 de 1.381
   zonas pobladas, 444 sin consultas. Por la autocorrelación espacial (\emph{I} de Moran de
   0,72) se reservó el 20~\% de los bloques como prueba. Siete técnicas, desde tasas
   simples hasta \emph{gradient boosting}, se compararon con validación cruzada por bloques y
@@ -67,7 +70,7 @@ hicieron posible este trabajo.
   % --- Párrafo 3: hallazgos ------------------------------------
   Se eligió la vecindad H3: la población de cada zona por la tasa de sus vecinas. En la
   prueba, evaluada una vez, redujo la devianza de Poisson de 2.183,8 (tasa única) a 1.086,5
-  ($D^2$ de 0,502; Spearman de 0,88), aunque subestima el volumen total (calibración de
+  (mejora relativa MR de 0,502; Spearman de 0,88), aunque subestima el volumen total (calibración de
   0,597). La lista de zonas prioritarias es estable ante el hueco temporal (Jaccard de 1,0),
   pero depende de la técnica; sin trazado cercano la brecha es algo más negativa, con efecto
   despreciable ($\delta$ de Cliff de $-0{,}058$).
@@ -78,6 +81,6 @@ hicieron posible este trabajo.
   revisión en terreno, como apoyo a la priorización y no como prueba de ausencia de rutas.
 
   \noindent\textbf{Palabras clave:} demanda esperada, datos de conteo, validación espacial,
-  paratránsito, Trufi App, H3.
+  paratránsito, ``Trufi App'', H3.
 }
 \clearpage

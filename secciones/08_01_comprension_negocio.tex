@@ -21,7 +21,7 @@ abordar.
 \subsection{Contexto operativo e institucional}
 \label{sec:contexto-operativo}
 
-Trufi Association es una organización sin fines de lucro que mantiene Trufi App, un
+Trufi Association es una organización sin fines de lucro que mantiene ``Trufi App'', un
 planificador de viajes para el transporte público del eje metropolitano de Cochabamba.
 Como la mayor parte de ese transporte opera bajo la modalidad de paratránsito, sin
 horarios ni paradas oficiales publicadas (sección~\ref{subsec:paratransito}), la
@@ -35,7 +35,8 @@ relevamiento colaborativo. El proceso real tiene cuatro pasos:
   \item El trazado se convierte al formato GTFS (sección~\ref{subsec:gtfs}), que es el que
         consume el planificador de la aplicación.
 \end{enumerate}
-El feed resultante, empleado en este trabajo, describe 141 líneas de 43 operadores.
+El feed resultante, empleado en este trabajo, describe 141 líneas de 43 operadores y 626
+recorridos (una línea puede tener varios recorridos, por ejemplo ida y vuelta).
 
 Cada jornada de mapeo consume desplazamientos, tiempo de edición y coordinación entre
 personas que colaboran de forma voluntaria. Por eso la capacidad de la organización es
@@ -115,7 +116,7 @@ criterios, cómo se mide cada uno y qué pregunta de la organización responde.
     \toprule
     \textbf{Criterio} & \textbf{Cómo se mide} & \textbf{Pregunta que responde} \\
     \midrule
-    Supera al punto de referencia inicial & $D^2$ frente a la tasa global en zonas no vistas, mayor que cero & ¿El contexto territorial aporta algo más que la población? \\
+    Supera al punto de referencia inicial & Mejora relativa frente a la tasa global (MR) en zonas no vistas, mayor que cero & ¿El contexto territorial aporta algo más que la población? \\
     Ordena bien las zonas & Correlación de Spearman entre observado y esperado & ¿Las zonas que más consultan quedan arriba? \\
     Está calibrada & Suma de lo esperado dividida entre suma de lo observado, cercana a 1 & ¿El volumen total estimado es realista? \\
     Es estable & Índice de Jaccard del top-20 ante variaciones razonables & ¿La lista cambia si se modifica un supuesto menor? \\
@@ -171,7 +172,7 @@ términos de investigación:
     \toprule
     \textbf{OE} & \textbf{Fase y notebook} & \textbf{Sección} & \textbf{Evidencia principal} \\
     \midrule
-    OE1 & Comprensión de los datos (\var{01_eda}); preparación (\var{02_preprocesamiento}, \var{03_feature_engineering}) & \ref{sec:comprension-datos} y \ref{sec:preparacion-datos} & Tabla de 1.628 zonas con consultas, población y cobertura; \var{metricas.json} de las tres fases \\
+    OE1 & Comprensión de los datos (\var{01_eda}); preparación (\var{02_preprocesamiento}, \var{03_feature_engineering}) & \ref{sec:comprension-datos} y \ref{sec:preparacion-datos} & Conjunto de datos H3 de 1.628 zonas con consultas, población y cobertura; \var{metricas.json} de las tres fases \\
     OE2 & Preparación (reserva de prueba, \var{03_feature_engineering}); modelado (\var{04_modelado}) & \ref{sec:conjuntos-entrenamiento-prueba} y \ref{sec:modelado} & Bloques de prueba (\var{test_blocks.csv}); comparación de siete técnicas (\var{cv_resumen.csv}); regla de selección (\var{regla_seleccion.csv}) \\
     OE3 & Evaluación (\var{05_evaluacion}) & \ref{sec:evaluacion-resultados} & Métricas de prueba, brecha por zona, contraste con la cobertura y sensibilidad \\
     OE4 & Despliegue como propuesta (\var{06_propuesta}) & \ref{sec:despliegue} & Predicciones por zona, lista de veinte zonas prioritarias, mapa interactivo y procedimiento de actualización \\

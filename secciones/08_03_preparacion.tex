@@ -12,11 +12,11 @@
 \section{Preparación de los datos}
 \label{sec:preparacion-datos}
 
-La preparación convierte las fuentes crudas en la tabla por zona sobre la que se modela.
+La preparación convierte las fuentes crudas en el conjunto de datos H3 sobre el que se modela.
 Aplica, en el orden fijado por la sección~\ref{sec:hallazgos-decisiones}, los criterios que
 el análisis exploratorio solo había medido. Se ejecuta en dos notebooks:
 \begin{itemize}
-  \item \var{02_preprocesamiento} limpia las consultas y construye la tabla por zona, que
+  \item \var{02_preprocesamiento} limpia las consultas y construye el conjunto de datos H3 por zona, que
         guarda en \var{data/interim/}.
   \item \var{03_feature_engineering} añade las variables, declara cuáles serán predictores y
         reserva el conjunto de prueba. Su resultado es
@@ -35,7 +35,7 @@ muestreo. El problema se formula sobre el total acumulado por zona
 (capítulo~\ref{cap:problema}), y descartar semanas o usuarios reduciría la información de
 las zonas con poca actividad, que son precisamente las de interés.
 
-\textbf{Zonas.} La tabla por zona se construye como la unión de dos conjuntos: las celdas
+\textbf{Zonas.} El conjunto de datos H3 se construye como la unión de dos conjuntos: las celdas
 de Kontur cuyo centroide cae dentro del área de estudio (1.577) y las celdas donde se
 originó al menos una consulta válida. Esta unión es deliberada. Si solo se tomaran las
 zonas con consultas, desaparecerían las 611 zonas pobladas sin ninguna consulta, que son
@@ -95,7 +95,8 @@ pero Kontur les asigna población.
 \subsection{Limpieza, datos faltantes y valores atípicos}
 \label{sec:limpieza}
 
-\textbf{Consolidación.} Los 85 archivos se leen con detección automática de codificación:
+\textbf{Consolidación.} Los 85 archivos, que cubren 84 semanas con datos (una semana viene
+partida en dos archivos; sección~\ref{sec:cobertura-temporal}), se leen con detección automática de codificación:
 se intenta UTF-8 y, si falla, Latin-1. Así se leen correctamente los seis archivos del
 lote 2024 y los nombres con tildes (por ejemplo, ``Santivañez''). Las columnas
 equivalentes de ambos esquemas se unifican, y a cada fila se le añade su linaje. Las
@@ -171,7 +172,7 @@ eliminándolas.
 \subsection{Transformaciones y codificación de variables}
 \label{sec:transformaciones}
 
-Las transformaciones convierten consultas individuales en una tabla por zona y dejan cada
+Las transformaciones convierten consultas individuales en un conjunto de datos H3 por zona y dejan cada
 variable en la escala que requieren los modelos. La tabla~\ref{tab:transformaciones} las
 resume con su justificación.
 
@@ -269,14 +270,14 @@ municipios aportan muchas zonas pobladas, pero casi ninguna consulta. Cercado co
 \subsection{Ingeniería y selección de características}
 \label{sec:ingenieria-caracteristicas}
 
-Cada columna de la tabla de modelado tiene un papel declarado antes de modelar. La
+Cada columna del conjunto de datos H3 tiene un papel declarado antes de modelar. La
 tabla~\ref{tab:grupos-variables} organiza las variables por su uso. Distinguir estos
 papeles es la principal salvaguarda contra la fuga de información
 (sección~\ref{subsec:fuga-datos}).
 
 \begin{table}[H]
   \centering
-  \caption{Variables de la tabla de modelado según su papel}
+  \caption{Variables del conjunto de datos H3 según su papel}
   \label{tab:grupos-variables}
   \interlineadoSimple
   \small

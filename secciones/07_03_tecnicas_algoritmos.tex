@@ -152,19 +152,23 @@ introduce explícitamente. Cuando la pérdida es la devianza de Poisson y el enl
 logarítmico, el modelo estima directamente el logaritmo del conteo esperado, conservando la
 coherencia con la naturaleza de los datos.
 
-Existen varias implementaciones eficientes. XGBoost \parencite{chen2016} introdujo un
-objetivo regularizado, un algoritmo de búsqueda de cortes consciente de la dispersión de los
-datos y optimizaciones de sistema que lo convirtieron en referencia en la práctica; ofrece
-el objetivo \var{count:poisson} y permite incorporar la exposición como margen base
-(\var{base_margin}) igual a $\log P_i$. LightGBM \parencite{ke2017} acelera el entrenamiento
-mediante el muestreo de observaciones basado en gradientes y la agrupación de variables
-mutuamente excluyentes, ofrece un objetivo de Poisson y admite la exposición como puntuación
-inicial (\var{init_score}). En scikit-learn, \var{HistGradientBoostingRegressor}, basado en
-histogramas, admite \var{loss="poisson"} desde la versión 0.23; según la documentación
+Existen varias implementaciones eficientes, entre ellas XGBoost \parencite{chen2016} y
+LightGBM \parencite{ke2017}, que admiten la exposición como margen inicial. En
+scikit-learn, el estimador basado en histogramas \var{HistGradientBoostingRegressor}
+admite \var{loss="poisson"} desde la versión 0.23; según la documentación
 oficial, esta pérdida implementa internamente la mitad de la devianza de Poisson con enlace
-logarítmico y requiere $y \ge 0$ \parencite{sklearn-hgb}. Como este estimador no admite
-\textit{offset}, la exposición puede incorporarse modelando la tasa $y_i / P_i$ con pesos
-muestrales $P_i$, formulación equivalente en esperanza a la del \textit{offset}.
+logarítmico y requiere $y \ge 0$ \parencite{sklearn-hgb}. Este estimador no admite
+\textit{offset}, pero con pérdida de Poisson no lo necesita: ajustar la tasa $y_i / P_i$ con
+peso muestral $P_i$ minimiza exactamente la misma devianza que un modelo con
+\textit{offset}. En efecto, si $\mu_i = P_i\,\lambda_i$ y
+$d(y,\mu) = 2\left[y \ln(y/\mu) - (y - \mu)\right]$ es la devianza unitaria de Poisson,
+\[
+  \sum_i P_i\, d\!\left(\frac{y_i}{P_i}, \lambda_i\right)
+  = \sum_i d(y_i, P_i\,\lambda_i),
+\]
+porque $d$ es homogénea de grado uno: $d(cy, c\mu) = c\,d(y,\mu)$. Por eso
+\var{HistGradientBoostingRegressor} es equivalente al \textit{gradient boosting} con
+\textit{offset} y el proyecto no necesita XGBoost ni LightGBM.
 
 La flexibilidad del \textit{gradient boosting} implica un mayor riesgo de sobreajuste, por
 lo que su uso requiere controlar hiperparámetros como el número de iteraciones, la
@@ -230,8 +234,7 @@ Para el modelado se emplean scikit-learn \parencite{pedregosa2011}, que proporci
 estimadores de \textit{gradient boosting} basados en histogramas, las utilidades de
 validación cruzada por grupos y las métricas de devianza; statsmodels
 \parencite{seabold2010}, que ofrece los modelos lineales generalizados de Poisson y binomial
-negativa con \textit{offset} e inferencia estadística completa; y, de forma complementaria,
-XGBoost \parencite{chen2016} y LightGBM \parencite{ke2017}. Los mapas interactivos de
+negativa con \textit{offset} e inferencia estadística completa. Los mapas interactivos de
 estimaciones y brechas se generan con Folium, biblioteca que produce mapas web basados en
 Leaflet \parencite{folium}. La reproducibilidad se asegura fijando las versiones de las
 bibliotecas y las semillas aleatorias, y organizando el código como una secuencia de guiones

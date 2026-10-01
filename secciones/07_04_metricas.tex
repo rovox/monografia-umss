@@ -100,15 +100,9 @@ de sus cuadrados es la devianza total \parencite{mccullagh1989}. Los residuos de
 tienen, en general, una distribución más próxima a la simétrica que los de Pearson, lo que
 facilita su inspección visual.
 
-En un contexto espacial, los residuos deben examinarse también en el mapa. La
-representación cartográfica de los residuos de las zonas de validación permite identificar
-áreas en las que el modelo sobrestima o subestima de forma sistemática, y el cálculo del $I$
-de Moran y de los indicadores LISA sobre los residuos permite diagnosticar si persiste
-autocorrelación espacial no explicada \parencite{anselin1995}. Una autocorrelación residual
-significativa indica que falta en el modelo alguna variable con estructura espacial y, en el
-contexto del proyecto, puede señalar agrupamientos de zonas con déficit de consultas
-compatibles con áreas enteras de cartografía incompleta, información sustantiva para la
-priorización.
+El diagnóstico espacial de los residuos, mediante el $I$ de Moran y los indicadores LISA
+calculados sobre ellos para detectar autocorrelación no explicada \parencite{anselin1995},
+no se ejecutó en este ciclo y se propone como trabajo futuro (R10).
 
 \subsection{Estabilidad de la priorización}
 \label{subsec:estabilidad-priorizacion}
@@ -133,9 +127,9 @@ $J = \lvert A \cap B \rvert / \lvert A \cup B \rvert$ mide la proporción de zon
 compartidas. En el proyecto, estas medidas se calculan entre las variantes que surgen de las
 decisiones metodológicas documentadas: el período anterior al hueco de siete semanas, un
 umbral de población mínima más exigente y la técnica de estimación. Las variantes con las
-dos ediciones de Kontur Population (2022-06-30 y 2023-11-01) y con las resoluciones H3 7 y
-9, comparadas tras agregar las prioridades a una escala común, se recomiendan como
-extensión.
+dos ediciones de Kontur Population (2022-06-30 y 2023-11-01) y con la resolución H3~7,
+comparadas tras agregar las prioridades a una escala común, se recomiendan como extensión
+(la resolución~9 no es viable, porque Kontur se publica en resolución~8).
 
 \subsection{Comparación de grupos con y sin cobertura}
 \label{subsec:comparacion-cobertura}
@@ -168,15 +162,10 @@ prueba causal del efecto de la cobertura.
 \subsection{Evaluación desagregada y análisis de sensibilidad}
 \label{subsec:evaluacion-desagregada}
 
-Una métrica global puede ocultar desempeños muy desiguales entre subconjuntos del
-territorio. Por ello, las métricas de \ref{subsec:devianza-poisson} a
-\ref{subsec:calibracion} se calculan también de forma desagregada: por anillos de distancia
-al centro, para verificar si el modelo funciona igual en el centro que en la periferia; por
-municipio, para detectar si alguno queda sistemáticamente mal representado; y por niveles de
-población (por ejemplo, terciles), para examinar el comportamiento en las zonas menos
-pobladas, donde el problema de los números pequeños es más agudo. Un modelo cuya ventaja
-global se concentre en un solo estrato, o que empeore en las zonas periféricas donde la
-priorización es más necesaria, debe interpretarse con cautela.
+Como una métrica global puede ocultar desempeños desiguales entre subconjuntos del
+territorio, la evaluación desagregada de las métricas de \ref{subsec:devianza-poisson}
+a~\ref{subsec:calibracion} por anillo de distancia al centro (A1 a A4) se propone como
+trabajo futuro (R10).
 
 El análisis de sensibilidad completa la evaluación examinando la robustez de las
 conclusiones frente a las decisiones metodológicas que no pueden fijarse con certeza. En
